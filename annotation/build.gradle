@@ -1,5 +1,8 @@
 apply plugin: 'java-library'
 
+apply plugin: 'maven'
+group='com.github.imfms'
+
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 }
