@@ -77,7 +77,8 @@ class PathNodeHelperCodeGenerator {
         final String packageName = getElementPackage(path.host).getQualifiedName().toString();
         final String className = path.host.getSimpleName().toString() + "_Path";
 
-        TypeSpec.Builder builder = TypeSpec.interfaceBuilder(className);
+        TypeSpec.Builder builder = TypeSpec.interfaceBuilder(className)
+                .addModifiers(Modifier.PUBLIC);
 
         for (NodeEntity node : path.nodes) {
             try {
@@ -101,8 +102,8 @@ class PathNodeHelperCodeGenerator {
 
         // node.type
         final String className = generateStandardIdentifier(parentLockedClassNames, node.type);
-        TypeSpec.Builder typeBuilder = TypeSpec.interfaceBuilder(className);
-        typeBuilder.addModifiers(Modifier.PUBLIC, Modifier.STATIC);
+        TypeSpec.Builder typeBuilder = TypeSpec.interfaceBuilder(className)
+                .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
 
         typeBuilder.addField(
                 FieldSpec.builder(String.class, "name$", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
