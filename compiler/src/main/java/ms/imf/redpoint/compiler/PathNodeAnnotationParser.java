@@ -145,10 +145,6 @@ class PathNodeAnnotationParser {
         final boolean nodeMode = path.value().length > 0;
         final boolean jsonMode = path.nodesJson().length > 0;
 
-        if (!nodeMode && !jsonMode) {
-            throw new CompilerException("value and nodeJson at least one", annotatedPathTypeElement, pathMirror);
-        }
-
         final List<NodeEntity> nodeEntities = new LinkedList<>();
 
         if (nodeMode) {
