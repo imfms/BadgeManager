@@ -1,6 +1,8 @@
 package ms.imf.redpoint.compiler;
 
 
+import com.google.auto.service.AutoService;
+
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
 import java.util.LinkedHashSet;
@@ -8,6 +10,7 @@ import java.util.List;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.TypeElement;
@@ -16,6 +19,7 @@ import javax.tools.Diagnostic;
 
 import ms.imf.redpoint.annotation.Path;
 
+@AutoService(Processor.class)
 public class PathNodeAnnotationProcessor extends AbstractProcessor {
 
     @Override
