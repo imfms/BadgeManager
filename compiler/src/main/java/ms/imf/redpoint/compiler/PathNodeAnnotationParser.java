@@ -25,6 +25,7 @@ import ms.imf.redpoint.annotation.Path;
 
 /**
  * todo node 和 jsonNode 的解析过程可以重用
+ * todo subNodeRefMapppers 添加key重复校验
  */
 class PathNodeAnnotationParser {
 
