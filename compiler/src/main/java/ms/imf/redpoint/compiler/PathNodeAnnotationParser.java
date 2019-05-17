@@ -25,7 +25,6 @@ import ms.imf.redpoint.annotation.Path;
 
 /**
  * todo node 和 jsonNode 的解析过程可以重用
- * todo subNodeRefMapppers 添加key重复校验
  */
 class PathNodeAnnotationParser {
 
@@ -176,7 +175,13 @@ class PathNodeAnnotationParser {
         for (AnnotationMirror mapperMirror : PathNodeAnnotationParser.<List<AnnotationMirror>>getAnnotionMirrorValue(pathMirror, "nodesJsonRefClassMapper")) {
             String key = PathNodeAnnotationParser.getAnnotionMirrorValue(mapperMirror, "key");
             TypeElement value = (TypeElement) PathNodeAnnotationParser.<DeclaredType>getAnnotionMirrorValue(mapperMirror, "value").asElement();
-            nodeJsonRefTypeMapper.put(key, value);
+            if (nodeJsonRefTypeMapper.put(key, value) != null) {
+                throw new CompilerException(
+                        String.format("found repeat subNodeRef key: '%s'", key),
+                        annotatedPathTypeElement,
+                        pathMirror
+                );
+            }
         }
 
         for (int i = 0; i < path.nodesJson().length; i++) {
