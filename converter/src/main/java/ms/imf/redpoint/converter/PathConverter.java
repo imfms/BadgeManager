@@ -4,7 +4,12 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * path converter
@@ -17,7 +22,7 @@ public class PathConverter {
     private final List<ConvertRule> convertRules;
 
     /**
-     * @param convertRulesJson  转换规则 格式为 toJson(List<{@link ConvertRule}>)
+     * @param convertRulesJson 转换规则 格式为 toJson(List<{@link ConvertRule}>)
      * @throws IllegalArgumentException 格式校验未通过
      */
     public PathConverter(String convertRulesJson) throws IllegalArgumentException {
@@ -43,20 +48,22 @@ public class PathConverter {
                 PathConverter.<List<ConvertRule>>parseJson(
                         gson,
                         convertRulesJson,
-                        new TypeToken<List<ConvertRule>>(){}.getType(),
+                        new TypeToken<List<ConvertRule>>() {
+                        }.getType(),
                         "found error on parse convertRulesJson"
                 ),
                 PathConverter.<List<NodeSchema>>parseJson(
                         gson,
                         targetPathsSchema,
-                        new TypeToken<List<NodeSchema>>(){}.getType(),
+                        new TypeToken<List<NodeSchema>>() {
+                        }.getType(),
                         "found error on parse targetPathsSchema"
                 )
         );
     }
 
     /**
-     * @param convertRules      转换规则 格式为 toJson(List<{@link ConvertRule}>)
+     * @param convertRules 转换规则 格式为 toJson(List<{@link ConvertRule}>)
      * @throws IllegalArgumentException 格式校验未通过
      */
     public PathConverter(List<ConvertRule> convertRules) throws IllegalArgumentException {
@@ -75,12 +82,82 @@ public class PathConverter {
 
     /**
      * 转换路径
+     *
      * @param sourceNodes 源路径
      * @return 目标路径, null == 查无匹配
      */
     public List<Node> convert(List<Node> sourceNodes) {
-        // TODO: 19-5-18
-        return null;
+
+        if (sourceNodes == null) {
+            return null;
+        }
+
+        if (sourceNodes.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        final List<ConvertRule> convertRules = matchConvertRule(sourceNodes);
+        if (convertRules == null) {
+            return null;
+        }
+
+        ConvertRule lastConvertRule = convertRules.get(convertRules.size() - 1);
+
+        if (lastConvertRule.convertTo == null
+                || lastConvertRule.convertTo.isEmpty()) {
+            return null;
+        }
+
+        final List<Node> result = new LinkedList<>();
+        for (ConvertRule.ConvertTo convertTo : lastConvertRule.convertTo) {
+
+            final Map<String, String> args = new HashMap<>();
+
+            if (convertTo.args != null) {
+                for (ConvertRule.Arg arg : convertTo.args) {
+                    Node targetLevelNode = sourceNodes.get(arg.myLevel);
+                    if (targetLevelNode.args != null) {
+                        args.put(
+                                arg.hisArg,
+                                targetLevelNode.args.get(arg.myArg)
+                        );
+                    }
+                }
+            }
+
+            result.add(new Node(convertTo.type, args));
+        }
+
+        return result;
+    }
+
+    private List<ConvertRule> matchConvertRule(List<Node> nodes) {
+        final List<ConvertRule> result = new ArrayList<>();
+
+        List<ConvertRule> currentLevelRules = this.convertRules;
+
+        for (Node node : nodes) {
+
+            ConvertRule matchedConvertRule = null;
+
+            if (currentLevelRules != null) {
+                for (ConvertRule convertRule : currentLevelRules) {
+                    if (convertRule.type.equals(node.type)) {
+                        matchedConvertRule = convertRule;
+                        break;
+                    }
+                }
+            }
+
+            if (matchedConvertRule == null) {
+                return null;
+            }
+
+            result.add(matchedConvertRule);
+            currentLevelRules = matchedConvertRule.sub;
+        }
+
+        return result;
     }
 
     private static <T> T parseJson(Gson gson, String json, Type type, String errorDescribe) throws IllegalArgumentException {
