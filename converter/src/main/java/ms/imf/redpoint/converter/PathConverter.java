@@ -63,15 +63,13 @@ public class PathConverter {
         this(convertRules, null);
     }
 
-
     /**
      * @param convertRules      转换规则 格式为 toJson(List<{@link ConvertRule}>)
      * @param targetPathsSchema 可选,目标Path的全貌,用于参与转换规则的校验以发现更多规则本身的错误,格式为 toJson(List<{@link NodeSchema}>)
      * @throws IllegalArgumentException 格式校验未通过
      */
     public PathConverter(List<ConvertRule> convertRules, List<NodeSchema> targetPathsSchema) throws IllegalArgumentException {
-        ArgCheckUtil.checkConvertRules(convertRules, targetPathsSchema);
-
+        ArgCheckUtil.checkArg(convertRules, targetPathsSchema);
         this.convertRules = convertRules;
     }
 
