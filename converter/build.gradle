@@ -1,0 +1,13 @@
+apply plugin: 'java-library'
+
+apply plugin: 'maven'
+group='com.github.imfms'
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    compile 'com.google.code.gson:gson:2.8.5'
+}
+
+sourceCompatibility = "7"
+targetCompatibility = "7"
