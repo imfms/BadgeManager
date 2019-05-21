@@ -3,6 +3,7 @@ package ms.imf.redpoint.compiler;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -19,8 +20,8 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
 
-import ms.imf.redpoint.annotation.Node;
 import ms.imf.redpoint.annotation.Path;
+import ms.imf.redpoint.entity.NodeSchema;
 
 
 /**
@@ -146,7 +147,7 @@ class PathNodeAnnotationParser {
         final boolean nodeMode = path.value().length > 0;
         final boolean jsonMode = path.nodesJson().length > 0;
 
-        final List<PathEntity.NodeEntity> nodeEntities = new LinkedList<>();
+        final List<PathEntity.Node> nodeEntities = new LinkedList<>();
 
         if (nodeMode) {
             nodeEntities.addAll(pathNodeToNodeEntity(annotatedPathTypeElement, path, pathMirror));
@@ -157,7 +158,7 @@ class PathNodeAnnotationParser {
 
         // check repeat type
         final Set<String> repeatElements = new HashSet<>();
-        for (PathEntity.NodeEntity nodeEntity : nodeEntities) {
+        for (PathEntity.Node nodeEntity : nodeEntities) {
             if (!repeatElements.add(nodeEntity.type)) {
                 throw new CompilerException("find repeat type: " + nodeEntity.type, annotatedPathTypeElement, pathMirror);
             }
@@ -169,8 +170,8 @@ class PathNodeAnnotationParser {
         return pathEntity;
     }
 
-    private List<PathEntity.NodeEntity> pathNodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws CompilerException {
-        final List<PathEntity.NodeEntity> results = new LinkedList<>();
+    private List<PathEntity.Node> pathNodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws CompilerException {
+        final List<PathEntity.Node> results = new LinkedList<>();
 
         final Map<String, TypeElement> nodeJsonRefTypeMapper = new HashMap<>();
         for (AnnotationMirror mapperMirror : PathNodeAnnotationParser.<List<AnnotationMirror>>getAnnotionMirrorValue(pathMirror, "nodesJsonRefClassMapper")) {
@@ -200,13 +201,13 @@ class PathNodeAnnotationParser {
         return results;
     }
 
-    private List<PathEntity.NodeEntity> pathNodeToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws CompilerException {
-        final LinkedList<PathEntity.NodeEntity> results = new LinkedList<>();
+    private List<PathEntity.Node> pathNodeToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws CompilerException {
+        final LinkedList<PathEntity.Node> results = new LinkedList<>();
 
         final List<AnnotationMirror> nodeMirrors = PathNodeAnnotationParser.getAnnotionMirrorValue(pathMirror, "value");
 
         for (int i = 0; i < path.value().length; i++) {
-            Node node = path.value()[i];
+            ms.imf.redpoint.annotation.Node node = path.value()[i];
             AnnotationMirror nodeMirror = nodeMirrors.get(i);
             try {
                 results.add(nodeAnnotationToNodeEntity(annotatedPathTypeElement, node, nodeMirror));
@@ -221,8 +222,8 @@ class PathNodeAnnotationParser {
         return results;
     }
 
-    private PathEntity.NodeEntity nodeAnnotationToNodeEntity(TypeElement annotatedPathTypeElement, Node nodeAnnotation, AnnotationMirror nodeMirror) throws CompilerException {
-        final PathEntity.NodeEntity nodeEntity = new PathEntity.NodeEntity();
+    private PathEntity.Node nodeAnnotationToNodeEntity(TypeElement annotatedPathTypeElement, ms.imf.redpoint.annotation.Node nodeAnnotation, AnnotationMirror nodeMirror) throws CompilerException {
+        final PathEntity.Node nodeEntity = new PathEntity.Node();
 
         // nodeAnnotation.type
         if (nodeAnnotation.type().isEmpty()) {
@@ -257,7 +258,7 @@ class PathNodeAnnotationParser {
         return nodeEntity;
     }
 
-    private PathEntity.NodeEntity nodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, String nodeJson, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
+    private PathEntity.Node nodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, String nodeJson, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
         // parse json
         JsonNode jsonNodeObj;
         try {
@@ -269,8 +270,8 @@ class PathNodeAnnotationParser {
         return nodeJsonObjToNodeEntity(annotatedPathTypeElement, jsonNodeObj, nodeJsonRefTypeMapper);
     }
 
-    private PathEntity.NodeEntity nodeJsonObjToNodeEntity(TypeElement annotatedPathTypeElement, JsonNode nodeJsonObj, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
-        final PathEntity.NodeEntity resultNodeEntity = new PathEntity.NodeEntity();
+    private PathEntity.Node nodeJsonObjToNodeEntity(TypeElement annotatedPathTypeElement, JsonNode nodeJsonObj, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
+        final PathEntity.Node resultNodeEntity = new PathEntity.Node();
 
         // parse type
         if (nodeJsonObj.type == null
@@ -316,7 +317,7 @@ class PathNodeAnnotationParser {
 
         // parse subNodes
         if (existSubNodes) {
-            final List<PathEntity.NodeEntity> subNodes = new LinkedList<>();
+            final List<PathEntity.Node> subNodes = new LinkedList<>();
             for (int i = 0; i < nodeJsonObj.subNodes.size(); i++) {
                 JsonNode subJsonNodeObj = nodeJsonObj.subNodes.get(i);
                 try {
@@ -374,34 +375,82 @@ class PathNodeAnnotationParser {
     }
 
     /**
-     * 获取树型节点实体
+     * 生成树型节点规则
      *
-     * @param nodeEntities source
+     * @param pathEntities source
      * @return target
      */
-    public static List<PathEntity.NodeEntity> getNodeEntityTree(List<PathEntity.NodeEntity> nodeEntities) {
-        final List<PathEntity.NodeEntity> result = new LinkedList<>(nodeEntities);
+    public static List<NodeSchema> generateNodeSchemaTree(List<PathEntity> pathEntities) {
+        final List<PathEntity> treePathEntities = new LinkedList<>(pathEntities);
 
-        result.removeAll(
-                getTreeNeedDeleteNodeEntity(nodeEntities, new HashSet<PathEntity.NodeEntity>())
+        treePathEntities.removeAll(
+                getTreeNeedDeleteNodeEntity(pathEntities)
         );
+
+        final List<NodeSchema> result = new LinkedList<>();
+
+        for (PathEntity pathEntity : treePathEntities) {
+            if (pathEntity.nodes == null
+                    || pathEntity.nodes.isEmpty()) {
+                continue;
+            }
+            result.addAll(convertNodeEntitiesToNodes(pathEntity.nodes));
+        }
 
         return result;
     }
 
-    private static Set<PathEntity.NodeEntity> getTreeNeedDeleteNodeEntity(List<PathEntity.NodeEntity> nodeEntities, Set<PathEntity.NodeEntity> deleteElementContainer) {
+    private static Set<PathEntity> getTreeNeedDeleteNodeEntity(List<PathEntity> pathEntities) {
+        final Set<PathEntity> deleteElementContainer = new HashSet<>();
 
-        for (PathEntity.NodeEntity nodeEntity : nodeEntities) {
-
-            if (nodeEntity.sub == null
-                    || nodeEntity.sub.isEmpty()) {
-                continue;
-            }
-
-            deleteElementContainer.addAll(nodeEntity.sub);
-            getTreeNeedDeleteNodeEntity(nodeEntity.sub, deleteElementContainer);
+        for (PathEntity pathEntity : pathEntities) {
+            getTreeNeedDeleteNodeEntity(pathEntity, deleteElementContainer);
         }
 
         return deleteElementContainer;
     }
+
+    private static void getTreeNeedDeleteNodeEntity(PathEntity pathEntity, Set<PathEntity> deleteElementContainer) {
+        for (PathEntity.Node node : pathEntity.nodes) {
+            if (node.subRef != null) {
+                deleteElementContainer.add(node.subRef);
+                getTreeNeedDeleteNodeEntity(node.subRef, deleteElementContainer);
+            }
+        }
+    }
+
+    private static List<NodeSchema> convertNodeEntitiesToNodes(List<PathEntity.Node> nodeEntities) {
+        List<NodeSchema> convertedSubNodeEntities = new ArrayList<>(nodeEntities.size());
+
+        for (PathEntity.Node subNodeEntity : nodeEntities) {
+            convertedSubNodeEntities.add(
+                    convertNodeEntityToNode(subNodeEntity)
+            );
+        }
+
+        return convertedSubNodeEntities;
+    }
+
+    private static NodeSchema convertNodeEntityToNode(PathEntity.Node nodeEntity) {
+
+        NodeSchema nodeSchema = new NodeSchema();
+
+        nodeSchema.type = nodeEntity.type;
+        nodeSchema.args = nodeEntity.args;
+
+        List<PathEntity.Node> subNodeEntities = null;
+        if (nodeEntity.sub != null) {
+            subNodeEntities = nodeEntity.sub;
+        }
+        if (nodeEntity.subRef != null) {
+            subNodeEntities = nodeEntity.subRef.nodes;
+        }
+        if (subNodeEntities != null
+                && !subNodeEntities.isEmpty()) {
+            nodeSchema.sub = convertNodeEntitiesToNodes(subNodeEntities);
+        }
+
+        return nodeSchema;
+    }
+
 }
