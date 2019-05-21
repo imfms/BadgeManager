@@ -80,7 +80,7 @@ class PathNodeHelperCodeGenerator {
         TypeSpec.Builder builder = TypeSpec.interfaceBuilder(className)
                 .addModifiers(Modifier.PUBLIC);
 
-        for (NodeEntity node : path.nodes) {
+        for (PathEntity.NodeEntity node : path.nodes) {
             try {
                 builder.addType(generateNode(node, new HashSet<>(Collections.singletonList(className))));
             } catch (Exception e) {
@@ -98,7 +98,7 @@ class PathNodeHelperCodeGenerator {
                 .writeTo(aptFiler);
     }
 
-    private TypeSpec generateNode(NodeEntity node, Set<String> parentLockedClassNames) throws Exception {
+    private TypeSpec generateNode(PathEntity.NodeEntity node, Set<String> parentLockedClassNames) throws Exception {
 
         // node.type
         final String className = generateStandardIdentifier(parentLockedClassNames, node.type);
@@ -124,7 +124,7 @@ class PathNodeHelperCodeGenerator {
 
         // node.sub
         if (node.sub != null) {
-            for (NodeEntity subNode : node.sub) {
+            for (PathEntity.NodeEntity subNode : node.sub) {
                 try {
                     HashSet<String> lockedClassNames = new HashSet<>(parentLockedClassNames);
                     lockedClassNames.add(className);
