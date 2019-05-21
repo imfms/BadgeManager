@@ -371,4 +371,35 @@ class PathNodeAnnotationParser {
         }
         return null;
     }
+
+    /**
+     * 获取树型节点实体
+     *
+     * @param nodeEntities source
+     * @return target
+     */
+    public static List<NodeEntity> getNodeEntityTree(List<NodeEntity> nodeEntities) {
+        final List<NodeEntity> result = new LinkedList<>(nodeEntities);
+
+        result.removeAll(
+                getTreeNeedDeleteNodeEntity(nodeEntities, new HashSet<NodeEntity>())
+        );
+
+        return result;
+    }
+
+    private static Set<NodeEntity> getTreeNeedDeleteNodeEntity(List<NodeEntity> nodeEntities, Set<NodeEntity> deleteElementContainer) {
+        for (NodeEntity nodeEntity : nodeEntities) {
+
+            if (nodeEntity.sub == null
+                    || nodeEntity.sub.isEmpty()) {
+                continue;
+            }
+
+            deleteElementContainer.addAll(nodeEntity.sub);
+            getTreeNeedDeleteNodeEntity(nodeEntity.sub, deleteElementContainer);
+        }
+
+        return deleteElementContainer;
+    }
 }
