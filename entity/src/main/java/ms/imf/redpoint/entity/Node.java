@@ -1,4 +1,4 @@
-package ms.imf.redpoint.converter;
+package ms.imf.redpoint.entity;
 
 import java.io.Serializable;
 import java.util.Collections;

@@ -5,6 +5,8 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
+import ms.imf.redpoint.entity.NodeSchema;
+
 class ArgCheckUtil {
 
     static void checkArg(List<ConvertRule> convertRules, List<NodeSchema> targetPathsSchema) throws IllegalArgumentException {
