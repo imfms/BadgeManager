@@ -146,7 +146,7 @@ class PathNodeAnnotationParser {
         final boolean nodeMode = path.value().length > 0;
         final boolean jsonMode = path.nodesJson().length > 0;
 
-        final List<NodeEntity> nodeEntities = new LinkedList<>();
+        final List<PathEntity.NodeEntity> nodeEntities = new LinkedList<>();
 
         if (nodeMode) {
             nodeEntities.addAll(pathNodeToNodeEntity(annotatedPathTypeElement, path, pathMirror));
@@ -157,7 +157,7 @@ class PathNodeAnnotationParser {
 
         // check repeat type
         final Set<String> repeatElements = new HashSet<>();
-        for (NodeEntity nodeEntity : nodeEntities) {
+        for (PathEntity.NodeEntity nodeEntity : nodeEntities) {
             if (!repeatElements.add(nodeEntity.type)) {
                 throw new CompilerException("find repeat type: " + nodeEntity.type, annotatedPathTypeElement, pathMirror);
             }
@@ -169,8 +169,8 @@ class PathNodeAnnotationParser {
         return pathEntity;
     }
 
-    private List<NodeEntity> pathNodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws CompilerException {
-        final List<NodeEntity> results = new LinkedList<>();
+    private List<PathEntity.NodeEntity> pathNodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws CompilerException {
+        final List<PathEntity.NodeEntity> results = new LinkedList<>();
 
         final Map<String, TypeElement> nodeJsonRefTypeMapper = new HashMap<>();
         for (AnnotationMirror mapperMirror : PathNodeAnnotationParser.<List<AnnotationMirror>>getAnnotionMirrorValue(pathMirror, "nodesJsonRefClassMapper")) {
@@ -200,8 +200,8 @@ class PathNodeAnnotationParser {
         return results;
     }
 
-    private List<NodeEntity> pathNodeToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws CompilerException {
-        final LinkedList<NodeEntity> results = new LinkedList<>();
+    private List<PathEntity.NodeEntity> pathNodeToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws CompilerException {
+        final LinkedList<PathEntity.NodeEntity> results = new LinkedList<>();
 
         final List<AnnotationMirror> nodeMirrors = PathNodeAnnotationParser.getAnnotionMirrorValue(pathMirror, "value");
 
@@ -221,8 +221,8 @@ class PathNodeAnnotationParser {
         return results;
     }
 
-    private NodeEntity nodeAnnotationToNodeEntity(TypeElement annotatedPathTypeElement, Node nodeAnnotation, AnnotationMirror nodeMirror) throws CompilerException {
-        final NodeEntity nodeEntity = new NodeEntity();
+    private PathEntity.NodeEntity nodeAnnotationToNodeEntity(TypeElement annotatedPathTypeElement, Node nodeAnnotation, AnnotationMirror nodeMirror) throws CompilerException {
+        final PathEntity.NodeEntity nodeEntity = new PathEntity.NodeEntity();
 
         // nodeAnnotation.type
         if (nodeAnnotation.type().isEmpty()) {
@@ -257,7 +257,7 @@ class PathNodeAnnotationParser {
         return nodeEntity;
     }
 
-    private NodeEntity nodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, String nodeJson, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
+    private PathEntity.NodeEntity nodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, String nodeJson, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
         // parse json
         JsonNode jsonNodeObj;
         try {
@@ -269,8 +269,8 @@ class PathNodeAnnotationParser {
         return nodeJsonObjToNodeEntity(annotatedPathTypeElement, jsonNodeObj, nodeJsonRefTypeMapper);
     }
 
-    private NodeEntity nodeJsonObjToNodeEntity(TypeElement annotatedPathTypeElement, JsonNode nodeJsonObj, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
-        final NodeEntity resultNodeEntity = new NodeEntity();
+    private PathEntity.NodeEntity nodeJsonObjToNodeEntity(TypeElement annotatedPathTypeElement, JsonNode nodeJsonObj, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
+        final PathEntity.NodeEntity resultNodeEntity = new PathEntity.NodeEntity();
 
         // parse type
         if (nodeJsonObj.type == null
@@ -316,7 +316,7 @@ class PathNodeAnnotationParser {
 
         // parse subNodes
         if (existSubNodes) {
-            final List<NodeEntity> subNodes = new LinkedList<>();
+            final List<PathEntity.NodeEntity> subNodes = new LinkedList<>();
             for (int i = 0; i < nodeJsonObj.subNodes.size(); i++) {
                 JsonNode subJsonNodeObj = nodeJsonObj.subNodes.get(i);
                 try {
