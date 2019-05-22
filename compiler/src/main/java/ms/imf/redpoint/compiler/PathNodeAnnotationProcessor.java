@@ -5,7 +5,9 @@ import com.google.auto.service.AutoService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.Iterator;
 import java.util.LinkedHashSet;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
@@ -18,6 +20,7 @@ import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic;
 
 import ms.imf.redpoint.annotation.Path;
+import ms.imf.redpoint.annotation.PathAptGlobalConfig;
 
 @AutoService(Processor.class)
 public class PathNodeAnnotationProcessor extends AbstractProcessor {
@@ -38,17 +41,24 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         return supportedTypes;
     }
 
+    private final List<PathEntity> allPathEntities = new LinkedList<>();
+    private PathAptGlobalConfig pathAptGlobalConfig;
+
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
 
-        TypeElement pathAnnotationTypeElement = processingEnv.getElementUtils().getTypeElement(Path.class.getCanonicalName());
-        if (!annotations.contains(pathAnnotationTypeElement)) {
+        // check config
+        try {
+            checkPathAptGlobalConfig(roundEnv);
+        } catch (CompilerException e) {
+            showErrorTip(e);
             return false;
         }
 
-        Set<TypeElement> pathAnnotationTypes = ElementFilter.typesIn(roundEnv.getElementsAnnotatedWith(Path.class));
+        // parse paths
+        final Set<TypeElement> pathAnnotationTypes = ElementFilter.typesIn(roundEnv.getElementsAnnotatedWith(Path.class));
 
-        PathNodeAnnotationParser pathNodeAnnotationParser = new PathNodeAnnotationParser(processingEnv.getElementUtils());
+        final PathNodeAnnotationParser pathNodeAnnotationParser = new PathNodeAnnotationParser(processingEnv.getElementUtils());
         final List<PathEntity> pathEntities;
         try {
             pathEntities = pathNodeAnnotationParser.parsePaths(pathAnnotationTypes);
@@ -57,6 +67,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             return false;
         }
 
+        // generate node helper code
         PathNodeHelperCodeGenerator pathNodeHelperCodeGenerator = new PathNodeHelperCodeGenerator(processingEnv.getFiler());
         try {
             pathNodeHelperCodeGenerator.generate(pathEntities);
@@ -65,7 +76,60 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             return false;
         }
 
+        // compose each round data
+        allPathEntities.addAll(pathEntities);
+
+        if (!roundEnv.processingOver()) {
+            return true;
+        }
+        // process finish task
+
+        // TODO: 19-5-22 root node repeat check
+        // TODO: 19-5-22 convert config check
+        // TODO: 19-5-22 node schema output
+
         return true;
+    }
+
+    private TypeElement lastPathAptGlobalConfigAnnotationHost;
+
+    private void checkPathAptGlobalConfig(RoundEnvironment roundEnv) throws CompilerException {
+        final Set<TypeElement> annotationElements = ElementFilter.typesIn(
+                roundEnv.getElementsAnnotatedWith(PathAptGlobalConfig.class)
+        );
+
+        if (annotationElements.isEmpty()) {
+            return;
+        }
+
+        boolean isRepeat = pathAptGlobalConfig != null || annotationElements.size() > 1;
+
+        if (isRepeat) {
+
+            final LinkedList<TypeElement> repeatElements = new LinkedList<>(annotationElements);
+            if (lastPathAptGlobalConfigAnnotationHost != null) {
+                repeatElements.add(lastPathAptGlobalConfigAnnotationHost);
+            }
+
+            final Iterator<TypeElement> elementIterator = repeatElements.iterator();
+            final StringBuilder elementsTip = new StringBuilder();
+            while (elementIterator.hasNext()) {
+                elementsTip.append(
+                        elementIterator.next().getQualifiedName().toString()
+                );
+                if (elementIterator.hasNext()) {
+                    elementsTip.append(",").append(' ');
+                }
+            }
+
+            throw new CompilerException(String.format("PathAptGlobalConfig only can exist one, but found these: %s", elementsTip));
+        }
+
+        final TypeElement host = annotationElements.iterator().next();
+        final PathAptGlobalConfig config = host.getAnnotation(PathAptGlobalConfig.class);
+
+        lastPathAptGlobalConfigAnnotationHost = host;
+        pathAptGlobalConfig = config;
     }
 
     private void showErrorTip(CompilerException e) {
