@@ -5,10 +5,12 @@ import com.google.auto.service.AutoService;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
@@ -84,11 +86,41 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         }
         // process finish task
 
-        // TODO: 19-5-22 root node repeat check
+        final List<PathEntity> treePathEntities = PathNodeAnnotationParser.convertPathTree(allPathEntities);
+
+        // root node repeat check
+        try {
+            pathNodeTypeRepeatCheck(treePathEntities);
+        } catch (CompilerException e) {
+            showErrorTip(e);
+            return false;
+        }
+
         // TODO: 19-5-22 convert config check
         // TODO: 19-5-22 node schema output
 
         return true;
+    }
+
+    private void pathNodeTypeRepeatCheck(List<PathEntity> treePathEntities) throws CompilerException {
+        Map<String, PathEntity> repeatCheckContainer = new HashMap<>();
+        for (PathEntity pathEntity : treePathEntities) {
+            for (int i = 0; i < pathEntity.nodes.size(); i++) {
+                PathEntity.Node node = pathEntity.nodes.get(i);
+                PathEntity repeatPathEntity = repeatCheckContainer.put(node.type, pathEntity);
+                if (repeatPathEntity != null) {
+                    throw new CompilerException(
+                            String.format(
+                                    "found repeat root node type '%s' on %s and %s, please check root type or path's link",
+                                    node.type,
+                                    repeatPathEntity.host.getQualifiedName(),
+                                    pathEntity.host.getQualifiedName()
+                            ),
+                            pathEntity.host
+                    );
+                }
+            }
+        }
     }
 
     private TypeElement lastPathAptGlobalConfigAnnotationHost;
@@ -122,7 +154,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                 }
             }
 
-            throw new CompilerException(String.format("PathAptGlobalConfig only can exist one, but found these: %s", elementsTip));
+            throw new CompilerException(String.format("PathAptGlobalConfig only can exist one, but found these: %s", elementsTip), repeatElements.get(0));
         }
 
         final TypeElement host = annotationElements.iterator().next();

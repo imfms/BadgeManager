@@ -375,18 +375,30 @@ class PathNodeAnnotationParser {
     }
 
     /**
-     * 生成树型节点规则
+     * 转换扁平路径列表为树型路径，移除独立路径
      *
      * @param pathEntities source
      * @return target
      */
-    public static List<NodeSchema> generateNodeSchemaTree(List<PathEntity> pathEntities) {
+    public static List<PathEntity> convertPathTree(List<PathEntity> pathEntities) {
         final List<PathEntity> treePathEntities = new LinkedList<>(pathEntities);
 
         treePathEntities.removeAll(
                 getTreeNeedDeleteNodeEntity(pathEntities)
         );
 
+        return treePathEntities;
+    }
+
+    /**
+     * 生成树型节点规则
+     *
+     * @param pathEntities source
+     * @return target
+     */
+    public static List<NodeSchema> generateNodeSchemaTree(List<PathEntity> pathEntities) {
+
+        final List<PathEntity> treePathEntities = convertPathTree(pathEntities);
         final List<NodeSchema> result = new LinkedList<>();
 
         for (PathEntity pathEntity : treePathEntities) {
@@ -399,6 +411,7 @@ class PathNodeAnnotationParser {
 
         return result;
     }
+
 
     private static Set<PathEntity> getTreeNeedDeleteNodeEntity(List<PathEntity> pathEntities) {
         final Set<PathEntity> deleteElementContainer = new HashSet<>();
