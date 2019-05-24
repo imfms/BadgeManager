@@ -45,7 +45,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
     public Set<String> getSupportedAnnotationTypes() {
         final LinkedHashSet<String> supportedTypes = new LinkedHashSet<>();
 
-        for (Class annotationClass : new Class[]{ Path.class }) {
+        for (Class annotationClass : new Class[]{ Path.class, PathAptGlobalConfig.class }) {
             supportedTypes.add(annotationClass.getCanonicalName());
         }
 
