@@ -1,4 +1,4 @@
-package ms.imf.redpoint.converter;
+package ms.imf.redpoint.entity;
 
 import java.io.Serializable;
 import java.util.Collections;
@@ -14,6 +14,9 @@ public class Node implements Serializable {
         this(type, null);
     }
 
+    /**
+     * todo 20190521 对args的key can't be null参数校验重申
+     */
     public Node(String type, Map<String, String> args) {
 
         if (type == null) {

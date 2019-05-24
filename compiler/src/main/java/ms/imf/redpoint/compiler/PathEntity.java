@@ -6,13 +6,13 @@ import javax.lang.model.element.TypeElement;
 
 class PathEntity {
 
-    List<NodeEntity> nodes;
+    List<Node> nodes;
     TypeElement host;
 
-    static class NodeEntity {
+    static class Node {
         String type;
         List<String> args;
-        List<NodeEntity> sub;
+        List<Node> sub;
         PathEntity subRef;
     }
 

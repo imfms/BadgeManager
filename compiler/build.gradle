@@ -7,6 +7,8 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     implementation project(':annotation')
+    implementation project(':entity')
+    implementation project(':converter')
     implementation 'com.squareup:javapoet:1.11.1'
     implementation 'com.google.code.gson:gson:2.8.5'
 
