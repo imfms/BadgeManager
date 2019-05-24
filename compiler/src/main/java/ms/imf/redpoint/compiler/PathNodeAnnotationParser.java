@@ -26,7 +26,6 @@ import ms.imf.redpoint.entity.NodeSchema;
 
 /**
  * todo node 和 jsonNode 的解析过程可以重用
- * todo 20190521 增加校验: 不同根Path可能会存在相同的type
  */
 class PathNodeAnnotationParser {
 
