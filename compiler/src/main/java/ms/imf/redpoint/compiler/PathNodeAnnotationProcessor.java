@@ -2,11 +2,14 @@ package ms.imf.redpoint.compiler;
 
 
 import com.google.auto.service.AutoService;
+import com.google.gson.Gson;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,6 +26,7 @@ import javax.lang.model.SourceVersion;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic;
+import javax.tools.StandardLocation;
 
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.annotation.PathAptGlobalConfig;
@@ -49,6 +53,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
     }
 
     private final List<PathEntity> allPathEntities = new LinkedList<>();
+    private final Gson gson = new Gson();
 
     private TypeElement lastPathAptGlobalConfigAnnotationHost;
     private PathAptGlobalConfig pathAptGlobalConfig;
@@ -64,9 +69,9 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             return false;
         }
 
-        // parse paths
         final Set<TypeElement> pathAnnotationTypes = ElementFilter.typesIn(roundEnv.getElementsAnnotatedWith(Path.class));
 
+        // parse paths
         final PathNodeAnnotationParser pathNodeAnnotationParser = new PathNodeAnnotationParser(processingEnv.getElementUtils());
         final List<PathEntity> pathEntities;
         try {
@@ -110,33 +115,88 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         final List<NodeSchema> nodeSchemas = PathNodeAnnotationParser.generateNodeSchemaTree(treePathEntities);
 
         // convert config check
+        try {
+            convertConfigCheck(nodeSchemas);
+        } catch (CompilerException e) {
+            showErrorTip(e);
+            return false;
+        }
+
+        // node schema output
+        try {
+            nodeSchemaOutput(nodeSchemas);
+        } catch (CompilerException e) {
+            showErrorTip(e);
+            return false;
+        }
+
+        return true;
+    }
+
+    private void nodeSchemaOutput(List<NodeSchema> nodeSchemas) throws CompilerException {
+        String resource = pathAptGlobalConfig.nodeSchemaExportJsonJavaStyleResource();
+        if (!resource.isEmpty()) {
+
+            String resourcePackage;
+            String resourceName;
+            int splitIndex = resource.indexOf('/');
+            if (splitIndex < 0) {
+                resourcePackage = "";
+                resourceName = resource;
+            } else {
+                resourcePackage = resource.substring(0, splitIndex);
+                resourceName = resource.substring(splitIndex + 1);
+            }
+
+            OutputStream resourceOutputStream = null;
+            try {
+                resourceOutputStream = processingEnv
+                        .getFiler()
+                        .createResource(StandardLocation.CLASS_OUTPUT, resourcePackage, resourceName)
+                        .openOutputStream();
+
+                resourceOutputStream.write(gson.toJson(nodeSchemas).getBytes());
+                resourceOutputStream.flush();
+                resourceOutputStream.close();
+
+            } catch (Exception e) {
+                throw new CompilerException(
+                        String.format("found error on write nodeSchema to JavaStyle resource '%s': %s", resource, e.getMessage()),
+                        e
+                );
+            } finally {
+                if (resourceOutputStream != null) {
+                    try {
+                        resourceOutputStream.close();
+                    } catch (IOException ignore) {}
+                }
+            }
+        }
+    }
+
+    private void convertConfigCheck(List<NodeSchema> nodeSchemas) throws CompilerException {
         if (!pathAptGlobalConfig.convertCheckConfigFilePath().isEmpty()) {
 
             InputStream convertCheckFileInputStream;
             try {
                 convertCheckFileInputStream = new FileInputStream(pathAptGlobalConfig.convertCheckConfigFilePath());
             } catch (FileNotFoundException e) {
-                showErrorTip(new CompilerException(
+                throw new CompilerException(
                         String.format("PathAptGlobalConfig's convertCheckConfigFilePath(%s) not exist", pathAptGlobalConfig.convertCheckConfigFilePath()),
                         e,
                         lastPathAptGlobalConfigAnnotationHost
-                ));
-                return false;
+                );
             }
 
             try {
                 ArgCheckUtil.checkArg(convertCheckFileInputStream, nodeSchemas);
             } catch (IllegalArgumentException e) {
-                showErrorTip(new CompilerException(
+                throw new CompilerException(
                         String.format("found error on convert config check: %s", e.getMessage()),
                         e
-                ));
+                );
             }
         }
-
-        // TODO: 19-5-22 node schema output
-
-        return true;
     }
 
     private void pathNodeTypeRepeatCheck(List<PathEntity> treePathEntities) throws CompilerException {

@@ -11,6 +11,9 @@ public @interface PathAptGlobalConfig {
 
     String convertCheckConfigFilePath() default "";
 
-    String nodeSchemaExportJsonAssets() default "";
+    /**
+     * format: packageName/resourceName
+     */
+    String nodeSchemaExportJsonJavaStyleResource() default "";
 
 }
