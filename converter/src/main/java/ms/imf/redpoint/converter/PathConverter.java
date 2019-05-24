@@ -3,6 +3,7 @@ package ms.imf.redpoint.converter;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -39,12 +40,33 @@ public class PathConverter {
     public PathConverter(String convertRulesJson, String targetPathsSchemaJson) throws IllegalArgumentException {
         this(new Gson(), convertRulesJson, targetPathsSchemaJson);
     }
-
     /**
-     * @param convertRulesJson  转换规则 格式为 toJson(List<{@link ConvertRule}>)
-     * @param targetPathsSchemaJson 可选,目标Path的全貌,用于参与转换规则的校验以发现更多规则本身的错误,格式为 toJson(List<{@link NodeSchema}>)
+     * @param convertRulesJsonInputStream  转换规则 格式为 toJson(List<{@link ConvertRule}>)
+     * @param targetPathsSchemaJsonInputStream 可选,目标Path的全貌,用于参与转换规则的校验以发现更多规则本身的错误,格式为 toJson(List<{@link NodeSchema}>)
      * @throws IllegalArgumentException 格式校验未通过
      */
+    public PathConverter(InputStream convertRulesJsonInputStream, InputStream targetPathsSchemaJsonInputStream) throws IllegalArgumentException {
+        this(new Gson(), convertRulesJsonInputStream, targetPathsSchemaJsonInputStream);
+    }
+
+    private PathConverter(Gson gson, InputStream convertRulesJsonInputStream, InputStream targetPathsSchemaJsonInputStream) throws IllegalArgumentException {
+        this(
+                ArgCheckUtil.<List<ConvertRule>>parseJson(
+                        gson,
+                        convertRulesJsonInputStream,
+                        new TypeToken<List<ConvertRule>>() {
+                        }.getType(),
+                        "found error on parse convertRulesJsonInputStream"
+                ),
+                ArgCheckUtil.<List<NodeSchema>>parseJson(
+                        gson,
+                        targetPathsSchemaJsonInputStream,
+                        new TypeToken<List<NodeSchema>>() {
+                        }.getType(),
+                        "found error on parse targetPathsSchemaJsonInputStream"
+                )
+        );
+    }
     private PathConverter(Gson gson, String convertRulesJson, String targetPathsSchemaJson) throws IllegalArgumentException {
         this(
                 ArgCheckUtil.<List<ConvertRule>>parseJson(
