@@ -4,6 +4,9 @@ package ms.imf.redpoint.compiler;
 import com.google.auto.service.AutoService;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -23,6 +26,8 @@ import javax.tools.Diagnostic;
 
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.annotation.PathAptGlobalConfig;
+import ms.imf.redpoint.converter.ArgCheckUtil;
+import ms.imf.redpoint.entity.NodeSchema;
 
 @AutoService(Processor.class)
 public class PathNodeAnnotationProcessor extends AbstractProcessor {
@@ -44,6 +49,8 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
     }
 
     private final List<PathEntity> allPathEntities = new LinkedList<>();
+
+    private TypeElement lastPathAptGlobalConfigAnnotationHost;
     private PathAptGlobalConfig pathAptGlobalConfig;
 
     @Override
@@ -96,7 +103,37 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             return false;
         }
 
-        // TODO: 19-5-22 convert config check
+        if (pathAptGlobalConfig == null) {
+            return true;
+        }
+
+        final List<NodeSchema> nodeSchemas = PathNodeAnnotationParser.generateNodeSchemaTree(treePathEntities);
+
+        // convert config check
+        if (!pathAptGlobalConfig.convertCheckConfigFilePath().isEmpty()) {
+
+            InputStream convertCheckFileInputStream;
+            try {
+                convertCheckFileInputStream = new FileInputStream(pathAptGlobalConfig.convertCheckConfigFilePath());
+            } catch (FileNotFoundException e) {
+                showErrorTip(new CompilerException(
+                        String.format("PathAptGlobalConfig's convertCheckConfigFilePath(%s) not exist", pathAptGlobalConfig.convertCheckConfigFilePath()),
+                        e,
+                        lastPathAptGlobalConfigAnnotationHost
+                ));
+                return false;
+            }
+
+            try {
+                ArgCheckUtil.checkArg(convertCheckFileInputStream, nodeSchemas);
+            } catch (IllegalArgumentException e) {
+                showErrorTip(new CompilerException(
+                        String.format("found error on convert config check: %s", e.getMessage()),
+                        e
+                ));
+            }
+        }
+
         // TODO: 19-5-22 node schema output
 
         return true;
@@ -122,8 +159,6 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             }
         }
     }
-
-    private TypeElement lastPathAptGlobalConfigAnnotationHost;
 
     private void checkPathAptGlobalConfig(RoundEnvironment roundEnv) throws CompilerException {
         final Set<TypeElement> annotationElements = ElementFilter.typesIn(

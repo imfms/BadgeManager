@@ -1,5 +1,11 @@
 package ms.imf.redpoint.converter;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
+
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
@@ -7,9 +13,42 @@ import java.util.List;
 
 import ms.imf.redpoint.entity.NodeSchema;
 
-class ArgCheckUtil {
+public class ArgCheckUtil {
 
-    static void checkArg(List<ConvertRule> convertRules, List<NodeSchema> targetPathsSchema) throws IllegalArgumentException {
+    public static void checkArg(String convertRulesJson, String targetPathsSchemaJson) throws IllegalArgumentException {
+        Gson gson = new Gson();
+        checkArg(
+                ArgCheckUtil.<List<ConvertRule>>parseJson(
+                        gson,
+                        convertRulesJson,
+                        new TypeToken<List<ConvertRule>>() {
+                        }.getType(),
+                        "found error on parse convertRulesJson"
+                ),
+                ArgCheckUtil.<List<NodeSchema>>parseJson(
+                        gson,
+                        targetPathsSchemaJson,
+                        new TypeToken<List<NodeSchema>>() {
+                        }.getType(),
+                        "found error on parse targetPathsSchemaJson"
+                )
+        );
+    }
+
+    public static void checkArg(InputStream convertRulesJsonReadStream, List<NodeSchema> targetPathsSchema) throws IllegalArgumentException {
+        checkArg(
+                ArgCheckUtil.<List<ConvertRule>>parseJson(
+                        new Gson(),
+                        convertRulesJsonReadStream,
+                        new TypeToken<List<ConvertRule>>() {
+                        }.getType(),
+                        "found error on parse convertRulesJsonReadStream"
+                ),
+                targetPathsSchema
+        );
+    }
+
+    public static void checkArg(List<ConvertRule> convertRules, List<NodeSchema> targetPathsSchema) throws IllegalArgumentException {
         if (convertRules == null) {
             throw new IllegalArgumentException("convertRules can't be null");
         }
@@ -299,4 +338,27 @@ class ArgCheckUtil {
         nextUpToNowConvertRules.add(convertRule);
         return nextUpToNowConvertRules;
     }
+
+    static <T> T parseJson(Gson gson, String json, Type type, String errorDescribe) throws IllegalArgumentException {
+        if (json == null) {
+            return null;
+        }
+        try {
+            return gson.fromJson(json, type);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format("%s: %s", errorDescribe, e.getMessage()), e);
+        }
+    }
+
+    static <T> T parseJson(Gson gson, InputStream jsonInputStream, Type type, String errorDescribe) throws IllegalArgumentException {
+        if (jsonInputStream == null) {
+            return null;
+        }
+        try {
+            return gson.fromJson(new InputStreamReader(jsonInputStream), type);
+        } catch (Exception e) {
+            throw new IllegalArgumentException(String.format("%s: %s", errorDescribe, e.getMessage()), e);
+        }
+    }
+
 }
