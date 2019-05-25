@@ -219,7 +219,10 @@ class PathNodeAnnotationParser {
 
                 nodeParseEntity.type = node.type();
                 nodeParseEntity.args = node.args();
-                nodeParseEntity.subNodeRef = (TypeElement) PathNodeAnnotationParser.<DeclaredType>getAnnotionMirrorValue(nodeMirror, "subRef").asElement();
+                DeclaredType subRefType = PathNodeAnnotationParser.getAnnotionMirrorValue(nodeMirror, "subRef");
+                if (subRefType != null) {
+                    nodeParseEntity.subNodeRef = (TypeElement) subRefType.asElement();
+                }
 
                 results.add(nodeParseEntityToPathNodeEntity(annotatedPathTypeElement, nodeParseEntity));
             } catch (CompilerException e) {
