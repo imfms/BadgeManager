@@ -20,13 +20,11 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
 
+import ms.imf.redpoint.annotation.Node;
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.entity.NodeSchema;
 
 
-/**
- * todo node 和 jsonNode 的解析过程可以重用
- */
 class PathNodeAnnotationParser {
 
     private final Gson gson = new Gson();
@@ -149,17 +147,25 @@ class PathNodeAnnotationParser {
         final List<PathEntity.Node> nodeEntities = new LinkedList<>();
 
         if (nodeMode) {
-            nodeEntities.addAll(pathNodeToNodeEntity(annotatedPathTypeElement, path, pathMirror));
+            try {
+                nodeEntities.addAll(pathNodeToNodeEntity(annotatedPathTypeElement, path, pathMirror));
+            } catch (CompilerException e) {
+                throw new CompilerException(String.format("found error on parse nodes: %s", e.getMessage()), e);
+            }
         }
         if (jsonMode) {
-            nodeEntities.addAll(pathNodeJsonToNodeEntity(annotatedPathTypeElement, path, pathMirror));
+            try {
+                nodeEntities.addAll(pathNodeJsonToNodeEntity(annotatedPathTypeElement, path, pathMirror));
+            } catch (CompilerException e) {
+                throw new CompilerException(String.format("found error on parse nodesJson: %s", e.getMessage()), e);
+            }
         }
 
         // check repeat type
         final Set<String> repeatElements = new HashSet<>();
         for (PathEntity.Node nodeEntity : nodeEntities) {
             if (!repeatElements.add(nodeEntity.type)) {
-                throw new CompilerException("find repeat type: " + nodeEntity.type, annotatedPathTypeElement, pathMirror);
+                throw new CompilerException("find repeat type in nodes and nodesJson: " + nodeEntity.type, annotatedPathTypeElement, pathMirror);
             }
         }
 
@@ -206,14 +212,20 @@ class PathNodeAnnotationParser {
         final List<AnnotationMirror> nodeMirrors = PathNodeAnnotationParser.getAnnotionMirrorValue(pathMirror, "value");
 
         for (int i = 0; i < path.value().length; i++) {
-            ms.imf.redpoint.annotation.Node node = path.value()[i];
+            Node node = path.value()[i];
             AnnotationMirror nodeMirror = nodeMirrors.get(i);
             try {
-                results.add(nodeAnnotationToNodeEntity(annotatedPathTypeElement, node, nodeMirror));
+                NodeParseEntity nodeParseEntity = new NodeParseEntity();
+
+                nodeParseEntity.type = node.type();
+                nodeParseEntity.args = node.args();
+                nodeParseEntity.subNodeRef = (TypeElement) PathNodeAnnotationParser.<DeclaredType>getAnnotionMirrorValue(nodeMirror, "subRef").asElement();
+
+                results.add(nodeParseEntityToPathNodeEntity(annotatedPathTypeElement, nodeParseEntity));
             } catch (CompilerException e) {
                 throw new CompilerException(
                         String.format("found error in parse value[%s]: %s", i, e.getMessage()),
-                        e
+                        e, annotatedPathTypeElement, nodeMirror
                 );
             }
         }
@@ -221,41 +233,6 @@ class PathNodeAnnotationParser {
         return results;
     }
 
-    private PathEntity.Node nodeAnnotationToNodeEntity(TypeElement annotatedPathTypeElement, ms.imf.redpoint.annotation.Node nodeAnnotation, AnnotationMirror nodeMirror) throws CompilerException {
-        final PathEntity.Node nodeEntity = new PathEntity.Node();
-
-        // nodeAnnotation.type
-        if (nodeAnnotation.type().isEmpty()) {
-            throw new CompilerException("type can't be empty", annotatedPathTypeElement, nodeMirror);
-        }
-        nodeEntity.type = nodeAnnotation.type();
-
-        // nodeAnnotation.args
-        // check empty arg
-        List<String> argList = Arrays.asList(nodeAnnotation.args());
-        int argNullIndex = argList.indexOf("");
-        if (argNullIndex >= 0) {
-            throw new CompilerException(String.format("arg can't contains empty value but found in index [%s]", argNullIndex), annotatedPathTypeElement, nodeMirror);
-        }
-        // check  repeat arg
-        final Set<String> repeatElements = new HashSet<>();
-        for (String arg : argList) {
-            if (!repeatElements.add(arg)) {
-                throw new CompilerException("find repeat arg: " + arg, annotatedPathTypeElement, nodeMirror);
-            }
-        }
-
-        nodeEntity.args = argList;
-
-        // nodeAnnotation.subRef
-        TypeElement subRefTypeElement = (TypeElement) PathNodeAnnotationParser.<DeclaredType>getAnnotionMirrorValue(nodeMirror, "subRef").asElement();
-        boolean isExistSubRef = !subRefTypeElement.getQualifiedName().toString().equals(Void.class.getCanonicalName());
-        if (isExistSubRef) {
-            nodeEntity.subRef = parsePathWrapper(subRefTypeElement);
-        }
-
-        return nodeEntity;
-    }
 
     private PathEntity.Node nodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, String nodeJson, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
         // parse json
@@ -263,31 +240,75 @@ class PathNodeAnnotationParser {
         try {
             jsonNodeObj = gson.fromJson(nodeJson, JsonNode.class);
         } catch (Exception e) {
-            throw new CompilerException("nodeJson parse error: " + e.getMessage(), e, annotatedPathTypeElement);
+            throw new CompilerException(String.format("nodeJson parse error: %s", e.getMessage()), e, annotatedPathTypeElement);
         }
 
-        return nodeJsonObjToNodeEntity(annotatedPathTypeElement, jsonNodeObj, nodeJsonRefTypeMapper);
+        // convert to parseEntity
+        NodeParseEntity nodeParseEntity;
+        try {
+            nodeParseEntity = jsonNodeConvertToNodeParseEntity(jsonNodeObj, nodeJsonRefTypeMapper);
+        } catch (CompilerException e) {
+            throw new CompilerException(String.format("nodeJson parse error: %s", e.getMessage()), e, annotatedPathTypeElement);
+        }
+
+        return nodeParseEntityToPathNodeEntity(annotatedPathTypeElement, nodeParseEntity);
     }
 
-    private PathEntity.Node nodeJsonObjToNodeEntity(TypeElement annotatedPathTypeElement, JsonNode nodeJsonObj, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
+    private NodeParseEntity jsonNodeConvertToNodeParseEntity(JsonNode jsonNode, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
+
+        NodeParseEntity nodeParseEntity = new NodeParseEntity();
+
+        nodeParseEntity.type = jsonNode.type;
+
+        nodeParseEntity.args = jsonNode.args;
+
+        if (jsonNode.subNodes != null
+                && !jsonNode.subNodes.isEmpty()) {
+            nodeParseEntity.subNodes = new LinkedList<>();
+            for (int i = 0; i < jsonNode.subNodes.size(); i++) {
+                JsonNode subJsonNode = jsonNode.subNodes.get(i);
+
+                NodeParseEntity subNodeParseEntity;
+                try {
+                    subNodeParseEntity = jsonNodeConvertToNodeParseEntity(subJsonNode, nodeJsonRefTypeMapper);
+                } catch (CompilerException e) {
+                    throw new CompilerException(String.format("found error on convert subNodes[%d]: %s", i, e.getMessage()), e);
+                }
+
+                nodeParseEntity.subNodes.add(subNodeParseEntity);
+            }
+        }
+
+        if (jsonNode.subNodeRef != null) {
+            TypeElement typeElement = nodeJsonRefTypeMapper.get(jsonNode.subNodeRef);
+            if (typeElement == null) {
+                throw new CompilerException(String.format("can't find nodeJson's subNodeRef's '%s's refClass in nodeJsonRefTypeMapper", jsonNode.subNodeRef));
+            }
+            nodeParseEntity.subNodeRef = typeElement;
+        }
+
+        return nodeParseEntity;
+    }
+
+    private PathEntity.Node nodeParseEntityToPathNodeEntity(TypeElement annotatedPathTypeElement, NodeParseEntity nodeParseEntity) throws CompilerException {
         final PathEntity.Node resultNodeEntity = new PathEntity.Node();
 
         // parse type
-        if (nodeJsonObj.type == null
-                || nodeJsonObj.type.isEmpty()) {
+        if (nodeParseEntity.type == null
+                || nodeParseEntity.type.isEmpty()) {
             throw new CompilerException("nodeJson's type can't be null", annotatedPathTypeElement);
         }
-        resultNodeEntity.type = nodeJsonObj.type;
+        resultNodeEntity.type = nodeParseEntity.type;
 
         // parse args
-        if (nodeJsonObj.args == null) {
+        if (nodeParseEntity.args == null) {
             resultNodeEntity.args = Collections.emptyList();
         } else {
 
             // check empty arg
             for (int nullIndex : new int[]{
-                    Arrays.asList(nodeJsonObj.args).indexOf(null),
-                    Arrays.asList(nodeJsonObj.args).indexOf("")}) {
+                    Arrays.asList(nodeParseEntity.args).indexOf(null),
+                    Arrays.asList(nodeParseEntity.args).indexOf("")}) {
                 if (nullIndex >= 0) {
                     throw new CompilerException(
                             String.format("nodeJson's args can't contains null or empty value, but found in index '%d'", nullIndex),
@@ -298,18 +319,18 @@ class PathNodeAnnotationParser {
 
             // check repeat arg
             final Set<String> repeatElements = new HashSet<>();
-            for (String arg : nodeJsonObj.args) {
+            for (String arg : nodeParseEntity.args) {
                 if (!repeatElements.add(arg)) {
                     throw new CompilerException("find repeat arg: " + arg, annotatedPathTypeElement);
                 }
             }
 
-            resultNodeEntity.args = Arrays.asList(nodeJsonObj.args);
+            resultNodeEntity.args = Arrays.asList(nodeParseEntity.args);
         }
 
         // check subNode
-        boolean existSubNodes = nodeJsonObj.subNodes != null && !nodeJsonObj.subNodes.isEmpty();
-        boolean existSubNodeRef = nodeJsonObj.subNodeRef != null;
+        boolean existSubNodes = nodeParseEntity.subNodes != null && !nodeParseEntity.subNodes.isEmpty();
+        boolean existSubNodeRef = nodeParseEntity.subNodeRef != null;
         if (existSubNodes && existSubNodeRef) {
             throw new CompilerException("nodeJson's subNodes and subNodeRef only can exist one", annotatedPathTypeElement);
         }
@@ -317,11 +338,11 @@ class PathNodeAnnotationParser {
         // parse subNodes
         if (existSubNodes) {
             final List<PathEntity.Node> subNodes = new LinkedList<>();
-            for (int i = 0; i < nodeJsonObj.subNodes.size(); i++) {
-                JsonNode subJsonNodeObj = nodeJsonObj.subNodes.get(i);
+            for (int i = 0; i < nodeParseEntity.subNodes.size(); i++) {
+                NodeParseEntity subEntity = nodeParseEntity.subNodes.get(i);
                 try {
                     subNodes.add(
-                            nodeJsonObjToNodeEntity(annotatedPathTypeElement, subJsonNodeObj, nodeJsonRefTypeMapper)
+                            nodeParseEntityToPathNodeEntity(annotatedPathTypeElement, subEntity)
                     );
                 } catch (CompilerException e) {
                     throw new CompilerException(
@@ -335,18 +356,9 @@ class PathNodeAnnotationParser {
 
         // parse subNodeRef
         if (existSubNodeRef) {
-
-            // get subNodeRefType
-            TypeElement subNodeRefType = nodeJsonRefTypeMapper.get(nodeJsonObj.subNodeRef);
-            if (subNodeRefType == null) {
-                throw new CompilerException(
-                        String.format("can't find nodeJson's subNodeRef's '%s's refClass in nodeJsonRefTypeMapper", nodeJsonObj.subNodeRef),
-                        annotatedPathTypeElement
-                );
-            }
-            boolean isExistSubRef = !subNodeRefType.getQualifiedName().toString().equals(Void.class.getCanonicalName());
+            boolean isExistSubRef = !nodeParseEntity.subNodeRef.getQualifiedName().toString().equals(Void.class.getCanonicalName());
             if (isExistSubRef) {
-                resultNodeEntity.subRef = parsePathWrapper(subNodeRefType);
+                resultNodeEntity.subRef = parsePathWrapper(nodeParseEntity.subNodeRef);
             }
         }
 
@@ -362,6 +374,13 @@ class PathNodeAnnotationParser {
         public List<JsonNode> subNodes;
         @SerializedName("subNodeRef")
         public String subNodeRef;
+    }
+
+    private static class NodeParseEntity {
+        public String type;
+        public String[] args;
+        public List<NodeParseEntity> subNodes;
+        public TypeElement subNodeRef;
     }
 
     private static <T> T getAnnotionMirrorValue(AnnotationMirror annotationMirror, String key) {
