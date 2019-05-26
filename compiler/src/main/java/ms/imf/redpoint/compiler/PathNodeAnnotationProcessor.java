@@ -60,7 +60,15 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
+        try {
+            return processRaw(roundEnv);
+        } catch (Exception e) {
+            showErrorTip(new CompilerException(String.format("unexpected exception on processor: %s", e.getMessage()), e));
+            return false;
+        }
+    }
 
+    private boolean processRaw(RoundEnvironment roundEnv) {
         // check config
         try {
             checkPathAptGlobalConfig(roundEnv);
