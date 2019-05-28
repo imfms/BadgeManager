@@ -26,5 +26,4 @@ public @interface SubNode {
      * 与 {@link #subNodes()} 只能指定一项
      */
     Class subRef() default Void.class;
-
 }

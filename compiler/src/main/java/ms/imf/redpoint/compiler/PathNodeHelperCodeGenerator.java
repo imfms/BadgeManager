@@ -1,3 +1,4 @@
+
 package ms.imf.redpoint.compiler;
 
 import com.squareup.javapoet.FieldSpec;

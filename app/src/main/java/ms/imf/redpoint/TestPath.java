@@ -2,6 +2,7 @@ package ms.imf.redpoint;
 
 import ms.imf.redpoint.annotation.Node;
 import ms.imf.redpoint.annotation.Path;
+import ms.imf.redpoint.annotation.SubNode;
 
 /**
  * TestPath
@@ -10,8 +11,10 @@ import ms.imf.redpoint.annotation.Path;
  * @date 19-5-16
  */
 @Path({
-        @Node(type = "home", subRef = Void.class),
-        @Node(type = "mine", args = {"uid"}, subRef = Void.class)
+        @Node(type = "home"),
+        @Node(type = "mine", args = {"uid"}, subNodes = {
+                @SubNode(type = "type")
+        })
 })
 public class TestPath {
     public static void main(String[] args) {

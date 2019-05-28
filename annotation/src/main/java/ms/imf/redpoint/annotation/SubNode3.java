@@ -18,5 +18,4 @@ public @interface SubNode3 {
      * 如果当前节点是最后一个节点的情况下(没有子节点)可使用{@link Void}.class
      */
     Class subRef() default Void.class;
-
 }
