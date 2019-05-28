@@ -3,6 +3,7 @@ package ms.imf.redpoint.compiler;
 import com.google.gson.Gson;
 import com.google.gson.annotations.SerializedName;
 
+import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,7 +24,6 @@ import javax.lang.model.util.Elements;
 import ms.imf.redpoint.annotation.Node;
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.entity.NodeSchema;
-
 
 class PathNodeAnnotationParser {
 
@@ -215,16 +215,10 @@ class PathNodeAnnotationParser {
             Node node = path.value()[i];
             AnnotationMirror nodeMirror = nodeMirrors.get(i);
             try {
-                NodeParseEntity nodeParseEntity = new NodeParseEntity();
-
-                nodeParseEntity.type = node.type();
-                nodeParseEntity.args = node.args();
-                DeclaredType subRefType = PathNodeAnnotationParser.getAnnotionMirrorValue(nodeMirror, "subRef");
-                if (subRefType != null) {
-                    nodeParseEntity.subNodeRef = (TypeElement) subRefType.asElement();
-                }
-
-                results.add(nodeParseEntityToPathNodeEntity(annotatedPathTypeElement, nodeParseEntity));
+                NodeParseEntity nodeParseEntity = subNodeWrapperConvertToNodeParseEntity(SubNodeWrapper.instance(node, nodeMirror));
+                results.add(
+                        nodeParseEntityToPathNodeEntity(annotatedPathTypeElement, nodeParseEntity)
+                );
             } catch (CompilerException e) {
                 throw new CompilerException(
                         String.format("found error in parse value[%s]: %s", i, e.getMessage()),
@@ -236,6 +230,33 @@ class PathNodeAnnotationParser {
         return results;
     }
 
+    private <Source extends Annotation, Sub extends Annotation> NodeParseEntity subNodeWrapperConvertToNodeParseEntity(SubNodeWrapper<Source, Sub> subNodeWrapper) {
+
+        NodeParseEntity nodeParseEntity = new NodeParseEntity();
+
+        nodeParseEntity.type = subNodeWrapper.type();
+        nodeParseEntity.args = subNodeWrapper.args();
+        nodeParseEntity.subNodeRef = subNodeWrapper.subRef();
+
+        Sub[] subNodes = subNodeWrapper.subNodes();
+
+        if (subNodes != null) {
+            nodeParseEntity.subNodes = new ArrayList<>(subNodes.length);
+            List<AnnotationMirror> subNodeMirrors = subNodeWrapper.subNodeMirrors();
+            for (int i = 0; i < subNodes.length; i++) {
+                Sub subNode = subNodes[i];
+                AnnotationMirror subNodeMirror = subNodeMirrors.get(i);
+
+                nodeParseEntity.subNodes.add(
+                        subNodeWrapperConvertToNodeParseEntity(
+                                subNodeWrapper.subNodeWrapper(subNode, subNodeMirror)
+                        )
+                );
+            }
+        }
+
+        return nodeParseEntity;
+    }
 
     private PathEntity.Node nodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, String nodeJson, Map<String, TypeElement> nodeJsonRefTypeMapper) throws CompilerException {
         // parse json
@@ -333,7 +354,7 @@ class PathNodeAnnotationParser {
 
         // check subNode
         boolean existSubNodes = nodeParseEntity.subNodes != null && !nodeParseEntity.subNodes.isEmpty();
-        boolean existSubNodeRef = nodeParseEntity.subNodeRef != null;
+        boolean existSubNodeRef = nodeParseEntity.subNodeRef != null && !nodeParseEntity.subNodeRef.getQualifiedName().toString().equals(Void.class.getCanonicalName());
         if (existSubNodes && existSubNodeRef) {
             throw new CompilerException("nodeJson's subNodes and subNodeRef only can exist one", annotatedPathTypeElement);
         }
@@ -359,10 +380,7 @@ class PathNodeAnnotationParser {
 
         // parse subNodeRef
         if (existSubNodeRef) {
-            boolean isExistSubRef = !nodeParseEntity.subNodeRef.getQualifiedName().toString().equals(Void.class.getCanonicalName());
-            if (isExistSubRef) {
-                resultNodeEntity.subRef = parsePathWrapper(nodeParseEntity.subNodeRef);
-            }
+            resultNodeEntity.subRef = parsePathWrapper(nodeParseEntity.subNodeRef);
         }
 
         return resultNodeEntity;
@@ -386,7 +404,7 @@ class PathNodeAnnotationParser {
         public TypeElement subNodeRef;
     }
 
-    private static <T> T getAnnotionMirrorValue(AnnotationMirror annotationMirror, String key) {
+    static <T> T getAnnotionMirrorValue(AnnotationMirror annotationMirror, String key) {
         for (Map.Entry<? extends ExecutableElement, ? extends AnnotationValue> entry : annotationMirror.getElementValues().entrySet()) {
             if (entry.getKey().getSimpleName().toString().equals(key)) {
                 return (T) entry.getValue().getValue();
@@ -451,12 +469,19 @@ class PathNodeAnnotationParser {
                 getTreeNeedDeleteNodeEntity(node.subRef, deleteElementContainer);
             }
             if (node.sub != null) {
-                for (PathEntity.Node subNode : node.sub) {
-                    if (subNode.subRef != null) {
-                        deleteElementContainer.add(subNode.subRef);
-                        getTreeNeedDeleteNodeEntity(subNode.subRef, deleteElementContainer);
-                    }
-                }
+                getTreeNeedDeleteNodeEntity(node.sub, deleteElementContainer);
+            }
+        }
+    }
+
+    private static void getTreeNeedDeleteNodeEntity(List<PathEntity.Node> nodeEntities, Set<PathEntity> deleteElementContainer) {
+        for (PathEntity.Node nodeEntity : nodeEntities) {
+            if (nodeEntity.subRef != null) {
+                deleteElementContainer.add(nodeEntity.subRef);
+                getTreeNeedDeleteNodeEntity(nodeEntity.subRef, deleteElementContainer);
+            }
+            if (nodeEntity.sub != null) {
+                getTreeNeedDeleteNodeEntity(nodeEntity.sub, deleteElementContainer);
             }
         }
     }
@@ -494,5 +519,4 @@ class PathNodeAnnotationParser {
 
         return nodeSchema;
     }
-
 }

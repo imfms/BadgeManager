@@ -210,8 +210,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
     private void pathNodeTypeRepeatCheck(List<PathEntity> treePathEntities) throws CompilerException {
         Map<String, PathEntity> repeatCheckContainer = new HashMap<>();
         for (PathEntity pathEntity : treePathEntities) {
-            for (int i = 0; i < pathEntity.nodes.size(); i++) {
-                PathEntity.Node node = pathEntity.nodes.get(i);
+            for (PathEntity.Node node : pathEntity.nodes) {
                 PathEntity repeatPathEntity = repeatCheckContainer.put(node.type, pathEntity);
                 if (repeatPathEntity != null) {
                     throw new CompilerException(
