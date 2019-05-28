@@ -450,6 +450,14 @@ class PathNodeAnnotationParser {
                 deleteElementContainer.add(node.subRef);
                 getTreeNeedDeleteNodeEntity(node.subRef, deleteElementContainer);
             }
+            if (node.sub != null) {
+                for (PathEntity.Node subNode : node.sub) {
+                    if (subNode.subRef != null) {
+                        deleteElementContainer.add(subNode.subRef);
+                        getTreeNeedDeleteNodeEntity(subNode.subRef, deleteElementContainer);
+                    }
+                }
+            }
         }
     }
 
