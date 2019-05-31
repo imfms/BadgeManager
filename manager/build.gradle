@@ -1,0 +1,13 @@
+apply plugin: 'java-library'
+apply plugin: 'maven'
+
+group='com.github.imfms'
+
+dependencies {
+    implementation fileTree(dir: 'libs', include: ['*.jar'])
+
+    api project(':entity')
+}
+
+sourceCompatibility = "7"
+targetCompatibility = "7"

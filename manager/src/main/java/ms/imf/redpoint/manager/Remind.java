@@ -1,6 +1,8 @@
-package ms.imf.redpoint.entity;
+package ms.imf.redpoint.manager;
 
 import java.io.Serializable;
+
+import ms.imf.redpoint.entity.NodePath;
 
 public class Remind implements Serializable {
 
