@@ -1,5 +1,6 @@
 package ms.imf.redpoint.manager;
 
 public interface RemindChangedListener {
-    void onRepoRemindChanged();
+    void onRemindChanged();
+    void onRemindChanged(Iterable<Remind> changedReminds);
 }

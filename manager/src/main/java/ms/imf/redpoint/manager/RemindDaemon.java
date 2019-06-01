@@ -15,6 +15,6 @@ public interface RemindDaemon {
     void pause();
     boolean resumed();
 
-    void notifyRefreshRemindDatas();
+    void refresh();
 
 }

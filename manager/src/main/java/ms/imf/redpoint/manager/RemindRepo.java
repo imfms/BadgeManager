@@ -3,29 +3,32 @@ package ms.imf.redpoint.manager;
 import java.util.Collection;
 import java.util.List;
 
+import ms.imf.redpoint.entity.Node;
+
 /**
  * 消息仓库
  *
  * @author imf_m
  * @date 2019/3/25
  */
-public interface RemindRepo extends Iterable<Remind> {
+public interface RemindRepo {
 
-    void clearAllRemind();
+    Collection<Remind> getAllReminds();
 
-    void handledRemind(Collection<Remind> reminds);
+    Collection<Remind> getSubPathRemind(List<Node> path);
 
-    Collection<Remind> getReminds();
-
-    List<Long> getUnHandledRemindIds();
-
-    List<Long> getHandledRemindIds();
-
+    void insertRemind(Remind remind);
     void insertReminds(Iterable<Remind> reminds);
 
-    void removeHandledReminds(Iterable<Long> remindIds);
+    void removeRemind(Long remindId);
+    void removeReminds(Iterable<Long> remindIds);
 
-    void setRepoRemindChangedListener(RemindChangedListener listener);
+    long removeMatchReminds(List<Node> path);
+    long removeMatchSubReminds(List<Node> path);
+
+    long removeAllReminds();
+
+    void setRemindChangedListener(RemindChangedListener listener);
 
     void notifyRepoRemindChanged();
 }

@@ -7,11 +7,7 @@ import java.util.List;
 
 import ms.imf.redpoint.entity.NodePath;
 
-/**
- * todo
- * 一个消息对应的功能有不同入口的话如何消费呢？可能会出现从另一个入口消费了但是消息对应的红点未消失
- */
-public abstract class RemindHandler {
+public abstract class AbstractRemindHandler {
 
     private final RemindHandlerControlCenter remindController = RemindHandlerControlCenter.instance();
     private final List<NodePath> paths = new LinkedList<>();
@@ -53,14 +49,14 @@ public abstract class RemindHandler {
         this.paths.addAll(paths);
 
         if (attachedRepo()) {
-            remindController.notifyRemindchanged(this);
+            remindController.notifyRemindChanged(this);
         }
     }
 
     public void clearPath() {
         this.paths.clear();
         if (attachedRepo()) {
-            remindController.notifyRemindchanged(this);
+            remindController.notifyRemindChanged(this);
         }
     }
 
@@ -105,22 +101,27 @@ public abstract class RemindHandler {
     }
 
     public void onHappednAll() {
-        remindController.happededAll(this);
+        remindController.happenedAll(this);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        AbstractRemindHandler that = (AbstractRemindHandler) o;
+
+        return paths != null ? paths.equals(that.paths) : that.paths == null;
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode();
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-        return super.equals(obj);
+        return paths != null ? paths.hashCode() : 0;
     }
 
     @Override
     public String toString() {
-        return "RemindHandler{" +
+        return "AbstractRemindHandler{" +
                 "paths=" + paths +
                 '}';
     }
