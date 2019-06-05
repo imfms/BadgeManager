@@ -7,8 +7,7 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.ANNOTATION_TYPE)
-public @interface SubNode2 {
-
+public @interface SubNode7 {
     /**
      * @see SubNode#type()
      */
@@ -22,7 +21,7 @@ public @interface SubNode2 {
     /**
      * @see SubNode#subNodes()
      */
-    SubNode3[] subNodes() default {};
+    SubNode8[] subNodes() default {};
 
     /**
      * @see SubNode#subRef()
