@@ -106,17 +106,12 @@ public abstract class AbstractRemindHandler {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        AbstractRemindHandler that = (AbstractRemindHandler) o;
-
-        return paths != null ? paths.equals(that.paths) : that.paths == null;
+        return super.equals(o);
     }
 
     @Override
     public int hashCode() {
-        return paths != null ? paths.hashCode() : 0;
+        return super.hashCode();
     }
 
     @Override
