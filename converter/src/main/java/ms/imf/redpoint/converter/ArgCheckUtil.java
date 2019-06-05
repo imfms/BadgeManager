@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 
@@ -75,6 +76,9 @@ public class ArgCheckUtil {
     }
 
     private static void checkConvertRules(List<ConvertRule> convertRules) throws IllegalArgumentException {
+
+        final HashSet<String> repeatCheckTypeNames = new HashSet<>();
+
         for (int i = 0; i < convertRules.size(); i++) {
             ConvertRule convertRule = convertRules.get(i);
 
@@ -85,6 +89,10 @@ public class ArgCheckUtil {
             if (convertRule.type == null
                     || convertRule.type.length() <= 0) {
                 throw new IllegalArgumentException(String.format("convertRule.type can't be null or empty, but found on convertRules[%d]", i));
+            }
+
+            if (!repeatCheckTypeNames.add(convertRule.type)) {
+                throw new IllegalArgumentException(String.format("found repeat type in same level: %s", convertRule.type));
             }
 
             if (convertRule.args != null) {
@@ -226,6 +234,8 @@ public class ArgCheckUtil {
 
     private static void checkTargetPathsSchema(List<NodeSchema> targetPathsSchema) throws IllegalArgumentException {
 
+        final HashSet<String> repeatCheckTypeNames = new HashSet<>();
+
         for (int i = 0; i < targetPathsSchema.size(); i++) {
             NodeSchema nodeSchema = targetPathsSchema.get(i);
 
@@ -236,6 +246,10 @@ public class ArgCheckUtil {
             if (nodeSchema.type == null
                     || nodeSchema.type.length() <= 0) {
                 throw new IllegalArgumentException(String.format("nodeSchema.type can't be null or empty, but found on targetPathsSchema[%d]", i));
+            }
+
+            if (!repeatCheckTypeNames.add(nodeSchema.type)) {
+                throw new IllegalArgumentException(String.format("found repeat type in same level: %s", nodeSchema.type));
             }
 
             if (nodeSchema.args != null) {
