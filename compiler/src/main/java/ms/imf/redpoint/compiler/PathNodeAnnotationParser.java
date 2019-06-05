@@ -21,7 +21,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
 
-import ms.imf.redpoint.annotation.Node;
+import ms.imf.redpoint.annotation.SubNode;
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.entity.NodeSchema;
 
@@ -212,7 +212,7 @@ class PathNodeAnnotationParser {
         final List<AnnotationMirror> nodeMirrors = PathNodeAnnotationParser.getAnnotionMirrorValue(pathMirror, "value");
 
         for (int i = 0; i < path.value().length; i++) {
-            Node node = path.value()[i];
+            SubNode node = path.value()[i];
             AnnotationMirror nodeMirror = nodeMirrors.get(i);
             try {
                 NodeParseEntity nodeParseEntity = subNodeWrapperConvertToNodeParseEntity(SubNodeWrapper.instance(node, nodeMirror));

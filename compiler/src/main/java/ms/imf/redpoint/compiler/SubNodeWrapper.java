@@ -7,15 +7,15 @@ import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 
-import ms.imf.redpoint.annotation.Node;
 import ms.imf.redpoint.annotation.SubNode;
 import ms.imf.redpoint.annotation.SubNode2;
 import ms.imf.redpoint.annotation.SubNode3;
+import ms.imf.redpoint.annotation.SubNode4;
 
 abstract class SubNodeWrapper
         <SourceNodeType extends Annotation, SubNodeType extends Annotation> {
 
-    static SubNodeWrapper<Node, SubNode> instance(Node source, AnnotationMirror sourceMirror) {
+    static SubNodeWrapper<SubNode, SubNode2> instance(SubNode source, AnnotationMirror sourceMirror) {
         return new NodeParser(source, sourceMirror);
     }
 
@@ -48,29 +48,29 @@ abstract class SubNodeWrapper
     abstract SubNodeType[] subNodes();
     protected abstract SubNodeWrapper<SubNodeType, ?> subNodeWrapper(SubNodeType source, AnnotationMirror sourceMirror);
 
-    private static class NodeParser extends SubNodeWrapper<Node, SubNode> {
-        private NodeParser(Node source, AnnotationMirror sourceMirror) { super(source, sourceMirror); }
-        @Override protected String type() { return source().type(); }
-        @Override protected String[] args() { return source().args(); }
-        @Override protected SubNode[] subNodes() { return source().subNodes(); }
-        @Override protected SubNodeWrapper<SubNode, SubNode2> subNodeWrapper(SubNode source, AnnotationMirror sourceMirror) { return new SubNodeParser(source, sourceMirror); }
-    }
-    private static class SubNodeParser extends SubNodeWrapper<SubNode, SubNode2> {
-        private SubNodeParser(SubNode source, AnnotationMirror sourceMirror) { super(source, sourceMirror); }
+    private static class NodeParser extends SubNodeWrapper<SubNode, SubNode2> {
+        private NodeParser(SubNode source, AnnotationMirror sourceMirror) { super(source, sourceMirror); }
         @Override protected String type() { return source().type(); }
         @Override protected String[] args() { return source().args(); }
         @Override protected SubNode2[] subNodes() { return source().subNodes(); }
-        @Override protected SubNodeWrapper<SubNode2, SubNode3> subNodeWrapper(SubNode2 source, AnnotationMirror sourceMirror) { return new SubNode2Parser(source, sourceMirror); }
+        @Override protected SubNodeWrapper<SubNode2, SubNode3> subNodeWrapper(SubNode2 source, AnnotationMirror sourceMirror) { return new SubNodeParser(source, sourceMirror); }
     }
-    private static class SubNode2Parser extends SubNodeWrapper<SubNode2, SubNode3> {
-        private SubNode2Parser(SubNode2 source, AnnotationMirror sourceMirror) { super(source, sourceMirror); }
+    private static class SubNodeParser extends SubNodeWrapper<SubNode2, SubNode3> {
+        private SubNodeParser(SubNode2 source, AnnotationMirror sourceMirror) { super(source, sourceMirror); }
         @Override protected String type() { return source().type(); }
         @Override protected String[] args() { return source().args(); }
         @Override protected SubNode3[] subNodes() { return source().subNodes(); }
-        @Override protected SubNodeWrapper<SubNode3, Annotation> subNodeWrapper(SubNode3 source, AnnotationMirror sourceMirror) { return new SubNode3Parser(source, sourceMirror); }
+        @Override protected SubNodeWrapper<SubNode3, SubNode4> subNodeWrapper(SubNode3 source, AnnotationMirror sourceMirror) { return new SubNode2Parser(source, sourceMirror); }
     }
-    private static class SubNode3Parser extends SubNodeWrapper<SubNode3, Annotation> {
-        private SubNode3Parser(SubNode3 source, AnnotationMirror sourceMirror) { super(source, sourceMirror); }
+    private static class SubNode2Parser extends SubNodeWrapper<SubNode3, SubNode4> {
+        private SubNode2Parser(SubNode3 source, AnnotationMirror sourceMirror) { super(source, sourceMirror); }
+        @Override protected String type() { return source().type(); }
+        @Override protected String[] args() { return source().args(); }
+        @Override protected SubNode4[] subNodes() { return source().subNodes(); }
+        @Override protected SubNodeWrapper<SubNode4, Annotation> subNodeWrapper(SubNode4 source, AnnotationMirror sourceMirror) { return new SubNode3Parser(source, sourceMirror); }
+    }
+    private static class SubNode3Parser extends SubNodeWrapper<SubNode4, Annotation> {
+        private SubNode3Parser(SubNode4 source, AnnotationMirror sourceMirror) { super(source, sourceMirror); }
         @Override protected String type() { return source().type(); }
         @Override protected String[] args() { return source().args(); }
         @Override protected Annotation[] subNodes() { return null; }

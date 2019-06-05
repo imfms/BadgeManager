@@ -8,18 +8,18 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface Path {
-    Node[] value() default {};
+    SubNode[] value() default {};
 
     /**
      * Node {
      * <p>
-     * | String type; {@link Node#type()}
+     * | String type; {@link SubNode#type()}
      * <p>
-     * | String[] args; {@link Node#args()}}
+     * | String[] args; {@link SubNode#args()}}
      * <p>
      * | Node[] subNodes;
      * <p>
-     * | String subNodeRef; {@link Node#subRef()}
+     * | String subNodeRef; {@link SubNode#subRef()}
      * <p>
      * }
      */

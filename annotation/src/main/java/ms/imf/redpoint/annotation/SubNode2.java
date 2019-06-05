@@ -12,6 +12,7 @@ public @interface SubNode2 {
 
     String[] args() default {};
 
+
     /**
      * 子节点列表, 与 {@link #subRef()} 只能指定一项
      */
