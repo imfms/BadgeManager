@@ -5,5 +5,11 @@ import java.util.List;
 import ms.imf.redpoint.entity.NodeSchema;
 
 public interface ParsedNodeSchemaHandlePlugin {
-    void onParsed(List<NodeSchema> nodeSchemas) throws Exception;
+
+    /**
+     * @param args        arguments
+     * @param nodeSchemas nodeSchemas
+     * @throws Exception framework will show your error to user friendly
+     */
+    void onParsed(String[] args, List<NodeSchema> nodeSchemas) throws Exception;
 }

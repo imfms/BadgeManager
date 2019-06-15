@@ -34,6 +34,7 @@ import javax.tools.StandardLocation;
 
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.annotation.PathAptGlobalConfig;
+import ms.imf.redpoint.annotation.Plugin;
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
 import ms.imf.redpoint.converter.ArgCheckUtil;
 import ms.imf.redpoint.entity.NodeSchema;
@@ -149,28 +150,35 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         if (pluginAnnotationValues == null) {
             pluginAnnotationValues = Collections.emptyList();
         }
-        for (AnnotationValue annotationValue : pluginAnnotationValues) {
+        Plugin[] plugins = pathAptGlobalConfig.plugins();
+
+        for (int i = 0; i < plugins.length; i++) {
+            Plugin pluginAnnotation = plugins[i];
+            AnnotationValue pluginAnnotationValue = pluginAnnotationValues.get(i);
+
+            String pluginClassName = ((TypeElement) ((DeclaredType) PathNodeAnnotationParser.getAnnotionMirrorValue((AnnotationMirror) pluginAnnotationValue.getValue(), "value")).asElement()).getQualifiedName().toString();
+            String[] pluginClassArguments = pluginAnnotation.args();
 
             final ParsedNodeSchemaHandlePlugin plugin;
             try {
-                plugin = getPluginInstance(annotationValue);
+                plugin = getPluginInstance(pluginClassName);
             } catch (Exception e) {
                 showErrorTip(
                         new CompilerException(
                                 String.format("found error on create plugin instance: %s", e.getMessage()),
-                                lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, annotationValue
+                                lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, pluginAnnotationValue
                         )
                 );
                 return false;
             }
 
             try {
-                plugin.onParsed(nodeSchemas);
+                plugin.onParsed(pluginClassArguments, nodeSchemas);
             } catch (Exception e) {
                 showErrorTip(
                         new CompilerException(
                                 String.format("found error on process plugin '%s': %s", plugin.getClass().getCanonicalName(), e.getMessage()),
-                                e, lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, annotationValue
+                                e, lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, pluginAnnotationValue
                         )
                 );
                 return false;
@@ -180,8 +188,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         return true;
     }
 
-    private ParsedNodeSchemaHandlePlugin getPluginInstance(AnnotationValue annotationValue) {
-        String pluginClassName = ((TypeElement) ((DeclaredType) annotationValue.getValue()).asElement()).getQualifiedName().toString();
+    private ParsedNodeSchemaHandlePlugin getPluginInstance(String pluginClassName) {
 
         final Class<?> pluginClass;
         try {
