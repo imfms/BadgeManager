@@ -17,6 +17,8 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 
+import ms.imf.redpoint.annotation.SubNode;
+
 /*
 interface ${CLASS}_Path {
 
@@ -39,7 +41,7 @@ interface ${CLASS}_Path {
 
 /**
  * helper code generator of
- * {@link ms.imf.redpoint.annotation.Node}
+ * {@link SubNode}
  * and {@link ms.imf.redpoint.annotation.Path}
  *
  * @author f_ms

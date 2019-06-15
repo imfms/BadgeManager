@@ -5,15 +5,21 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-@Target(ElementType.ANNOTATION_TYPE)
 @Retention(RetentionPolicy.SOURCE)
-public @interface Mapper {
+@Target(ElementType.ANNOTATION_TYPE)
+public @interface SubNode8 {
+    /**
+     * @see SubNode#type()
+     */
+    String type();
 
-    String key();
+    /**
+     * @see SubNode#args()
+     */
+    String[] args() default {};
 
     /**
      * @see SubNode#subRef()
      */
-    Class value();
+    Class subRef() default Void.class;
 }
-
