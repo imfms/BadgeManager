@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -23,13 +24,17 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic;
 import javax.tools.StandardLocation;
 
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.annotation.PathAptGlobalConfig;
+import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
 import ms.imf.redpoint.converter.ArgCheckUtil;
 import ms.imf.redpoint.entity.NodeSchema;
 
@@ -57,6 +62,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
 
     private TypeElement lastPathAptGlobalConfigAnnotationHost;
     private PathAptGlobalConfig pathAptGlobalConfig;
+    private AnnotationMirror pathAptGlobalConfigMirror;
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -138,7 +144,61 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             return false;
         }
 
+        // process plugin
+        List<AnnotationValue> pluginAnnotationValues = PathNodeAnnotationParser.getAnnotionMirrorValue(pathAptGlobalConfigMirror, "plugins");
+        if (pluginAnnotationValues == null) {
+            pluginAnnotationValues = Collections.emptyList();
+        }
+        for (AnnotationValue annotationValue : pluginAnnotationValues) {
+
+            final ParsedNodeSchemaHandlePlugin plugin;
+            try {
+                plugin = getPluginInstance(annotationValue);
+            } catch (Exception e) {
+                showErrorTip(
+                        new CompilerException(
+                                String.format("found error on create plugin instance: %s", e.getMessage()),
+                                lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, annotationValue
+                        )
+                );
+                return false;
+            }
+
+            try {
+                plugin.onParsed(nodeSchemas);
+            } catch (Exception e) {
+                showErrorTip(
+                        new CompilerException(
+                                String.format("found error on process plugin '%s': %s", plugin.getClass().getCanonicalName(), e.getMessage()),
+                                e, lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, annotationValue
+                        )
+                );
+                return false;
+            }
+        }
+
         return true;
+    }
+
+    private ParsedNodeSchemaHandlePlugin getPluginInstance(AnnotationValue annotationValue) {
+        String pluginClassName = ((TypeElement) ((DeclaredType) annotationValue.getValue()).asElement()).getQualifiedName().toString();
+
+        final Class<?> pluginClass;
+        try {
+            pluginClass = Class.forName(pluginClassName);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException(String.format("can't find class '%s', please check classpath", pluginClassName), e);
+        }
+
+        if (!ParsedNodeSchemaHandlePlugin.class.isAssignableFrom(pluginClass)) {
+            throw new IllegalArgumentException(String.format("plugin class '%s' is not %s's instance, please check plugin's type", pluginClassName, ParsedNodeSchemaHandlePlugin.class.getCanonicalName()));
+        }
+
+        try {
+            return (ParsedNodeSchemaHandlePlugin) pluginClass.newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalArgumentException(String.format("can't create '%s's instance: %s", pluginClassName, e.getMessage()), e);
+        }
     }
 
     private void nodeSchemaOutput(List<NodeSchema> nodeSchemas) throws CompilerException {
@@ -262,7 +322,17 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         final TypeElement host = annotationElements.iterator().next();
         final PathAptGlobalConfig config = host.getAnnotation(PathAptGlobalConfig.class);
 
+        AnnotationMirror configMirror = null;
+        for (AnnotationMirror annotationMirror : host.getAnnotationMirrors()) {
+            if (annotationMirror.getAnnotationType().equals(processingEnv.getElementUtils().getTypeElement(PathAptGlobalConfig.class.getCanonicalName()).asType())) {
+                configMirror = annotationMirror;
+                break;
+            }
+        }
+        assert configMirror != null;
+
         lastPathAptGlobalConfigAnnotationHost = host;
+        pathAptGlobalConfigMirror = configMirror;
         pathAptGlobalConfig = config;
     }
 
@@ -272,9 +342,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         processingEnv.getMessager().printMessage(
                 Diagnostic.Kind.ERROR,
                 os.toString(),
-                e.e,
-                e.a,
-                e.v
+                e.e, e.a, e.v
         );
     }
 }

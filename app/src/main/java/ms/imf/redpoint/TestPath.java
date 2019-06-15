@@ -2,6 +2,7 @@ package ms.imf.redpoint;
 
 import ms.imf.redpoint.annotation.Node;
 import ms.imf.redpoint.annotation.Path;
+import ms.imf.redpoint.annotation.PathAptGlobalConfig;
 import ms.imf.redpoint.annotation.SubNode;
 
 /**

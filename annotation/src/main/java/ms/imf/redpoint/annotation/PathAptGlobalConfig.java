@@ -5,6 +5,8 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
+
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
 public @interface PathAptGlobalConfig {
@@ -16,4 +18,8 @@ public @interface PathAptGlobalConfig {
      */
     String nodeSchemaExportJsonJavaStyleResource() default "";
 
+    /**
+     * parsed node schemas handle plugins
+     */
+    Class<? extends ParsedNodeSchemaHandlePlugin>[] plugins() default {};
 }

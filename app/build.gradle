@@ -27,5 +27,6 @@ dependencies {
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
 
     compileOnly project(':annotation')
+    implementation project(':compiler-plugin')
     annotationProcessor project(':compiler')
 }

@@ -5,7 +5,7 @@ group='com.github.imfms'
 
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    api project(':compiler-plugin')
+    api project(':entity')
 }
 
 sourceCompatibility = "7"
