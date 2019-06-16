@@ -7,7 +7,8 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonSerializationContext;
 import com.google.gson.JsonSerializer;
 
-import java.io.OutputStream;
+import java.io.IOException;
+import java.io.PrintStream;
 import java.lang.reflect.Type;
 import java.util.List;
 
@@ -64,30 +65,37 @@ public class NodeSchemaExportJsonCompilerPlugin implements ParsedNodeSchemaHandl
             resourceName = resource.substring(splitIndex + 1);
         }
 
-        try (OutputStream os = processingEnvironment.getFiler()
-                .createResource(StandardLocation.CLASS_OUTPUT, resourcePackage, resourceName)
-                .openOutputStream()) {
+        try (PrintStream os = exportOutputStream(processingEnvironment, resourcePackage, resourceName)) {
 
-            new GsonBuilder()
-                    .registerTypeAdapter(NodeSchema.class, new JsonSerializer<NodeSchema>() {
-                        @Override
-                        public JsonElement serialize(NodeSchema src, Type typeOfSrc, JsonSerializationContext context) {
-                            JsonObject jsonObject = new JsonObject();
-
-                            jsonObject.addProperty(JSON_KEY_TYPE, src.type);
-                            jsonObject.add(JSON_KEY_ARGS, context.serialize(src.args));
-                            jsonObject.add(JSON_KEY_SUB, context.serialize(src.sub));
-
-                            return jsonObject;
-                        }
-                    })
-                    .create();
-
-            os.write(new Gson().toJson(nodeSchemas).getBytes());
+            gson().toJson(nodeSchemas, os);
             os.flush();
 
         } catch (Exception e) {
             throw new IllegalStateException(String.format("found error on write nodeSchema to JavaStyle resource '%s': %s", resource, e.getMessage()), e);
         }
+    }
+
+    private PrintStream exportOutputStream(ProcessingEnvironment processingEnvironment, String resourcePackage, String resourceName) throws IOException {
+        return new PrintStream(
+                processingEnvironment.getFiler()
+                        .createResource(StandardLocation.CLASS_OUTPUT, resourcePackage, resourceName)
+                        .openOutputStream());
+    }
+
+    private Gson gson() {
+        return new GsonBuilder()
+                .registerTypeAdapter(NodeSchema.class, new JsonSerializer<NodeSchema>() {
+                    @Override
+                    public JsonElement serialize(NodeSchema src, Type typeOfSrc, JsonSerializationContext context) {
+                        JsonObject jsonObject = new JsonObject();
+
+                        jsonObject.addProperty(JSON_KEY_TYPE, src.type);
+                        jsonObject.add(JSON_KEY_ARGS, context.serialize(src.args));
+                        jsonObject.add(JSON_KEY_SUB, context.serialize(src.sub));
+
+                        return jsonObject;
+                    }
+                })
+                .create();
     }
 }
