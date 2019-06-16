@@ -5,12 +5,8 @@ import com.google.auto.service.AutoService;
 import com.google.gson.Gson;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.PrintStream;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -23,14 +19,17 @@ import javax.annotation.processing.AbstractProcessor;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
+import javax.lang.model.element.AnnotationMirror;
+import javax.lang.model.element.AnnotationValue;
 import javax.lang.model.element.TypeElement;
+import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic;
-import javax.tools.StandardLocation;
 
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.annotation.PathAptGlobalConfig;
-import ms.imf.redpoint.converter.ArgCheckUtil;
+import ms.imf.redpoint.annotation.Plugin;
+import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
 import ms.imf.redpoint.entity.NodeSchema;
 
 @AutoService(Processor.class)
@@ -57,6 +56,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
 
     private TypeElement lastPathAptGlobalConfigAnnotationHost;
     private PathAptGlobalConfig pathAptGlobalConfig;
+    private AnnotationMirror pathAptGlobalConfigMirror;
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -122,88 +122,66 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
 
         final List<NodeSchema> nodeSchemas = PathNodeAnnotationParser.generateNodeSchemaTree(treePathEntities);
 
-        // convert config check
-        try {
-            convertConfigCheck(nodeSchemas);
-        } catch (CompilerException e) {
-            showErrorTip(e);
-            return false;
+        // process plugin
+        List<AnnotationValue> pluginAnnotationValues = PathNodeAnnotationParser.getAnnotionMirrorValue(pathAptGlobalConfigMirror, "plugins");
+        if (pluginAnnotationValues == null) {
+            pluginAnnotationValues = Collections.emptyList();
         }
+        Plugin[] plugins = pathAptGlobalConfig.plugins();
 
-        // node schema output
-        try {
-            nodeSchemaOutput(nodeSchemas);
-        } catch (CompilerException e) {
-            showErrorTip(e);
-            return false;
+        for (int i = 0; i < plugins.length; i++) {
+            Plugin pluginAnnotation = plugins[i];
+            AnnotationValue pluginAnnotationValue = pluginAnnotationValues.get(i);
+
+            String pluginClassName = ((TypeElement) ((DeclaredType) PathNodeAnnotationParser.getAnnotionMirrorValue((AnnotationMirror) pluginAnnotationValue.getValue(), "value")).asElement()).getQualifiedName().toString();
+            String[] pluginClassArguments = pluginAnnotation.args();
+
+            final ParsedNodeSchemaHandlePlugin plugin;
+            try {
+                plugin = getPluginInstance(pluginClassName);
+            } catch (Exception e) {
+                showErrorTip(
+                        new CompilerException(
+                                String.format("found error on create plugin instance: %s", e.getMessage()),
+                                lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, pluginAnnotationValue
+                        )
+                );
+                return false;
+            }
+
+            try {
+                plugin.onParsed(processingEnv, pluginClassArguments, nodeSchemas);
+            } catch (Exception e) {
+                showErrorTip(
+                        new CompilerException(
+                                String.format("found error on process plugin '%s': %s", plugin.getClass().getCanonicalName(), e.getMessage()),
+                                e, lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, pluginAnnotationValue
+                        )
+                );
+                return false;
+            }
         }
 
         return true;
     }
 
-    private void nodeSchemaOutput(List<NodeSchema> nodeSchemas) throws CompilerException {
-        String resource = pathAptGlobalConfig.nodeSchemaExportJsonJavaStyleResource();
-        if (!resource.isEmpty()) {
+    private ParsedNodeSchemaHandlePlugin getPluginInstance(String pluginClassName) {
 
-            String resourcePackage;
-            String resourceName;
-            int splitIndex = resource.indexOf('/');
-            if (splitIndex < 0) {
-                resourcePackage = "";
-                resourceName = resource;
-            } else {
-                resourcePackage = resource.substring(0, splitIndex);
-                resourceName = resource.substring(splitIndex + 1);
-            }
-
-            OutputStream resourceOutputStream = null;
-            try {
-                resourceOutputStream = processingEnv
-                        .getFiler()
-                        .createResource(StandardLocation.CLASS_OUTPUT, resourcePackage, resourceName)
-                        .openOutputStream();
-
-                resourceOutputStream.write(gson.toJson(nodeSchemas).getBytes());
-                resourceOutputStream.flush();
-                resourceOutputStream.close();
-
-            } catch (Exception e) {
-                throw new CompilerException(
-                        String.format("found error on write nodeSchema to JavaStyle resource '%s': %s", resource, e.getMessage()),
-                        e
-                );
-            } finally {
-                if (resourceOutputStream != null) {
-                    try {
-                        resourceOutputStream.close();
-                    } catch (IOException ignore) {}
-                }
-            }
+        final Class<?> pluginClass;
+        try {
+            pluginClass = Class.forName(pluginClassName);
+        } catch (ClassNotFoundException e) {
+            throw new IllegalArgumentException(String.format("can't find class '%s', please check classpath", pluginClassName), e);
         }
-    }
 
-    private void convertConfigCheck(List<NodeSchema> nodeSchemas) throws CompilerException {
-        if (!pathAptGlobalConfig.convertCheckConfigFilePath().isEmpty()) {
+        if (!ParsedNodeSchemaHandlePlugin.class.isAssignableFrom(pluginClass)) {
+            throw new IllegalArgumentException(String.format("plugin class '%s' is not %s's instance, please check plugin's type", pluginClassName, ParsedNodeSchemaHandlePlugin.class.getCanonicalName()));
+        }
 
-            InputStream convertCheckFileInputStream;
-            try {
-                convertCheckFileInputStream = new FileInputStream(pathAptGlobalConfig.convertCheckConfigFilePath());
-            } catch (FileNotFoundException e) {
-                throw new CompilerException(
-                        String.format("PathAptGlobalConfig's convertCheckConfigFilePath(%s) not exist", pathAptGlobalConfig.convertCheckConfigFilePath()),
-                        e,
-                        lastPathAptGlobalConfigAnnotationHost
-                );
-            }
-
-            try {
-                ArgCheckUtil.checkArg(convertCheckFileInputStream, nodeSchemas);
-            } catch (IllegalArgumentException e) {
-                throw new CompilerException(
-                        String.format("found error on convert config check: %s", e.getMessage()),
-                        e
-                );
-            }
+        try {
+            return (ParsedNodeSchemaHandlePlugin) pluginClass.newInstance();
+        } catch (ReflectiveOperationException e) {
+            throw new IllegalArgumentException(String.format("can't create '%s's instance: %s", pluginClassName, e.getMessage()), e);
         }
     }
 
@@ -262,7 +240,17 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         final TypeElement host = annotationElements.iterator().next();
         final PathAptGlobalConfig config = host.getAnnotation(PathAptGlobalConfig.class);
 
+        AnnotationMirror configMirror = null;
+        for (AnnotationMirror annotationMirror : host.getAnnotationMirrors()) {
+            if (annotationMirror.getAnnotationType().equals(processingEnv.getElementUtils().getTypeElement(PathAptGlobalConfig.class.getCanonicalName()).asType())) {
+                configMirror = annotationMirror;
+                break;
+            }
+        }
+        assert configMirror != null;
+
         lastPathAptGlobalConfigAnnotationHost = host;
+        pathAptGlobalConfigMirror = configMirror;
         pathAptGlobalConfig = config;
     }
 
@@ -272,9 +260,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         processingEnv.getMessager().printMessage(
                 Diagnostic.Kind.ERROR,
                 os.toString(),
-                e.e,
-                e.a,
-                e.v
+                e.e, e.a, e.v
         );
     }
 }

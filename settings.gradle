@@ -1,1 +1,1 @@
-include ':app', ':annotation', ':compiler', ':converter', ':entity', ':manager'
+include ':app', ':annotation', ':compiler', ':converter', ':entity', ':manager', ':compiler-plugin', ':compiler-plugin-node-convert-checker', ':compiler-plugin-nodeschema-export-json'

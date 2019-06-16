@@ -8,12 +8,8 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
 public @interface PathAptGlobalConfig {
-
-    String convertCheckConfigFilePath() default "";
-
     /**
-     * format: packageName/resourceName
+     * parsed node schemas handle plugins
      */
-    String nodeSchemaExportJsonJavaStyleResource() default "";
-
+    Plugin[] plugins() default {};
 }
