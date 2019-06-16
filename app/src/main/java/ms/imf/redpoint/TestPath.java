@@ -20,7 +20,6 @@ import ms.imf.redpoint.compiler.plugin.nodeschema.export.json.NodeSchemaExportJs
         })
 })
 @PathAptGlobalConfig(
-        nodeSchemaExportJsonJavaStyleResource = "nodeschema.json",
         plugins = @Plugin(value = NodeSchemaExportJsonCompilerPlugin.class, args = "a.b.c/hi.json")
 )
 public class TestPath {

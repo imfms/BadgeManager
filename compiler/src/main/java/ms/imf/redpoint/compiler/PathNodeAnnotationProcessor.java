@@ -5,8 +5,6 @@ import com.google.auto.service.AutoService;
 import com.google.gson.Gson;
 
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,7 +25,6 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.ElementFilter;
 import javax.tools.Diagnostic;
-import javax.tools.StandardLocation;
 
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.annotation.PathAptGlobalConfig;
@@ -125,14 +122,6 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
 
         final List<NodeSchema> nodeSchemas = PathNodeAnnotationParser.generateNodeSchemaTree(treePathEntities);
 
-        // node schema output
-        try {
-            nodeSchemaOutput(nodeSchemas);
-        } catch (CompilerException e) {
-            showErrorTip(e);
-            return false;
-        }
-
         // process plugin
         List<AnnotationValue> pluginAnnotationValues = PathNodeAnnotationParser.getAnnotionMirrorValue(pathAptGlobalConfigMirror, "plugins");
         if (pluginAnnotationValues == null) {
@@ -193,47 +182,6 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             return (ParsedNodeSchemaHandlePlugin) pluginClass.newInstance();
         } catch (ReflectiveOperationException e) {
             throw new IllegalArgumentException(String.format("can't create '%s's instance: %s", pluginClassName, e.getMessage()), e);
-        }
-    }
-
-    private void nodeSchemaOutput(List<NodeSchema> nodeSchemas) throws CompilerException {
-        String resource = pathAptGlobalConfig.nodeSchemaExportJsonJavaStyleResource();
-        if (!resource.isEmpty()) {
-
-            String resourcePackage;
-            String resourceName;
-            int splitIndex = resource.indexOf('/');
-            if (splitIndex < 0) {
-                resourcePackage = "";
-                resourceName = resource;
-            } else {
-                resourcePackage = resource.substring(0, splitIndex);
-                resourceName = resource.substring(splitIndex + 1);
-            }
-
-            OutputStream resourceOutputStream = null;
-            try {
-                resourceOutputStream = processingEnv
-                        .getFiler()
-                        .createResource(StandardLocation.CLASS_OUTPUT, resourcePackage, resourceName)
-                        .openOutputStream();
-
-                resourceOutputStream.write(gson.toJson(nodeSchemas).getBytes());
-                resourceOutputStream.flush();
-                resourceOutputStream.close();
-
-            } catch (Exception e) {
-                throw new CompilerException(
-                        String.format("found error on write nodeSchema to JavaStyle resource '%s': %s", resource, e.getMessage()),
-                        e
-                );
-            } finally {
-                if (resourceOutputStream != null) {
-                    try {
-                        resourceOutputStream.close();
-                    } catch (IOException ignore) {}
-                }
-            }
         }
     }
 

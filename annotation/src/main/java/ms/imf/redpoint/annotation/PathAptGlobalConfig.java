@@ -8,12 +8,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
 public @interface PathAptGlobalConfig {
-
-    /**
-     * format: packageName/resourceName
-     */
-    String nodeSchemaExportJsonJavaStyleResource() default "";
-
     /**
      * parsed node schemas handle plugins
      */
