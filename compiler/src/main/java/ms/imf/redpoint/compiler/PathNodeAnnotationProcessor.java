@@ -161,7 +161,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             }
 
             try {
-                plugin.onParsed(pluginClassArguments, nodeSchemas);
+                plugin.onParsed(processingEnv, pluginClassArguments, nodeSchemas);
             } catch (Exception e) {
                 showErrorTip(
                         new CompilerException(

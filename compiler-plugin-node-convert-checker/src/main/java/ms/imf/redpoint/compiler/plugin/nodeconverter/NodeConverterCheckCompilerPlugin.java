@@ -5,6 +5,8 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.util.List;
 
+import javax.annotation.processing.ProcessingEnvironment;
+
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
 import ms.imf.redpoint.converter.ArgCheckUtil;
 import ms.imf.redpoint.entity.NodeSchema;
@@ -16,7 +18,7 @@ import ms.imf.redpoint.entity.NodeSchema;
 public class NodeConverterCheckCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
 
     @Override
-    public void onParsed(String[] args, List<NodeSchema> nodeSchemas) throws Exception {
+    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<NodeSchema> nodeSchemas) throws Exception {
 
         if (args == null
                 || args.length <= 0
