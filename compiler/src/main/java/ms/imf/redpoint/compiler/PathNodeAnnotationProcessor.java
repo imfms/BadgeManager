@@ -5,10 +5,7 @@ import com.google.auto.service.AutoService;
 import com.google.gson.Gson;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.Collections;
@@ -36,7 +33,6 @@ import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.annotation.PathAptGlobalConfig;
 import ms.imf.redpoint.annotation.Plugin;
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
-import ms.imf.redpoint.converter.ArgCheckUtil;
 import ms.imf.redpoint.entity.NodeSchema;
 
 @AutoService(Processor.class)
@@ -128,14 +124,6 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         }
 
         final List<NodeSchema> nodeSchemas = PathNodeAnnotationParser.generateNodeSchemaTree(treePathEntities);
-
-        // convert config check
-        try {
-            convertConfigCheck(nodeSchemas);
-        } catch (CompilerException e) {
-            showErrorTip(e);
-            return false;
-        }
 
         // node schema output
         try {
@@ -245,31 +233,6 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                         resourceOutputStream.close();
                     } catch (IOException ignore) {}
                 }
-            }
-        }
-    }
-
-    private void convertConfigCheck(List<NodeSchema> nodeSchemas) throws CompilerException {
-        if (!pathAptGlobalConfig.convertCheckConfigFilePath().isEmpty()) {
-
-            InputStream convertCheckFileInputStream;
-            try {
-                convertCheckFileInputStream = new FileInputStream(pathAptGlobalConfig.convertCheckConfigFilePath());
-            } catch (FileNotFoundException e) {
-                throw new CompilerException(
-                        String.format("PathAptGlobalConfig's convertCheckConfigFilePath(%s) not exist", pathAptGlobalConfig.convertCheckConfigFilePath()),
-                        e,
-                        lastPathAptGlobalConfigAnnotationHost
-                );
-            }
-
-            try {
-                ArgCheckUtil.checkArg(convertCheckFileInputStream, nodeSchemas);
-            } catch (IllegalArgumentException e) {
-                throw new CompilerException(
-                        String.format("found error on convert config check: %s", e.getMessage()),
-                        e
-                );
             }
         }
     }
