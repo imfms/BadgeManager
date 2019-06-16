@@ -2,8 +2,10 @@ package ms.imf.redpoint;
 
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.annotation.PathAptGlobalConfig;
+import ms.imf.redpoint.annotation.Plugin;
 import ms.imf.redpoint.annotation.SubNode;
 import ms.imf.redpoint.annotation.SubNode2;
+import ms.imf.redpoint.compiler.plugin.nodeschema.export.json.NodeSchemaExportJsonCompilerPlugin;
 
 /**
  * TestPath
@@ -18,7 +20,8 @@ import ms.imf.redpoint.annotation.SubNode2;
         })
 })
 @PathAptGlobalConfig(
-        nodeSchemaExportJsonJavaStyleResource = "nodeschema.json"
+        nodeSchemaExportJsonJavaStyleResource = "nodeschema.json",
+        plugins = @Plugin(value = NodeSchemaExportJsonCompilerPlugin.class, args = "a.b.c/hi.json")
 )
 public class TestPath {
     public static void main(String[] args) {

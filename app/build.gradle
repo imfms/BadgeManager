@@ -29,4 +29,6 @@ dependencies {
     compileOnly project(':annotation')
     implementation project(':compiler-plugin')
     annotationProcessor project(':compiler')
+    compileOnly project(':compiler-plugin-nodeschema-export-json')
+    annotationProcessor project(':compiler-plugin-nodeschema-export-json')
 }
