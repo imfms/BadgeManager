@@ -30,6 +30,7 @@ import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.annotation.PathAptGlobalConfig;
 import ms.imf.redpoint.annotation.Plugin;
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
+import ms.imf.redpoint.compiler.plugin.PathEntity;
 import ms.imf.redpoint.entity.NodeSchema;
 
 @AutoService(Processor.class)
@@ -120,7 +121,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             return true;
         }
 
-        final List<NodeSchema> nodeSchemas = PathNodeAnnotationParser.generateNodeSchemaTree(treePathEntities);
+        final List<NodeSchema> treeNodeSchemas = PathNodeAnnotationParser.generateNodeSchemaTree(treePathEntities);
 
         // process plugin
         List<AnnotationValue> pluginAnnotationValues = PathNodeAnnotationParser.getAnnotionMirrorValue(pathAptGlobalConfigMirror, "plugins");
@@ -150,7 +151,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             }
 
             try {
-                plugin.onParsed(processingEnv, pluginClassArguments, nodeSchemas);
+                plugin.onParsed(processingEnv, pluginClassArguments, treePathEntities, treeNodeSchemas);
             } catch (Exception e) {
                 showErrorTip(
                         new CompilerException(

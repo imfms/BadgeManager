@@ -16,6 +16,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.tools.StandardLocation;
 
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
+import ms.imf.redpoint.compiler.plugin.PathEntity;
 import ms.imf.redpoint.entity.NodeSchema;
 
 /**
@@ -44,7 +45,7 @@ public class NodeSchemaExportJsonCompilerPlugin implements ParsedNodeSchemaHandl
     public static final String JSON_KEY_SUB = "sub";
 
     @Override
-    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<NodeSchema> nodeSchemas) throws Exception {
+    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws Exception {
         if (args == null
                 || args.length <= 0
                 || args[0] == null
@@ -67,7 +68,7 @@ public class NodeSchemaExportJsonCompilerPlugin implements ParsedNodeSchemaHandl
 
         try (PrintStream os = exportOutputStream(processingEnvironment, resourcePackage, resourceName)) {
 
-            gson().toJson(nodeSchemas, os);
+            gson().toJson(treeNodeSchemas, os);
             os.flush();
 
         } catch (Exception e) {

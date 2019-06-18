@@ -23,6 +23,7 @@ import javax.lang.model.util.Elements;
 
 import ms.imf.redpoint.annotation.SubNode;
 import ms.imf.redpoint.annotation.Path;
+import ms.imf.redpoint.compiler.plugin.PathEntity;
 import ms.imf.redpoint.entity.NodeSchema;
 
 class PathNodeAnnotationParser {

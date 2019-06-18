@@ -10,9 +10,10 @@ public interface ParsedNodeSchemaHandlePlugin {
 
     /**
      * @param processingEnvironment annotation processingEnvironment
-     * @param args        arguments
-     * @param nodeSchemas nodeSchemas
+     * @param args                  arguments
+     * @param treePathEntities          path entities tree
+     * @param treeNodeSchemas           node schema tree
      * @throws Exception framework will show your error to user friendly
      */
-    void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<NodeSchema> nodeSchemas) throws Exception;
+    void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws Exception;
 }

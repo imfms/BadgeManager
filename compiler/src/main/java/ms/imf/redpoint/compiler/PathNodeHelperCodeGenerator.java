@@ -18,6 +18,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 
 import ms.imf.redpoint.annotation.SubNode;
+import ms.imf.redpoint.compiler.plugin.PathEntity;
 
 /*
 interface ${CLASS}_Path {

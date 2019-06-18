@@ -8,6 +8,7 @@ import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
+import ms.imf.redpoint.compiler.plugin.PathEntity;
 import ms.imf.redpoint.converter.ArgCheckUtil;
 import ms.imf.redpoint.entity.NodeSchema;
 
@@ -18,7 +19,7 @@ import ms.imf.redpoint.entity.NodeSchema;
 public class NodeConverterCheckCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
 
     @Override
-    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<NodeSchema> nodeSchemas) throws Exception {
+    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws Exception {
 
         if (args == null
                 || args.length <= 0
@@ -37,7 +38,7 @@ public class NodeConverterCheckCompilerPlugin implements ParsedNodeSchemaHandleP
         }
 
         try {
-            ArgCheckUtil.checkArg(convertCheckFileInputStream, nodeSchemas);
+            ArgCheckUtil.checkArg(convertCheckFileInputStream, treeNodeSchemas);
         } catch (IllegalArgumentException e) {
             throw new RuntimeException(String.format("found error on convert config check: %s", e.getMessage()), e);
         }
