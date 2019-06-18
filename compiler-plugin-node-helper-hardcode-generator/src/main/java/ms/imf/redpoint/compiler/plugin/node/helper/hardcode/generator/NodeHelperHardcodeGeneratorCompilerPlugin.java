@@ -60,6 +60,6 @@ public class NodeHelperHardcodeGeneratorCompilerPlugin implements ParsedNodeSche
     @Override
     public void onParsed(PluginContext context) throws AptProcessException {
         new Generator(context.processingEnvironment().getFiler())
-                .generate(context.treePathEntities());
+                .generate(context.allPathEntities());
     }
 }

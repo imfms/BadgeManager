@@ -67,15 +67,6 @@ class Generator {
                     path.host
             );
         }
-
-        if (path.nodes != null) {
-            for (PathEntity.Node node : path.nodes) {
-                if (node.subRef != null) {
-                    generatePath(node.subRef);
-                }
-            }
-        }
-
     }
 
     private TypeSpec generateNode(PathEntity.Node node, Set<String> parentLockedClassNames) {
