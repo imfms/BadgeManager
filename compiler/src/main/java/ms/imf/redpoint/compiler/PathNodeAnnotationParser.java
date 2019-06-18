@@ -21,8 +21,9 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
 
-import ms.imf.redpoint.annotation.SubNode;
 import ms.imf.redpoint.annotation.Path;
+import ms.imf.redpoint.annotation.SubNode;
+import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.PathEntity;
 import ms.imf.redpoint.entity.NodeSchema;
 
@@ -48,8 +49,8 @@ class PathNodeAnnotationParser {
         this.elementUtil = elementUtil;
     }
 
-    synchronized List<PathEntity> parsePaths(Set<TypeElement> annotatedPathTypeElements) throws AptException {
-
+    synchronized List<PathEntity> parsePaths(Set<TypeElement> annotatedPathTypeElements) throws AptProcessException {
+        
         pathEntityPoll.clear();
         parsingTypeElements.clear();
 
@@ -69,22 +70,22 @@ class PathNodeAnnotationParser {
         return results;
     }
 
-    private PathEntity parsePathWrapper(TypeElement annotatedPathTypeElement) throws AptException {
+    private PathEntity parsePathWrapper(TypeElement annotatedPathTypeElement) throws AptProcessException {
         try {
             return parsePath(annotatedPathTypeElement);
-        } catch (AptException e) {
-            throw new AptException(
+        } catch (AptProcessException e) {
+            throw new AptProcessException(
                     String.format("found error on parse type %s's PathAnnotation: %s", annotatedPathTypeElement.getQualifiedName(), e.getMessage()),
                     e
             );
         }
     }
 
-    private PathEntity parsePath(TypeElement annotatedPathTypeElement) throws AptException {
+    private PathEntity parsePath(TypeElement annotatedPathTypeElement) throws AptProcessException {
 
         Path path = annotatedPathTypeElement.getAnnotation(Path.class);
         if (path == null) {
-            throw new AptException("can't find Path Annotation", annotatedPathTypeElement);
+            throw new AptProcessException("can't find Path Annotation", annotatedPathTypeElement);
         }
         AnnotationMirror pathMirror = null;
         for (AnnotationMirror annotationMirror : annotatedPathTypeElement.getAnnotationMirrors()) {
@@ -93,12 +94,12 @@ class PathNodeAnnotationParser {
             }
         }
         if (pathMirror == null) {
-            throw new AptException("can't find Path Annotation", annotatedPathTypeElement);
+            throw new AptProcessException("can't find Path Annotation", annotatedPathTypeElement);
         }
         return parsePath(annotatedPathTypeElement, path, pathMirror);
     }
 
-    private synchronized PathEntity parsePath(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws AptException {
+    private synchronized PathEntity parsePath(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws AptProcessException {
 
         // check circular reference
         if (parsingTypeElements.contains(annotatedPathTypeElement)) {
@@ -109,7 +110,7 @@ class PathNodeAnnotationParser {
                 stack.append('\n')
                         .append(parsingTypeElement.getQualifiedName());
             }
-            throw new AptException(
+            throw new AptProcessException(
                     String.format(
                             "found Path circular reference on '%s', this is circular reference stack: %s",
                             annotatedPathTypeElement.getQualifiedName(),
@@ -140,7 +141,7 @@ class PathNodeAnnotationParser {
         return resultPathEntity;
     }
 
-    private PathEntity parsePathRaw(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws AptException {
+    private PathEntity parsePathRaw(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws AptProcessException {
 
         final boolean nodeMode = path.value().length > 0;
         final boolean jsonMode = path.nodesJson().length > 0;
@@ -150,15 +151,15 @@ class PathNodeAnnotationParser {
         if (nodeMode) {
             try {
                 nodeEntities.addAll(pathNodeToNodeEntity(annotatedPathTypeElement, path, pathMirror));
-            } catch (AptException e) {
-                throw new AptException(String.format("found error on parse nodes: %s", e.getMessage()), e);
+            } catch (AptProcessException e) {
+                throw new AptProcessException(String.format("found error on parse nodes: %s", e.getMessage()), e);
             }
         }
         if (jsonMode) {
             try {
                 nodeEntities.addAll(pathNodeJsonToNodeEntity(annotatedPathTypeElement, path, pathMirror));
-            } catch (AptException e) {
-                throw new AptException(String.format("found error on parse nodesJson: %s", e.getMessage()), e);
+            } catch (AptProcessException e) {
+                throw new AptProcessException(String.format("found error on parse nodesJson: %s", e.getMessage()), e);
             }
         }
 
@@ -166,7 +167,7 @@ class PathNodeAnnotationParser {
         final Set<String> repeatElements = new HashSet<>();
         for (PathEntity.Node nodeEntity : nodeEntities) {
             if (!repeatElements.add(nodeEntity.type)) {
-                throw new AptException("find repeat type in nodes and nodesJson: " + nodeEntity.type, annotatedPathTypeElement, pathMirror);
+                throw new AptProcessException("find repeat type in nodes and nodesJson: " + nodeEntity.type, annotatedPathTypeElement, pathMirror);
             }
         }
 
@@ -176,7 +177,7 @@ class PathNodeAnnotationParser {
         return pathEntity;
     }
 
-    private List<PathEntity.Node> pathNodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws AptException {
+    private List<PathEntity.Node> pathNodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws AptProcessException {
         final List<PathEntity.Node> results = new LinkedList<>();
 
         final Map<String, TypeElement> nodeJsonRefTypeMapper = new HashMap<>();
@@ -184,7 +185,7 @@ class PathNodeAnnotationParser {
             String key = PathNodeAnnotationParser.getAnnotionMirrorValue(mapperMirror, "key");
             TypeElement value = (TypeElement) PathNodeAnnotationParser.<DeclaredType>getAnnotionMirrorValue(mapperMirror, "value").asElement();
             if (nodeJsonRefTypeMapper.put(key, value) != null) {
-                throw new AptException(
+                throw new AptProcessException(
                         String.format("found repeat subNodeRef key: '%s'", key),
                         annotatedPathTypeElement,
                         pathMirror
@@ -196,8 +197,8 @@ class PathNodeAnnotationParser {
             String nodeJson = path.nodesJson()[i];
             try {
                 results.add(nodeJsonToNodeEntity(annotatedPathTypeElement, nodeJson, nodeJsonRefTypeMapper));
-            } catch (AptException e) {
-                throw new AptException(
+            } catch (AptProcessException e) {
+                throw new AptProcessException(
                         String.format("found error in parse nodeJson[%s]: %s", i, e.getMessage()),
                         e
                 );
@@ -207,7 +208,7 @@ class PathNodeAnnotationParser {
         return results;
     }
 
-    private List<PathEntity.Node> pathNodeToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws AptException {
+    private List<PathEntity.Node> pathNodeToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws AptProcessException {
         final LinkedList<PathEntity.Node> results = new LinkedList<>();
 
         final List<AnnotationMirror> nodeMirrors = PathNodeAnnotationParser.getAnnotionMirrorValue(pathMirror, "value");
@@ -220,8 +221,8 @@ class PathNodeAnnotationParser {
                 results.add(
                         nodeParseEntityToPathNodeEntity(annotatedPathTypeElement, nodeParseEntity)
                 );
-            } catch (AptException e) {
-                throw new AptException(
+            } catch (AptProcessException e) {
+                throw new AptProcessException(
                         String.format("found error in parse value[%s]: %s", i, e.getMessage()),
                         e, annotatedPathTypeElement, nodeMirror
                 );
@@ -259,27 +260,27 @@ class PathNodeAnnotationParser {
         return nodeParseEntity;
     }
 
-    private PathEntity.Node nodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, String nodeJson, Map<String, TypeElement> nodeJsonRefTypeMapper) throws AptException {
+    private PathEntity.Node nodeJsonToNodeEntity(TypeElement annotatedPathTypeElement, String nodeJson, Map<String, TypeElement> nodeJsonRefTypeMapper) throws AptProcessException {
         // parse json
         JsonNode jsonNodeObj;
         try {
             jsonNodeObj = gson.fromJson(nodeJson, JsonNode.class);
         } catch (Exception e) {
-            throw new AptException(String.format("nodeJson parse error: %s", e.getMessage()), e, annotatedPathTypeElement);
+            throw new AptProcessException(String.format("nodeJson parse error: %s", e.getMessage()), e, annotatedPathTypeElement);
         }
 
         // convert to parseEntity
         NodeParseEntity nodeParseEntity;
         try {
             nodeParseEntity = jsonNodeConvertToNodeParseEntity(jsonNodeObj, nodeJsonRefTypeMapper);
-        } catch (AptException e) {
-            throw new AptException(String.format("nodeJson parse error: %s", e.getMessage()), e, annotatedPathTypeElement);
+        } catch (AptProcessException e) {
+            throw new AptProcessException(String.format("nodeJson parse error: %s", e.getMessage()), e, annotatedPathTypeElement);
         }
 
         return nodeParseEntityToPathNodeEntity(annotatedPathTypeElement, nodeParseEntity);
     }
 
-    private NodeParseEntity jsonNodeConvertToNodeParseEntity(JsonNode jsonNode, Map<String, TypeElement> nodeJsonRefTypeMapper) throws AptException {
+    private NodeParseEntity jsonNodeConvertToNodeParseEntity(JsonNode jsonNode, Map<String, TypeElement> nodeJsonRefTypeMapper) throws AptProcessException {
 
         NodeParseEntity nodeParseEntity = new NodeParseEntity();
 
@@ -296,8 +297,8 @@ class PathNodeAnnotationParser {
                 NodeParseEntity subNodeParseEntity;
                 try {
                     subNodeParseEntity = jsonNodeConvertToNodeParseEntity(subJsonNode, nodeJsonRefTypeMapper);
-                } catch (AptException e) {
-                    throw new AptException(String.format("found error on convert subNodes[%d]: %s", i, e.getMessage()), e);
+                } catch (AptProcessException e) {
+                    throw new AptProcessException(String.format("found error on convert subNodes[%d]: %s", i, e.getMessage()), e);
                 }
 
                 nodeParseEntity.subNodes.add(subNodeParseEntity);
@@ -307,7 +308,7 @@ class PathNodeAnnotationParser {
         if (jsonNode.subNodeRef != null) {
             TypeElement typeElement = nodeJsonRefTypeMapper.get(jsonNode.subNodeRef);
             if (typeElement == null) {
-                throw new AptException(String.format("can't find nodeJson's subNodeRef's '%s's refClass in nodeJsonRefTypeMapper", jsonNode.subNodeRef));
+                throw new AptProcessException(String.format("can't find nodeJson's subNodeRef's '%s's refClass in nodeJsonRefTypeMapper", jsonNode.subNodeRef));
             }
             nodeParseEntity.subNodeRef = typeElement;
         }
@@ -315,13 +316,13 @@ class PathNodeAnnotationParser {
         return nodeParseEntity;
     }
 
-    private PathEntity.Node nodeParseEntityToPathNodeEntity(TypeElement annotatedPathTypeElement, NodeParseEntity nodeParseEntity) throws AptException {
+    private PathEntity.Node nodeParseEntityToPathNodeEntity(TypeElement annotatedPathTypeElement, NodeParseEntity nodeParseEntity) throws AptProcessException {
         final PathEntity.Node resultNodeEntity = new PathEntity.Node();
 
         // parse type
         if (nodeParseEntity.type == null
                 || nodeParseEntity.type.isEmpty()) {
-            throw new AptException("nodeJson's type can't be null", annotatedPathTypeElement);
+            throw new AptProcessException("nodeJson's type can't be null", annotatedPathTypeElement);
         }
         resultNodeEntity.type = nodeParseEntity.type;
 
@@ -335,7 +336,7 @@ class PathNodeAnnotationParser {
                     Arrays.asList(nodeParseEntity.args).indexOf(null),
                     Arrays.asList(nodeParseEntity.args).indexOf("")}) {
                 if (nullIndex >= 0) {
-                    throw new AptException(
+                    throw new AptProcessException(
                             String.format("nodeJson's args can't contains null or empty value, but found in index '%d'", nullIndex),
                             annotatedPathTypeElement
                     );
@@ -346,7 +347,7 @@ class PathNodeAnnotationParser {
             final Set<String> repeatElements = new HashSet<>();
             for (String arg : nodeParseEntity.args) {
                 if (!repeatElements.add(arg)) {
-                    throw new AptException("find repeat arg: " + arg, annotatedPathTypeElement);
+                    throw new AptProcessException("find repeat arg: " + arg, annotatedPathTypeElement);
                 }
             }
 
@@ -357,7 +358,7 @@ class PathNodeAnnotationParser {
         boolean existSubNodes = nodeParseEntity.subNodes != null && !nodeParseEntity.subNodes.isEmpty();
         boolean existSubNodeRef = nodeParseEntity.subNodeRef != null && !nodeParseEntity.subNodeRef.getQualifiedName().toString().equals(Void.class.getCanonicalName());
         if (existSubNodes && existSubNodeRef) {
-            throw new AptException("nodeJson's subNodes and subNodeRef only can exist one", annotatedPathTypeElement);
+            throw new AptProcessException("nodeJson's subNodes and subNodeRef only can exist one", annotatedPathTypeElement);
         }
 
         // parse subNodes
@@ -369,8 +370,8 @@ class PathNodeAnnotationParser {
                     subNodes.add(
                             nodeParseEntityToPathNodeEntity(annotatedPathTypeElement, subEntity)
                     );
-                } catch (AptException e) {
-                    throw new AptException(
+                } catch (AptProcessException e) {
+                    throw new AptProcessException(
                             String.format("found error in nodeJson's subNodes[%s]: %s", i, e.getMessage()),
                             e
                     );

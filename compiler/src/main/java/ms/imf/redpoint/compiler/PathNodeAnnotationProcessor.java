@@ -6,7 +6,6 @@ import com.google.gson.Gson;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -30,6 +29,7 @@ import javax.tools.Diagnostic;
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.annotation.PathAptGlobalConfig;
 import ms.imf.redpoint.annotation.Plugin;
+import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
 import ms.imf.redpoint.compiler.plugin.PathEntity;
 import ms.imf.redpoint.compiler.plugin.PluginContext;
@@ -66,7 +66,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         try {
             return processRaw(roundEnv);
         } catch (Exception e) {
-            showErrorTip(new AptException(String.format("unexpected exception on processor: %s", e.getMessage()), e));
+            showErrorTip(new AptProcessException(String.format("unexpected exception on processor: %s", e.getMessage()), e));
             return false;
         }
     }
@@ -75,7 +75,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         // check config
         try {
             checkPathAptGlobalConfig(roundEnv);
-        } catch (AptException e) {
+        } catch (AptProcessException e) {
             showErrorTip(e);
             return false;
         }
@@ -87,9 +87,24 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         final List<PathEntity> pathEntities;
         try {
             pathEntities = pathNodeAnnotationParser.parsePaths(pathAnnotationTypes);
-        } catch (AptException e) {
+        } catch (AptProcessException e) {
             showErrorTip(e);
             return false;
+        }
+
+        if (pathAptGlobalConfig != null) {
+            // process each apt round plugin
+            try {
+                processPlugins(
+                        "each apt round plugin",
+                        PathNodeAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "eachAptRoundPlugins"),
+                        pathAptGlobalConfig.eachAptRoundPlugins(),
+                        pathEntities
+                );
+            } catch (AptProcessException e) {
+                showErrorTip(e);
+                return false;
+            }
         }
 
         // compose each round data
@@ -105,23 +120,37 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         // root node repeat check
         try {
             pathNodeTypeRepeatCheck(treePathEntities);
-        } catch (AptException e) {
+        } catch (AptProcessException e) {
             showErrorTip(e);
             return false;
         }
 
-        if (pathAptGlobalConfig == null) {
-            return true;
+        if (pathAptGlobalConfig != null) {
+            // process last apt round plugin
+            try {
+                processPlugins(
+                        "last apt round plugin",
+                        PathNodeAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "lastAptRoundPlugins"),
+                        pathAptGlobalConfig.lastAptRoundPlugins(),
+                        allPathEntities
+                );
+            } catch (AptProcessException e) {
+                showErrorTip(e);
+                return false;
+            }
         }
 
-        final List<NodeSchema> treeNodeSchemas = PathNodeAnnotationParser.generateNodeSchemaTree(treePathEntities);
+        return true;
+    }
 
-        // process plugin
-        List<AnnotationValue> pluginAnnotationValues = PathNodeAnnotationParser.getAnnotionMirrorValue(pathAptGlobalConfigMirror, "plugins");
-        if (pluginAnnotationValues == null) {
-            pluginAnnotationValues = Collections.emptyList();
+    private void processPlugins(String pluginProcessDesc, List<AnnotationValue> pluginAnnotationValues, Plugin[] plugins, final List<PathEntity> allPathEntities) throws AptProcessException {
+
+        if (pluginAnnotationValues == null
+                || pluginAnnotationValues.isEmpty()
+                || plugins == null
+                || plugins.length <= 0) {
+            return;
         }
-        Plugin[] plugins = pathAptGlobalConfig.plugins();
 
         for (int i = 0; i < plugins.length; i++) {
             Plugin pluginAnnotation = plugins[i];
@@ -135,34 +164,43 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                 plugin = getPluginInstance(pluginClassName);
             } catch (Exception e) {
                 showErrorTip(
-                        new AptException(
+                        new AptProcessException(
                                 String.format("found error on create plugin instance: %s", e.getMessage()),
                                 lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, pluginAnnotationValue
                         )
                 );
-                return false;
+                return;
             }
 
             try {
+
+                @SuppressWarnings("unchecked") final List<PathEntity>[] treePathEntities = new List[1];
+                @SuppressWarnings("unchecked") final List<NodeSchema>[] treeNodeSchemas = new List[1];
+
                 plugin.onParsed(new PluginContext() {
                     @Override public ProcessingEnvironment processingEnvironment() { return processingEnv; }
                     @Override public String[] args() { return pluginClassArguments; }
                     @Override public List<PathEntity> allPathEntities() { return allPathEntities; }
-                    @Override public List<PathEntity> treePathEntities() { return treePathEntities; }
-                    @Override public List<NodeSchema> treeNodeSchemas() { return treeNodeSchemas; }
+                    @Override public List<PathEntity> treePathEntities() {
+                        if (treePathEntities[0] == null) {
+                            treePathEntities[0] = PathNodeAnnotationParser.convertPathTree(allPathEntities());
+                        }
+                        return treePathEntities[0];
+                    }
+                    @Override public List<NodeSchema> treeNodeSchemas() {
+                        if (treeNodeSchemas[0] == null) {
+                            treeNodeSchemas[0] = PathNodeAnnotationParser.generateNodeSchemaTree(treePathEntities());
+                        }
+                        return treeNodeSchemas[0];
+                    }
                 });
             } catch (Exception e) {
-                showErrorTip(
-                        new AptException(
-                                String.format("found error on process plugin '%s': %s", plugin.getClass().getCanonicalName(), e.getMessage()),
-                                e, lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, pluginAnnotationValue
-                        )
+                throw new AptProcessException(
+                        String.format("found error on process %s '%s': %s", pluginProcessDesc, plugin.getClass().getCanonicalName(), e.getMessage()),
+                        e, lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, pluginAnnotationValue
                 );
-                return false;
             }
         }
-
-        return true;
     }
 
     private ParsedNodeSchemaHandlePlugin getPluginInstance(String pluginClassName) {
@@ -185,13 +223,13 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         }
     }
 
-    private void pathNodeTypeRepeatCheck(List<PathEntity> treePathEntities) throws AptException {
+    private void pathNodeTypeRepeatCheck(List<PathEntity> treePathEntities) throws AptProcessException {
         Map<String, PathEntity> repeatCheckContainer = new HashMap<>();
         for (PathEntity pathEntity : treePathEntities) {
             for (PathEntity.Node node : pathEntity.nodes) {
                 PathEntity repeatPathEntity = repeatCheckContainer.put(node.type, pathEntity);
                 if (repeatPathEntity != null) {
-                    throw new AptException(
+                    throw new AptProcessException(
                             String.format(
                                     "found repeat root node type '%s' on %s and %s, please check root type or path's link",
                                     node.type,
@@ -205,7 +243,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         }
     }
 
-    private void checkPathAptGlobalConfig(RoundEnvironment roundEnv) throws AptException {
+    private void checkPathAptGlobalConfig(RoundEnvironment roundEnv) throws AptProcessException {
         final Set<TypeElement> annotationElements = ElementFilter.typesIn(
                 roundEnv.getElementsAnnotatedWith(PathAptGlobalConfig.class)
         );
@@ -234,7 +272,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                 }
             }
 
-            throw new AptException(String.format("PathAptGlobalConfig only can exist one, but found these: %s", elementsTip), repeatElements.get(0));
+            throw new AptProcessException(String.format("PathAptGlobalConfig only can exist one, but found these: %s", elementsTip), repeatElements.get(0));
         }
 
         final TypeElement host = annotationElements.iterator().next();
@@ -254,7 +292,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         pathAptGlobalConfig = config;
     }
 
-    private void showErrorTip(AptException e) {
+    private void showErrorTip(AptProcessException e) {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(os));
         processingEnv.getMessager().printMessage(
