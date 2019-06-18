@@ -21,10 +21,8 @@ import ms.imf.redpoint.compiler.plugin.nodeschema.export.json.NodeSchemaExportJs
         })
 })
 @PathAptGlobalConfig(
-        plugins = {
-                @Plugin(NodeHelperHardcodeGeneratorCompilerPlugin.class),
-                @Plugin(value = NodeSchemaExportJsonCompilerPlugin.class, args = "a.b.c/hi.json")
-        }
+        eachAptRoundPlugins = @Plugin(NodeHelperHardcodeGeneratorCompilerPlugin.class),
+        lastAptRoundPlugins = @Plugin(value = NodeSchemaExportJsonCompilerPlugin.class, args = "a.b.c/hi.json")
 )
 public class TestPath {
     public static void main(String[] args) {

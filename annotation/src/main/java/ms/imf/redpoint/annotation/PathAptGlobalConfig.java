@@ -8,8 +8,14 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
 public @interface PathAptGlobalConfig {
+
     /**
-     * parsed node schemas handle plugins
+     * each apt round parsed node schemas handle plugins
      */
-    Plugin[] plugins() default {};
+    Plugin[] eachAptRoundPlugins() default {};
+
+    /**
+     * last apt round parsed node schemas handle plugins, can't create java source file
+     */
+    Plugin[] lastAptRoundPlugins() default {};
 }
