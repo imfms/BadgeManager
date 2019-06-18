@@ -13,7 +13,7 @@ public interface ParsedNodeSchemaHandlePlugin {
      * @param args                  arguments
      * @param treePathEntities          path entities tree
      * @param treeNodeSchemas           node schema tree
-     * @throws Exception framework will show your error to user friendly
+     * @throws AptProcessException framework will show your error to user friendly
      */
-    void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws Exception;
+    void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws AptProcessException;
 }

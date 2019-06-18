@@ -15,6 +15,7 @@ import java.util.List;
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.tools.StandardLocation;
 
+import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
 import ms.imf.redpoint.compiler.plugin.PathEntity;
 import ms.imf.redpoint.entity.NodeSchema;
@@ -45,7 +46,7 @@ public class NodeSchemaExportJsonCompilerPlugin implements ParsedNodeSchemaHandl
     public static final String JSON_KEY_SUB = "sub";
 
     @Override
-    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws Exception {
+    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws AptProcessException {
         if (args == null
                 || args.length <= 0
                 || args[0] == null
@@ -72,7 +73,7 @@ public class NodeSchemaExportJsonCompilerPlugin implements ParsedNodeSchemaHandl
             os.flush();
 
         } catch (Exception e) {
-            throw new IllegalStateException(String.format("found error on write nodeSchema to JavaStyle resource '%s': %s", resource, e.getMessage()), e);
+            throw new AptProcessException(String.format("found error on write nodeSchema to JavaStyle resource '%s': %s", resource, e.getMessage()), e);
         }
     }
 

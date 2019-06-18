@@ -5,6 +5,7 @@ import ms.imf.redpoint.annotation.PathAptGlobalConfig;
 import ms.imf.redpoint.annotation.Plugin;
 import ms.imf.redpoint.annotation.SubNode;
 import ms.imf.redpoint.annotation.SubNode2;
+import ms.imf.redpoint.compiler.plugin.node.helper.hardcode.generator.NodeHelperHardcodeGeneratorCompilerPlugin;
 import ms.imf.redpoint.compiler.plugin.nodeschema.export.json.NodeSchemaExportJsonCompilerPlugin;
 
 /**
@@ -20,7 +21,10 @@ import ms.imf.redpoint.compiler.plugin.nodeschema.export.json.NodeSchemaExportJs
         })
 })
 @PathAptGlobalConfig(
-        plugins = @Plugin(value = NodeSchemaExportJsonCompilerPlugin.class, args = "a.b.c/hi.json")
+        plugins = {
+                @Plugin(NodeHelperHardcodeGeneratorCompilerPlugin.class),
+                @Plugin(value = NodeSchemaExportJsonCompilerPlugin.class, args = "a.b.c/hi.json")
+        }
 )
 public class TestPath {
     public static void main(String[] args) {

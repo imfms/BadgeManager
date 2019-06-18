@@ -64,7 +64,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         try {
             return processRaw(roundEnv);
         } catch (Exception e) {
-            showErrorTip(new CompilerException(String.format("unexpected exception on processor: %s", e.getMessage()), e));
+            showErrorTip(new AptException(String.format("unexpected exception on processor: %s", e.getMessage()), e));
             return false;
         }
     }
@@ -73,7 +73,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         // check config
         try {
             checkPathAptGlobalConfig(roundEnv);
-        } catch (CompilerException e) {
+        } catch (AptException e) {
             showErrorTip(e);
             return false;
         }
@@ -85,16 +85,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         final List<PathEntity> pathEntities;
         try {
             pathEntities = pathNodeAnnotationParser.parsePaths(pathAnnotationTypes);
-        } catch (CompilerException e) {
-            showErrorTip(e);
-            return false;
-        }
-
-        // generate node helper code
-        PathNodeHelperCodeGenerator pathNodeHelperCodeGenerator = new PathNodeHelperCodeGenerator(processingEnv.getFiler());
-        try {
-            pathNodeHelperCodeGenerator.generate(pathEntities);
-        } catch (CompilerException e) {
+        } catch (AptException e) {
             showErrorTip(e);
             return false;
         }
@@ -112,7 +103,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         // root node repeat check
         try {
             pathNodeTypeRepeatCheck(treePathEntities);
-        } catch (CompilerException e) {
+        } catch (AptException e) {
             showErrorTip(e);
             return false;
         }
@@ -142,7 +133,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                 plugin = getPluginInstance(pluginClassName);
             } catch (Exception e) {
                 showErrorTip(
-                        new CompilerException(
+                        new AptException(
                                 String.format("found error on create plugin instance: %s", e.getMessage()),
                                 lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, pluginAnnotationValue
                         )
@@ -154,7 +145,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                 plugin.onParsed(processingEnv, pluginClassArguments, treePathEntities, treeNodeSchemas);
             } catch (Exception e) {
                 showErrorTip(
-                        new CompilerException(
+                        new AptException(
                                 String.format("found error on process plugin '%s': %s", plugin.getClass().getCanonicalName(), e.getMessage()),
                                 e, lastPathAptGlobalConfigAnnotationHost, pathAptGlobalConfigMirror, pluginAnnotationValue
                         )
@@ -186,13 +177,13 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         }
     }
 
-    private void pathNodeTypeRepeatCheck(List<PathEntity> treePathEntities) throws CompilerException {
+    private void pathNodeTypeRepeatCheck(List<PathEntity> treePathEntities) throws AptException {
         Map<String, PathEntity> repeatCheckContainer = new HashMap<>();
         for (PathEntity pathEntity : treePathEntities) {
             for (PathEntity.Node node : pathEntity.nodes) {
                 PathEntity repeatPathEntity = repeatCheckContainer.put(node.type, pathEntity);
                 if (repeatPathEntity != null) {
-                    throw new CompilerException(
+                    throw new AptException(
                             String.format(
                                     "found repeat root node type '%s' on %s and %s, please check root type or path's link",
                                     node.type,
@@ -206,7 +197,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         }
     }
 
-    private void checkPathAptGlobalConfig(RoundEnvironment roundEnv) throws CompilerException {
+    private void checkPathAptGlobalConfig(RoundEnvironment roundEnv) throws AptException {
         final Set<TypeElement> annotationElements = ElementFilter.typesIn(
                 roundEnv.getElementsAnnotatedWith(PathAptGlobalConfig.class)
         );
@@ -235,7 +226,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                 }
             }
 
-            throw new CompilerException(String.format("PathAptGlobalConfig only can exist one, but found these: %s", elementsTip), repeatElements.get(0));
+            throw new AptException(String.format("PathAptGlobalConfig only can exist one, but found these: %s", elementsTip), repeatElements.get(0));
         }
 
         final TypeElement host = annotationElements.iterator().next();
@@ -255,7 +246,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         pathAptGlobalConfig = config;
     }
 
-    private void showErrorTip(CompilerException e) {
+    private void showErrorTip(AptException e) {
         ByteArrayOutputStream os = new ByteArrayOutputStream();
         e.printStackTrace(new PrintStream(os));
         processingEnv.getMessager().printMessage(

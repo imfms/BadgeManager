@@ -7,6 +7,7 @@ import java.util.List;
 
 import javax.annotation.processing.ProcessingEnvironment;
 
+import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
 import ms.imf.redpoint.compiler.plugin.PathEntity;
 import ms.imf.redpoint.converter.ArgCheckUtil;
@@ -19,13 +20,13 @@ import ms.imf.redpoint.entity.NodeSchema;
 public class NodeConverterCheckCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
 
     @Override
-    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws Exception {
+    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws AptProcessException {
 
         if (args == null
                 || args.length <= 0
                 || args[0] == null
                 || args[0].isEmpty()) {
-            throw new IllegalArgumentException("args can't be empty, I need convertCheckConfigFilePath, please add it into args[0]");
+            throw new AptProcessException("args can't be empty, I need convertCheckConfigFilePath, please add it into args[0]");
         }
 
         String convertCheckConfigFilePath = args[0];
@@ -34,13 +35,13 @@ public class NodeConverterCheckCompilerPlugin implements ParsedNodeSchemaHandleP
         try {
             convertCheckFileInputStream = new FileInputStream(convertCheckConfigFilePath);
         } catch (FileNotFoundException e) {
-            throw new IllegalArgumentException(String.format("args[0]-convertCheckConfigFilePath(%s) not exist, please check file path", convertCheckConfigFilePath), e);
+            throw new AptProcessException(String.format("args[0]-convertCheckConfigFilePath(%s) not exist, please check file path", convertCheckConfigFilePath), e);
         }
 
         try {
             ArgCheckUtil.checkArg(convertCheckFileInputStream, treeNodeSchemas);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException(String.format("found error on convert config check: %s", e.getMessage()), e);
+            throw new AptProcessException(String.format("found error on convert config check: %s", e.getMessage()), e);
         }
     }
 

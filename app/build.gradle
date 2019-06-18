@@ -30,5 +30,7 @@ dependencies {
     implementation project(':compiler-plugin')
     annotationProcessor project(':compiler')
     compileOnly project(':compiler-plugin-nodeschema-export-json')
+    annotationProcessor project(':compiler-plugin-node-helper-hardcode-generator')
+    compileOnly project(':compiler-plugin-node-helper-hardcode-generator')
     annotationProcessor project(':compiler-plugin-nodeschema-export-json')
 }

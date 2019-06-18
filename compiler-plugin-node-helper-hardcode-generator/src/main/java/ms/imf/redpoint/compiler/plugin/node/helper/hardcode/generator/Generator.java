@@ -1,5 +1,5 @@
 
-package ms.imf.redpoint.compiler;
+package ms.imf.redpoint.compiler.plugin.node.helper.hardcode.generator;
 
 import com.squareup.javapoet.FieldSpec;
 import com.squareup.javapoet.JavaFile;
@@ -17,66 +17,31 @@ import javax.lang.model.element.Element;
 import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 
-import ms.imf.redpoint.annotation.SubNode;
+import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.PathEntity;
 
-/*
-interface ${CLASS}_Path {
-
-    interface ${subNodeType} {
-
-        String name$;
-
-        String arg${arg1};
-        String arg${arg2};
-        String arg${arg...};
-
-        interface ${subNodeType} {
-            ...
-        }
-
-    }
-
-}
- */
-
 /**
- * helper code generator of
- * {@link SubNode}
- * and {@link ms.imf.redpoint.annotation.Path}
- *
  * @author f_ms
  * @date 2019/5/14
  */
-class PathNodeHelperCodeGenerator {
+class Generator {
 
     private final Filer aptFiler;
 
-    PathNodeHelperCodeGenerator(Filer aptFiler) {
+    Generator(Filer aptFiler) {
         if (aptFiler == null) {
             throw new IllegalArgumentException("aptFiler can't be null");
         }
         this.aptFiler = aptFiler;
     }
 
-    void generate(List<PathEntity> paths) throws CompilerException {
+    void generate(List<PathEntity> paths) throws AptProcessException {
         for (PathEntity path : paths) {
-            try {
-                generatePath(path);
-            } catch (Exception e) {
-                throw new CompilerException(
-                        String.format(
-                                "generate %s's Path annotation helper code error: %s",
-                                path.host.getQualifiedName(),
-                                e.getMessage()
-                        ),
-                        e
-                );
-            }
+            generatePath(path);
         }
     }
 
-    private void generatePath(PathEntity path) throws CompilerException, IOException {
+    private void generatePath(PathEntity path) throws AptProcessException {
 
         final String packageName = getElementPackage(path.host).getQualifiedName().toString();
         final String className = path.host.getSimpleName().toString() + "_Path";
@@ -85,24 +50,35 @@ class PathNodeHelperCodeGenerator {
                 .addModifiers(Modifier.PUBLIC);
 
         for (PathEntity.Node node : path.nodes) {
-            try {
-                builder.addType(generateNode(node, new HashSet<>(Collections.singletonList(className))));
-            } catch (Exception e) {
-                throw new CompilerException(
-                        String.format("found error on generate node '%s': %s", node.type, e.getMessage()),
-                        e,
-                        path.host
-                );
+            builder.addType(
+                    generateNode(node, new HashSet<>(Collections.singletonList(className)))
+            );
+        }
+
+        try {
+            JavaFile
+                    .builder(packageName, builder.build())
+                    .build()
+                    .writeTo(aptFiler);
+        } catch (IOException e) {
+            throw new AptProcessException(
+                    String.format("found error on generate helper code: %s", e.getMessage()),
+                    e,
+                    path.host
+            );
+        }
+
+        if (path.nodes != null) {
+            for (PathEntity.Node node : path.nodes) {
+                if (node.subRef != null) {
+                    generatePath(node.subRef);
+                }
             }
         }
 
-        JavaFile
-                .builder(packageName, builder.build())
-                .build()
-                .writeTo(aptFiler);
     }
 
-    private TypeSpec generateNode(PathEntity.Node node, Set<String> parentLockedClassNames) throws Exception {
+    private TypeSpec generateNode(PathEntity.Node node, Set<String> parentLockedClassNames) {
 
         // node.type
         final String className = generateStandardIdentifier(parentLockedClassNames, node.type);
@@ -129,17 +105,9 @@ class PathNodeHelperCodeGenerator {
         // node.sub
         if (node.sub != null) {
             for (PathEntity.Node subNode : node.sub) {
-                try {
-                    HashSet<String> lockedClassNames = new HashSet<>(parentLockedClassNames);
-                    lockedClassNames.add(className);
-                    typeBuilder.addType(generateNode(subNode, lockedClassNames));
-                } catch (Exception e) {
-                    throw new CompilerException(String.format(
-                            "found error on generate node '%s': %s",
-                            subNode.type,
-                            e.getMessage()
-                    ));
-                }
+                HashSet<String> lockedClassNames = new HashSet<>(parentLockedClassNames);
+                lockedClassNames.add(className);
+                typeBuilder.addType(generateNode(subNode, lockedClassNames));
             }
         }
 
@@ -198,7 +166,7 @@ class PathNodeHelperCodeGenerator {
             return typeNameBuffer.toString();
         }
 
-        for (int i = 1;; i++) {
+        for (int i = 1; ; i++) {
             String finalName = String.format("%s$%s", typeNameBuffer, i);
             if (!lockedClassNames.contains(finalName)) {
                 return finalName;
