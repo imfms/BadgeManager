@@ -1,13 +1,8 @@
 package ms.imf.redpoint.compiler.plugin.node.helper.hardcode.generator;
 
-import java.util.List;
-
-import javax.annotation.processing.ProcessingEnvironment;
-
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
-import ms.imf.redpoint.compiler.plugin.PathEntity;
-import ms.imf.redpoint.entity.NodeSchema;
+import ms.imf.redpoint.compiler.plugin.PluginContext;
 
 /*
 package ${CLASS_PACKAGE_NAME}
@@ -63,9 +58,8 @@ interface ${CLASS}_Path {
 public class NodeHelperHardcodeGeneratorCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
 
     @Override
-    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws AptProcessException {
-        new Generator(processingEnvironment.getFiler())
-                .generate(treePathEntities);
+    public void onParsed(PluginContext context) throws AptProcessException {
+        new Generator(context.processingEnvironment().getFiler())
+                .generate(context.treePathEntities());
     }
-
 }

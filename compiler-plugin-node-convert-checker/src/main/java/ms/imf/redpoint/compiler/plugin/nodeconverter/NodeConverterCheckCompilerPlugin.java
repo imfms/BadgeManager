@@ -3,15 +3,11 @@ package ms.imf.redpoint.compiler.plugin.nodeconverter;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.util.List;
-
-import javax.annotation.processing.ProcessingEnvironment;
 
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
-import ms.imf.redpoint.compiler.plugin.PathEntity;
+import ms.imf.redpoint.compiler.plugin.PluginContext;
 import ms.imf.redpoint.converter.ArgCheckUtil;
-import ms.imf.redpoint.entity.NodeSchema;
 
 /**
  * node convert checker compiler plugin
@@ -20,16 +16,15 @@ import ms.imf.redpoint.entity.NodeSchema;
 public class NodeConverterCheckCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
 
     @Override
-    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws AptProcessException {
-
-        if (args == null
-                || args.length <= 0
-                || args[0] == null
-                || args[0].isEmpty()) {
+    public void onParsed(PluginContext context) throws AptProcessException {
+        if (context.args() == null
+                || context.args().length <= 0
+                || context.args()[0] == null
+                || context.args()[0].isEmpty()) {
             throw new AptProcessException("args can't be empty, I need convertCheckConfigFilePath, please add it into args[0]");
         }
 
-        String convertCheckConfigFilePath = args[0];
+        String convertCheckConfigFilePath = context.args()[0];
 
         InputStream convertCheckFileInputStream;
         try {
@@ -39,10 +34,9 @@ public class NodeConverterCheckCompilerPlugin implements ParsedNodeSchemaHandleP
         }
 
         try {
-            ArgCheckUtil.checkArg(convertCheckFileInputStream, treeNodeSchemas);
+            ArgCheckUtil.checkArg(convertCheckFileInputStream, context.treeNodeSchemas());
         } catch (IllegalArgumentException e) {
             throw new AptProcessException(String.format("found error on convert config check: %s", e.getMessage()), e);
         }
     }
-
 }

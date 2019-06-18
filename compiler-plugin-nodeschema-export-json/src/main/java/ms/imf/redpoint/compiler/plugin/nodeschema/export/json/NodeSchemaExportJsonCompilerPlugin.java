@@ -10,14 +10,13 @@ import com.google.gson.JsonSerializer;
 import java.io.IOException;
 import java.io.PrintStream;
 import java.lang.reflect.Type;
-import java.util.List;
 
 import javax.annotation.processing.ProcessingEnvironment;
 import javax.tools.StandardLocation;
 
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
-import ms.imf.redpoint.compiler.plugin.PathEntity;
+import ms.imf.redpoint.compiler.plugin.PluginContext;
 import ms.imf.redpoint.entity.NodeSchema;
 
 /**
@@ -46,15 +45,15 @@ public class NodeSchemaExportJsonCompilerPlugin implements ParsedNodeSchemaHandl
     public static final String JSON_KEY_SUB = "sub";
 
     @Override
-    public void onParsed(ProcessingEnvironment processingEnvironment, String[] args, List<PathEntity> treePathEntities, List<NodeSchema> treeNodeSchemas) throws AptProcessException {
-        if (args == null
-                || args.length <= 0
-                || args[0] == null
-                || args[0].isEmpty()) {
+    public void onParsed(PluginContext context) throws AptProcessException {
+        if (context.args() == null
+                || context.args().length <= 0
+                || context.args()[0] == null
+                || context.args()[0].isEmpty()) {
             throw new IllegalArgumentException("args can't be empty, I need java style resource location, please add it into args[0]");
         }
 
-        final String resource = args[0];
+        final String resource = context.args()[0];
 
         final String resourcePackage;
         final String resourceName;
@@ -67,9 +66,9 @@ public class NodeSchemaExportJsonCompilerPlugin implements ParsedNodeSchemaHandl
             resourceName = resource.substring(splitIndex + 1);
         }
 
-        try (PrintStream os = exportOutputStream(processingEnvironment, resourcePackage, resourceName)) {
+        try (PrintStream os = exportOutputStream(context.processingEnvironment(), resourcePackage, resourceName)) {
 
-            gson().toJson(treeNodeSchemas, os);
+            gson().toJson(context.treeNodeSchemas(), os);
             os.flush();
 
         } catch (Exception e) {

@@ -16,6 +16,7 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.annotation.processing.AbstractProcessor;
+import javax.annotation.processing.ProcessingEnvironment;
 import javax.annotation.processing.Processor;
 import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
@@ -31,6 +32,7 @@ import ms.imf.redpoint.annotation.PathAptGlobalConfig;
 import ms.imf.redpoint.annotation.Plugin;
 import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
 import ms.imf.redpoint.compiler.plugin.PathEntity;
+import ms.imf.redpoint.compiler.plugin.PluginContext;
 import ms.imf.redpoint.entity.NodeSchema;
 
 @AutoService(Processor.class)
@@ -126,7 +128,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             AnnotationValue pluginAnnotationValue = pluginAnnotationValues.get(i);
 
             String pluginClassName = ((TypeElement) ((DeclaredType) PathNodeAnnotationParser.getAnnotionMirrorValue((AnnotationMirror) pluginAnnotationValue.getValue(), "value")).asElement()).getQualifiedName().toString();
-            String[] pluginClassArguments = pluginAnnotation.args();
+            final String[] pluginClassArguments = pluginAnnotation.args();
 
             final ParsedNodeSchemaHandlePlugin plugin;
             try {
@@ -142,7 +144,13 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             }
 
             try {
-                plugin.onParsed(processingEnv, pluginClassArguments, treePathEntities, treeNodeSchemas);
+                plugin.onParsed(new PluginContext() {
+                    @Override public ProcessingEnvironment processingEnvironment() { return processingEnv; }
+                    @Override public String[] args() { return pluginClassArguments; }
+                    @Override public List<PathEntity> allPathEntities() { return allPathEntities; }
+                    @Override public List<PathEntity> treePathEntities() { return treePathEntities; }
+                    @Override public List<NodeSchema> treeNodeSchemas() { return treeNodeSchemas; }
+                });
             } catch (Exception e) {
                 showErrorTip(
                         new AptException(
