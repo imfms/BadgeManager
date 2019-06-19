@@ -125,6 +125,14 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             return false;
         }
 
+        // path node type check
+        try {
+            checkPathNodeType(allPathEntities, treePathEntities);
+        } catch (AptProcessException e) {
+            showErrorTip(e);
+            return false;
+        }
+
         if (pathAptGlobalConfig != null) {
             // process last apt round plugin
             try {
@@ -141,6 +149,62 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         }
 
         return true;
+    }
+
+    private void checkPathNodeType(List<PathEntity> allPathEntities, List<PathEntity> treePathEntities) throws AptProcessException {
+        for (PathEntity pathEntity : allPathEntities) {
+            boolean isRootNode = treePathEntities.contains(pathEntity);
+            switch (pathEntity.host.getAnnotation(Path.class).type()) {
+                case ROOT_NODE:
+                    if (!isRootNode) {
+                        PathEntity parentPathEntiity = findParentPathEntity(pathEntity, treePathEntities);
+                        throw new AptProcessException(
+                                String.format(
+                                        "'%s's PathNode should be a root node, but found it's a sub node, it has a parent PathNode '%s', please check path's link relations",
+                                        pathEntity.host.getQualifiedName(),
+                                        parentPathEntiity.host.getQualifiedName()
+                                ),
+                                pathEntity.host
+                        );
+                    }
+                    break;
+                case SUB_NODE:
+                    if (isRootNode) {
+                        throw new AptProcessException(
+                                String.format(
+                                        "'%s's PathNode should be a sub node, but found it's a root node, please check path's link relations",
+                                        pathEntity.host.getQualifiedName()
+                                ),
+                                pathEntity.host
+                        );
+                    }
+                    break;
+                case UNLIMIT:
+                default:
+                    break;
+            }
+        }
+    }
+
+    private PathEntity findParentPathEntity(PathEntity sourcePathEntity, List<PathEntity> treePathEntities) {
+        for (PathEntity pathEntity : treePathEntities) {
+            PathEntity result = findParentPathEntity(sourcePathEntity, pathEntity);
+            if (result != null) {
+                return result;
+            }
+        }
+        return null;
+    }
+
+    private PathEntity findParentPathEntity(PathEntity sourcePathEntity, PathEntity pathEntity) {
+        for (PathEntity.Node node : pathEntity.nodes) {
+            if (node.subRef == sourcePathEntity) {
+                return pathEntity;
+            } else {
+                return findParentPathEntity(sourcePathEntity, node.subRef);
+            }
+        }
+        return null;
     }
 
     private void processPlugins(String pluginProcessDesc, List<AnnotationValue> pluginAnnotationValues, Plugin[] plugins, final List<PathEntity> allPathEntities) throws AptProcessException {

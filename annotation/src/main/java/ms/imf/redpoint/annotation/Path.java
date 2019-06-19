@@ -31,4 +31,9 @@ public @interface Path {
      * 则在nodesJsonRefClassMapper中需要存在abc对应的subNodeRefClass: @Mapper(key = "abc", value = Xxx.class)
      */
     Mapper[] nodesJsonRefClassMapper() default {};
+
+    /**
+     * node's type
+     */
+    NodeType type() default NodeType.UNLIMIT;
 }
