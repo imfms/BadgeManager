@@ -7,9 +7,9 @@ import java.util.List;
 
 import ms.imf.redpoint.entity.NodePath;
 
-public abstract class AbstractRemindHandler {
+public abstract class RemindHandler {
 
-    private final RemindHandlerControlCenter remindController = RemindHandlerControlCenter.instance();
+    private final RemindHandlerManager remindController = RemindHandlerManager.instance();
     private final List<NodePath> paths = new LinkedList<>();
 
     public void setPath(NodePath... paths) {
@@ -49,14 +49,14 @@ public abstract class AbstractRemindHandler {
         this.paths.addAll(paths);
 
         if (attachedRepo()) {
-            remindController.notifyRemindChanged(this);
+            remindController.notifyRemindHandlerChanged(this);
         }
     }
 
     public void clearPath() {
         this.paths.clear();
         if (attachedRepo()) {
-            remindController.notifyRemindChanged(this);
+            remindController.notifyRemindHandlerChanged(this);
         }
     }
 
@@ -97,11 +97,11 @@ public abstract class AbstractRemindHandler {
     protected abstract void showReminds(int num);
 
     public void onHappend() {
-        remindController.happened(this);
+        remindController.happenedRemindHandler(this);
     }
 
     public void onHappednAll() {
-        remindController.happenedAll(this);
+        remindController.happenedRemindHandlerWithSubNodeAll(this);
     }
 
     @Override
@@ -116,7 +116,7 @@ public abstract class AbstractRemindHandler {
 
     @Override
     public String toString() {
-        return "AbstractRemindHandler{" +
+        return "RemindHandler{" +
                 "paths=" + paths +
                 '}';
     }
