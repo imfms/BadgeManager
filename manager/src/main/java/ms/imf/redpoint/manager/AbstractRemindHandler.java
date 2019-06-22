@@ -49,14 +49,14 @@ public abstract class AbstractRemindHandler {
         this.paths.addAll(paths);
 
         if (attachedRepo()) {
-            remindController.notifyRemindChanged(this);
+            remindController.notifyRemindHandlerChanged(this);
         }
     }
 
     public void clearPath() {
         this.paths.clear();
         if (attachedRepo()) {
-            remindController.notifyRemindChanged(this);
+            remindController.notifyRemindHandlerChanged(this);
         }
     }
 
@@ -97,11 +97,11 @@ public abstract class AbstractRemindHandler {
     protected abstract void showReminds(int num);
 
     public void onHappend() {
-        remindController.happened(this);
+        remindController.happenedRemindHandler(this);
     }
 
     public void onHappednAll() {
-        remindController.happenedAll(this);
+        remindController.happenedRemindHandlerWithSubNodeAll(this);
     }
 
     @Override
