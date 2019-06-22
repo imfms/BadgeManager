@@ -8,16 +8,16 @@ import java.util.Set;
 import ms.imf.redpoint.entity.NodePath;
 
 
-public class SimpleRemindHandlerControlCenter extends AbstractRemindHandlerControlCenter {
+public class SimpleRemindHandlerManager extends AbstractRemindHandlerManager {
 
-    private final Set<AbstractRemindHandler> remindHandlers = new LinkedHashSet<>();
+    private final Set<RemindHandler> remindHandlers = new LinkedHashSet<>();
 
-    public SimpleRemindHandlerControlCenter(RemindRepo repo) {
+    public SimpleRemindHandlerManager(RemindRepo repo) {
         super(repo);
     }
 
     @Override
-    public void addRemindHandler(AbstractRemindHandler handler) {
+    public void addRemindHandler(RemindHandler handler) {
         if (handler == null) { throw new IllegalArgumentException("handler can't be null"); }
         if (remindHandlers.contains(handler)) {
             return;
@@ -27,7 +27,7 @@ public class SimpleRemindHandlerControlCenter extends AbstractRemindHandlerContr
     }
 
     @Override
-    public void removeRemindHandler(AbstractRemindHandler handler) {
+    public void removeRemindHandler(RemindHandler handler) {
         if (handler == null) {
             return;
         }
@@ -35,7 +35,7 @@ public class SimpleRemindHandlerControlCenter extends AbstractRemindHandlerContr
     }
 
     @Override
-    public void happenedRemindHandler(AbstractRemindHandler handler) {
+    public void happenedRemindHandler(RemindHandler handler) {
 
         if (!remindHandlerAttached(handler)) {
             return;
@@ -55,7 +55,7 @@ public class SimpleRemindHandlerControlCenter extends AbstractRemindHandlerContr
      * 消费指定handler节点下所有消息(包括handler节点本身)
      */
     @Override
-    public void happenedRemindHandlerWithSubNodeAll(AbstractRemindHandler handler) {
+    public void happenedRemindHandlerWithSubNodeAll(RemindHandler handler) {
         if (!remindHandlerAttached(handler)) {
             return;
         }
@@ -67,13 +67,13 @@ public class SimpleRemindHandlerControlCenter extends AbstractRemindHandlerContr
 
     @Override
     public void notifyRemindDataChanged() {
-        for (AbstractRemindHandler handler : remindHandlers) {
+        for (RemindHandler handler : remindHandlers) {
             notifyRemindHandlerChanged(handler);
         }
     }
 
     @Override
-    public void notifyRemindHandlerChanged(AbstractRemindHandler handler) {
+    public void notifyRemindHandlerChanged(RemindHandler handler) {
 
         List<Remind> reminds = new LinkedList<>();
         for (NodePath path : handler.getPaths()) {
@@ -84,7 +84,7 @@ public class SimpleRemindHandlerControlCenter extends AbstractRemindHandlerContr
     }
 
     @Override
-    public boolean remindHandlerAttached(AbstractRemindHandler handler) {
+    public boolean remindHandlerAttached(RemindHandler handler) {
         if (handler == null) {
             return false;
         }

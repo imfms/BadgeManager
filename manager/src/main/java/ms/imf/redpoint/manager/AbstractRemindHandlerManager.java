@@ -1,14 +1,14 @@
 package ms.imf.redpoint.manager;
 
-public abstract class AbstractRemindHandlerControlCenter extends RemindHandlerControlCenter{
+public abstract class AbstractRemindHandlerManager extends RemindHandlerManager {
 
-    public AbstractRemindHandlerControlCenter(RemindRepo repo) {
+    public AbstractRemindHandlerManager(RemindRepo repo) {
         super(repo);
     }
 
     @Override
-    public void happenedRemindHandlers(Iterable<AbstractRemindHandler> handler) {
-        for (AbstractRemindHandler remindHandler : handler) {
+    public void happenedRemindHandlers(Iterable<RemindHandler> handler) {
+        for (RemindHandler remindHandler : handler) {
             happenedRemindHandler(remindHandler);
         }
     }
@@ -21,8 +21,8 @@ public abstract class AbstractRemindHandlerControlCenter extends RemindHandlerCo
     }
 
     @Override
-    public void happenedRemindHandlersWithSubNodeAll(Iterable<AbstractRemindHandler> handlers) {
-        for (AbstractRemindHandler handler : handlers) {
+    public void happenedRemindHandlersWithSubNodeAll(Iterable<RemindHandler> handlers) {
+        for (RemindHandler handler : handlers) {
             happenedRemindHandlerWithSubNodeAll(handler);
         }
     }
