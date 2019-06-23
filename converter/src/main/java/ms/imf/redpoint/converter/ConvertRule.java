@@ -23,12 +23,26 @@ public class ConvertRule {
     }
 
     public static class Arg {
-        @SerializedName("myLevel")
-        public Integer myLevel;
-        @SerializedName("myArg")
-        public String myArg;
         @SerializedName("hisArg")
         public String hisArg;
+        /**
+         * 与 {@link #refValue} 只能出现一个
+         */
+        @SerializedName("value")
+        public String value;
+        /**
+         * 与 {@link #value} 只能出现一个
+         */
+        @SerializedName("refValue")
+        public RefValue refValue;
+
+        public static class RefValue {
+            @SerializedName("myLevel")
+            public Integer myLevel;
+            @SerializedName("myArg")
+            public String myArg;
+        }
+
     }
 
 }

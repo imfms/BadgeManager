@@ -20,8 +20,7 @@ import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.PathEntity;
 
 /**
- * @author f_ms
- * @date 2019/5/14
+ * @see NodeHelperHardcodeGeneratorCompilerPlugin
  */
 class Generator {
 
@@ -84,12 +83,31 @@ class Generator {
 
         // node.args
         if (node.args != null) {
-            for (String arg : node.args) {
+            for (PathEntity.NodeArg arg : node.args) {
+                String argFieldName = generateStandardIdentifier(String.format("arg$%s", arg.name));
                 typeBuilder.addField(
-                        FieldSpec.builder(String.class, "arg$" + generateStandardIdentifier(arg), Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                                .initializer("$S", arg)
+                        FieldSpec.builder(String.class, argFieldName, Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+                                .initializer("$S", arg.name)
                                 .build()
                 );
+                if (arg.valueLimits != null) {
+                    Set<String> lockedNames = new HashSet<>(
+                            Collections.singleton(argFieldName)
+                    );
+                    for (String valueLimit : arg.valueLimits) {
+
+                        String argValueFieldName = generateStandardIdentifier(lockedNames, String.format("%s$%s", argFieldName, valueLimit));
+                        typeBuilder.addField(
+                                FieldSpec.builder(String.class, argValueFieldName, Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
+                                        .initializer("$S", valueLimit)
+                                        .build()
+                        );
+
+                        lockedNames.add(argValueFieldName);
+                    }
+                }
+
+
             }
         }
 
@@ -129,14 +147,14 @@ class Generator {
             "null", "true", "false"
     };
 
-    private static String generateStandardIdentifier(String typeName) {
-        return generateStandardIdentifier(Collections.<String>emptySet(), typeName);
+    private static String generateStandardIdentifier(String name) {
+        return generateStandardIdentifier(Collections.<String>emptySet(), name);
     }
 
     /**
      * https://docs.oracle.com/javase/specs/jls/se12/html/jls-3.html#jls-IdentifierChars
      */
-    private static String generateStandardIdentifier(Set<String> lockedClassNames, String typeName) {
+    private static String generateStandardIdentifier(Set<String> lockedNames, String typeName) {
         final StringBuilder typeNameBuffer = new StringBuilder(typeName);
 
         if (Arrays.asList(JAVA_KEYWORDS).contains(typeName)) {
@@ -153,13 +171,13 @@ class Generator {
             }
         }
 
-        if (!lockedClassNames.contains(typeNameBuffer.toString())) {
+        if (!lockedNames.contains(typeNameBuffer.toString())) {
             return typeNameBuffer.toString();
         }
 
-        for (int i = 1; ; i++) {
-            String finalName = String.format("%s$%s", typeNameBuffer, i);
-            if (!lockedClassNames.contains(finalName)) {
+        for (int i = 2; ; i++) {
+            String finalName = String.format("%s_%s", typeNameBuffer, i);
+            if (!lockedNames.contains(finalName)) {
                 return finalName;
             }
         }

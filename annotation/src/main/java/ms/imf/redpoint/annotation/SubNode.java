@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 public @interface SubNode {
     String type();
 
-    String[] args() default {};
+    NodeArg[] args() default {};
 
     /**
      * 子节点列表, 与 {@link #subRef()} 只能指定一项

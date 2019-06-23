@@ -21,6 +21,7 @@ import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.Elements;
 
+import ms.imf.redpoint.annotation.NodeArg;
 import ms.imf.redpoint.annotation.Path;
 import ms.imf.redpoint.annotation.SubNode;
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
@@ -181,7 +182,11 @@ class PathNodeAnnotationParser {
         final List<PathEntity.Node> results = new LinkedList<>();
 
         final Map<String, TypeElement> nodeJsonRefTypeMapper = new HashMap<>();
-        for (AnnotationMirror mapperMirror : PathNodeAnnotationParser.<List<AnnotationMirror>>getAnnotionMirrorValue(pathMirror, "nodesJsonRefClassMapper")) {
+        List<AnnotationMirror> nodesJsonRefClassMappers = PathNodeAnnotationParser.<List<AnnotationMirror>>getAnnotionMirrorValue(pathMirror, "nodesJsonRefClassMapper");
+        if (nodesJsonRefClassMappers == null) {
+            nodesJsonRefClassMappers = Collections.emptyList();
+        }
+        for (AnnotationMirror mapperMirror : nodesJsonRefClassMappers) {
             String key = PathNodeAnnotationParser.getAnnotionMirrorValue(mapperMirror, "key");
             TypeElement value = (TypeElement) PathNodeAnnotationParser.<DeclaredType>getAnnotionMirrorValue(mapperMirror, "value").asElement();
             if (nodeJsonRefTypeMapper.put(key, value) != null) {
@@ -237,7 +242,20 @@ class PathNodeAnnotationParser {
         NodeParseEntity nodeParseEntity = new NodeParseEntity();
 
         nodeParseEntity.type = subNodeWrapper.type();
-        nodeParseEntity.args = subNodeWrapper.args();
+
+        if (subNodeWrapper.args() != null) {
+            nodeParseEntity.args = new ArrayList<>(subNodeWrapper.args().length);
+
+            for (NodeArg sourceArg : subNodeWrapper.args()) {
+
+                NodeParseEntity.NodeArg targetArg = new NodeParseEntity.NodeArg();
+                targetArg.name = sourceArg.value();
+                targetArg.valueLimits = Arrays.asList(sourceArg.valueLimits());
+
+                nodeParseEntity.args.add(targetArg);
+            }
+        }
+
         nodeParseEntity.subNodeRef = subNodeWrapper.subRef();
 
         Sub[] subNodes = subNodeWrapper.subNodes();
@@ -286,7 +304,26 @@ class PathNodeAnnotationParser {
 
         nodeParseEntity.type = jsonNode.type;
 
-        nodeParseEntity.args = jsonNode.args;
+        if (jsonNode.args != null
+                && jsonNode.args.length > 0) {
+
+            int nullIndex = Arrays.asList(jsonNode.args).indexOf(null);
+            if (nullIndex >= 0) {
+                throw new AptProcessException(String.format("args can't contain null value, but found on index '%d'", nullIndex));
+            }
+
+            nodeParseEntity.args = new ArrayList<>(jsonNode.args.length);
+
+            for (JsonNode.Arg sourceArg : jsonNode.args) {
+                NodeParseEntity.NodeArg targetArg = new NodeParseEntity.NodeArg();
+                targetArg.name = sourceArg.name;
+                if (sourceArg.limits != null) {
+                    targetArg.valueLimits = Arrays.asList(sourceArg.limits);
+                }
+
+                nodeParseEntity.args.add(targetArg);
+            }
+        }
 
         if (jsonNode.subNodes != null
                 && !jsonNode.subNodes.isEmpty()) {
@@ -319,39 +356,60 @@ class PathNodeAnnotationParser {
     private PathEntity.Node nodeParseEntityToPathNodeEntity(TypeElement annotatedPathTypeElement, NodeParseEntity nodeParseEntity) throws AptProcessException {
         final PathEntity.Node resultNodeEntity = new PathEntity.Node();
 
-        // parse type
+        // type convert
         if (nodeParseEntity.type == null
                 || nodeParseEntity.type.isEmpty()) {
             throw new AptProcessException("nodeJson's type can't be null", annotatedPathTypeElement);
         }
         resultNodeEntity.type = nodeParseEntity.type;
 
-        // parse args
-        if (nodeParseEntity.args == null) {
-            resultNodeEntity.args = Collections.emptyList();
-        } else {
+        // args convert
+        if (nodeParseEntity.args != null) {
 
-            // check empty arg
-            for (int nullIndex : new int[]{
-                    Arrays.asList(nodeParseEntity.args).indexOf(null),
-                    Arrays.asList(nodeParseEntity.args).indexOf("")}) {
-                if (nullIndex >= 0) {
-                    throw new AptProcessException(
-                            String.format("nodeJson's args can't contains null or empty value, but found in index '%d'", nullIndex),
-                            annotatedPathTypeElement
-                    );
+            // check null arg
+            int nullIndex = nodeParseEntity.args.indexOf(null);
+            if (nullIndex >= 0) {
+                throw new AptProcessException(
+                        String.format("nodeJson's args can't contains null value, but found in index '%d'", nullIndex),
+                        annotatedPathTypeElement
+                );
+            }
+
+            // check repeat
+            final Set<String> repeatArgNames = new HashSet<>();
+            for (NodeParseEntity.NodeArg arg : nodeParseEntity.args) {
+
+                // arg name
+                if (!repeatArgNames.add(arg.name)) {
+                    throw new AptProcessException("find repeat arg: " + arg.name, annotatedPathTypeElement);
+                }
+
+                // arg valueLimits
+                if (arg.valueLimits != null) {
+
+                    int valueLimitNullIndex = arg.valueLimits.indexOf(null);
+                    if (valueLimitNullIndex >= 0) {
+                        throw new AptProcessException(String.format("find null value in arg '%s'.valueLimits[%s]", arg.name, valueLimitNullIndex), annotatedPathTypeElement);
+                    }
+
+                    final Set<String> repeatValueLimits = new HashSet<>();
+                    for (String valueLimit : arg.valueLimits) {
+                        if (!repeatValueLimits.add(valueLimit)) {
+                            throw new AptProcessException(String.format("find repeat arg's valueLimit '%s' in arg '%s'", valueLimit, arg.name), annotatedPathTypeElement);
+                        }
+                    }
                 }
             }
 
-            // check repeat arg
-            final Set<String> repeatElements = new HashSet<>();
-            for (String arg : nodeParseEntity.args) {
-                if (!repeatElements.add(arg)) {
-                    throw new AptProcessException("find repeat arg: " + arg, annotatedPathTypeElement);
-                }
-            }
+            // convert arg
+            resultNodeEntity.args = new ArrayList<>(nodeParseEntity.args.size());
+            for (NodeParseEntity.NodeArg sourceArg : nodeParseEntity.args) {
+                PathEntity.NodeArg targetArg = new PathEntity.NodeArg();
+                targetArg.name = sourceArg.name;
+                targetArg.valueLimits = sourceArg.valueLimits;
 
-            resultNodeEntity.args = Arrays.asList(nodeParseEntity.args);
+                resultNodeEntity.args.add(targetArg);
+            }
         }
 
         // check subNode
@@ -388,22 +446,37 @@ class PathNodeAnnotationParser {
         return resultNodeEntity;
     }
 
+    /**
+     * @see Path#nodesJson()
+     */
     private static class JsonNode {
         @SerializedName("type")
-        public String type;
+        String type;
         @SerializedName("args")
-        public String[] args;
+        Arg[] args;
         @SerializedName("subNodes")
-        public List<JsonNode> subNodes;
+        List<JsonNode> subNodes;
         @SerializedName("subNodeRef")
-        public String subNodeRef;
+        String subNodeRef;
+
+        static class Arg {
+            @SerializedName("name")
+            String name;
+            @SerializedName("limits")
+            String[] limits;
+        }
     }
 
     private static class NodeParseEntity {
         public String type;
-        public String[] args;
+        public List<NodeArg> args;
         public List<NodeParseEntity> subNodes;
         public TypeElement subNodeRef;
+
+        public static class NodeArg {
+            public String name;
+            public List<String> valueLimits;
+        }
     }
 
     static <T> T getAnnotionMirrorValue(AnnotationMirror annotationMirror, String key) {
@@ -505,7 +578,19 @@ class PathNodeAnnotationParser {
         NodeSchema nodeSchema = new NodeSchema();
 
         nodeSchema.type = nodeEntity.type;
-        nodeSchema.args = nodeEntity.args;
+
+        if (nodeEntity.args != null) {
+            nodeSchema.args = new ArrayList<>(nodeEntity.args.size());
+
+            for (PathEntity.NodeArg sourceArg : nodeEntity.args) {
+                NodeSchema.NodeArg targetArg = new NodeSchema.NodeArg();
+                targetArg.name = sourceArg.name;
+                targetArg.valueLimits = sourceArg.valueLimits;
+
+                nodeSchema.args.add(targetArg);
+            }
+
+        }
 
         List<PathEntity.Node> subNodeEntities = null;
         if (nodeEntity.sub != null) {

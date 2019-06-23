@@ -8,6 +8,7 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.TYPE)
 public @interface Path {
+
     SubNode[] value() default {};
 
     /**
@@ -15,13 +16,22 @@ public @interface Path {
      * <p>
      * | String type; {@link SubNode#type()}
      * <p>
-     * | String[] args; {@link SubNode#args()}}
+     * | Arg[] args; {@link SubNode#args()}}
      * <p>
-     * | Node[] subNodes;
+     * | Node[] subNodes; {@link SubNode#subNodes()}}
      * <p>
      * | String subNodeRef; {@link SubNode#subRef()}
      * <p>
      * }
+     * <p>
+     * Arg {
+     * <p>
+     * | String name; {@link NodeArg#value()}}
+     * <p>
+     * | String[] limits; {@link NodeArg#valueLimits()}}
+     * <p>
+     * }
+     * <p>
      */
     String[] nodesJson() default {};
 
