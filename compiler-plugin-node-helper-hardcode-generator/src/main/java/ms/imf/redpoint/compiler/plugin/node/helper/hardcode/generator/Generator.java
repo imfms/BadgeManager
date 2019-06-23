@@ -1,4 +1,3 @@
-
 package ms.imf.redpoint.compiler.plugin.node.helper.hardcode.generator;
 
 import com.squareup.javapoet.FieldSpec;
@@ -47,6 +46,7 @@ class Generator {
         final String className = path.host.getSimpleName().toString() + "_Path";
 
         TypeSpec.Builder builder = TypeSpec.interfaceBuilder(className)
+                .addJavadoc("@see $T", path.host)
                 .addModifiers(Modifier.PUBLIC);
 
         for (PathEntity.Node node : path.nodes) {
