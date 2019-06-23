@@ -11,9 +11,14 @@ public class PathEntity {
 
     public static class Node {
         public String type;
-        public List<String> args;
+        public List<NodeArg> args;
         public List<Node> sub;
         public PathEntity subRef;
+    }
+
+    public static class NodeArg {
+        public String name;
+        public List<String> valueLimits;
     }
 
 }

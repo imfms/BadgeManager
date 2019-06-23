@@ -17,7 +17,7 @@ public @interface SubNode2 {
     /**
      * @see SubNode#args()
      */
-    String[] args() default {};
+    NodeArg[] args() default {};
 
     /**
      * @see SubNode#subNodes()

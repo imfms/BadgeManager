@@ -139,12 +139,21 @@ public class PathConverter {
 
             if (convertTo.args != null) {
                 for (ConvertRule.Arg arg : convertTo.args) {
-                    Node targetLevelNode = sourceNodes.get(arg.myLevel);
-                    if (targetLevelNode.args != null) {
-                        args.put(
-                                arg.hisArg,
-                                targetLevelNode.args.get(arg.myArg)
-                        );
+
+                    if (arg.value != null) {
+                        args.put(arg.hisArg, arg.value);
+                        continue;
+                    }
+
+                    if (arg.refValue != null) {
+                        Node targetLevelNode = sourceNodes.get(arg.refValue.myLevel);
+                        if (targetLevelNode.args != null) {
+                            args.put(
+                                    arg.hisArg,
+                                    targetLevelNode.args.get(arg.refValue.myArg)
+                            );
+                        }
+                        continue;
                     }
                 }
             }

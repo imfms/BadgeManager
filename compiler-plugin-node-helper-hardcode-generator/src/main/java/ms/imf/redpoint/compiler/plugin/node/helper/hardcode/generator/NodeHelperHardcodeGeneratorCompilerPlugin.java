@@ -39,8 +39,8 @@ interface ${CLASS}_Path {
  * <p>&nbsp;&nbsp;interface&nbsp;${subNodeType}&nbsp;{
  * <p>
  * <p>&nbsp;&nbsp;&nbsp;&nbsp;String&nbsp;name$;
- * <p>&nbsp;&nbsp;&nbsp;&nbsp;String&nbsp;arg${arg1};
  * <p>&nbsp;&nbsp;&nbsp;&nbsp;String&nbsp;arg${arg...};
+ * <p>&nbsp;&nbsp;&nbsp;&nbsp;String&nbsp;arg${arg...}${argValueLimit...};
  * <p>
  * <p>&nbsp;&nbsp;&nbsp;&nbsp;interface&nbsp;${subNodeType}&nbsp;{
  * <p>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...
