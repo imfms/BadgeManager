@@ -2,7 +2,6 @@ package ms.imf.redpoint.compiler;
 
 
 import com.google.auto.service.AutoService;
-import com.google.gson.Gson;
 
 import java.io.ByteArrayOutputStream;
 import java.io.PrintStream;
@@ -47,7 +46,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
     public Set<String> getSupportedAnnotationTypes() {
         final LinkedHashSet<String> supportedTypes = new LinkedHashSet<>();
 
-        for (Class annotationClass : new Class[]{ Path.class, PathAptGlobalConfig.class }) {
+        for (Class annotationClass : new Class[]{Path.class, PathAptGlobalConfig.class}) {
             supportedTypes.add(annotationClass.getCanonicalName());
         }
 
@@ -55,7 +54,6 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
     }
 
     private final List<PathEntity> allPathEntities = new LinkedList<>();
-    private final Gson gson = new Gson();
 
     private TypeElement lastPathAptGlobalConfigAnnotationHost;
     private PathAptGlobalConfig pathAptGlobalConfig;
@@ -88,7 +86,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         try {
             pathEntities = pathNodeAnnotationParser.parsePaths(pathAnnotationTypes);
         } catch (AptProcessException e) {
-            showErrorTip(e);
+            showErrorTip(new AptProcessException(String.format("found error on parsing @Path: %s", e.getMessage()), e));
             return false;
         }
 
@@ -97,7 +95,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             try {
                 processPlugins(
                         "each apt round plugin",
-                        PathNodeAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "eachAptRoundPlugins"),
+                        PathNodeAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "eachAptRoundPlugins" /* todo runtime check */),
                         pathAptGlobalConfig.eachAptRoundPlugins(),
                         pathEntities
                 );
@@ -138,7 +136,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             try {
                 processPlugins(
                         "last apt round plugin",
-                        PathNodeAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "lastAptRoundPlugins"),
+                        PathNodeAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "lastAptRoundPlugins" /* todo runtime check */),
                         pathAptGlobalConfig.lastAptRoundPlugins(),
                         allPathEntities
                 );
@@ -160,7 +158,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                         PathEntity parentPathEntiity = findParentPathEntity(pathEntity, treePathEntities);
                         throw new AptProcessException(
                                 String.format(
-                                        "'%s's PathNode should be a root node, but found it's a sub node, it has a parent PathNode '%s', please check path's link relations",
+                                        "'%s's PathNode should be a root node, but it's a sub node, it has a parent '%s', please check path's link relations",
                                         pathEntity.host.getQualifiedName(),
                                         parentPathEntiity.host.getQualifiedName()
                                 ),
@@ -172,7 +170,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                     if (isRootNode) {
                         throw new AptProcessException(
                                 String.format(
-                                        "'%s's PathNode should be a sub node, but found it's a root node, please check path's link relations",
+                                        "'%s's PathNode should be a sub node, but it's a root node, please check path's link relations",
                                         pathEntity.host.getQualifiedName()
                                 ),
                                 pathEntity.host
@@ -220,7 +218,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
             Plugin pluginAnnotation = plugins[i];
             AnnotationValue pluginAnnotationValue = pluginAnnotationValues.get(i);
 
-            String pluginClassName = ((TypeElement) ((DeclaredType) PathNodeAnnotationParser.getAnnotionMirrorValue((AnnotationMirror) pluginAnnotationValue.getValue(), "value")).asElement()).getQualifiedName().toString();
+            final String pluginClassName = ((TypeElement) ((DeclaredType) PathNodeAnnotationParser.getAnnotionMirrorValue((AnnotationMirror) pluginAnnotationValue.getValue(), "value" /* todo runtime check */)).asElement()).getQualifiedName().toString();
             final String[] pluginClassArguments = pluginAnnotation.args();
 
             final ParsedNodeSchemaHandlePlugin plugin;
@@ -242,16 +240,31 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                 @SuppressWarnings("unchecked") final List<NodeSchema>[] treeNodeSchemas = new List[1];
 
                 plugin.onParsed(new PluginContext() {
-                    @Override public ProcessingEnvironment processingEnvironment() { return processingEnv; }
-                    @Override public String[] args() { return pluginClassArguments; }
-                    @Override public List<PathEntity> allPathEntities() { return allPathEntities; }
-                    @Override public List<PathEntity> treePathEntities() {
+                    @Override
+                    public ProcessingEnvironment processingEnvironment() {
+                        return processingEnv;
+                    }
+
+                    @Override
+                    public String[] args() {
+                        return pluginClassArguments;
+                    }
+
+                    @Override
+                    public List<PathEntity> allPathEntities() {
+                        return allPathEntities;
+                    }
+
+                    @Override
+                    public List<PathEntity> treePathEntities() {
                         if (treePathEntities[0] == null) {
                             treePathEntities[0] = PathNodeAnnotationParser.convertPathTree(allPathEntities());
                         }
                         return treePathEntities[0];
                     }
-                    @Override public List<NodeSchema> treeNodeSchemas() {
+
+                    @Override
+                    public List<NodeSchema> treeNodeSchemas() {
                         if (treeNodeSchemas[0] == null) {
                             treeNodeSchemas[0] = PathNodeAnnotationParser.generateNodeSchemaTree(treePathEntities());
                         }
@@ -273,17 +286,17 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
         try {
             pluginClass = Class.forName(pluginClassName);
         } catch (ClassNotFoundException e) {
-            throw new IllegalArgumentException(String.format("can't find class '%s', please check classpath", pluginClassName), e);
+            throw new IllegalStateException(String.format("can't find plugin's class '%s', please check classpath", pluginClassName), e);
         }
 
         if (!ParsedNodeSchemaHandlePlugin.class.isAssignableFrom(pluginClass)) {
-            throw new IllegalArgumentException(String.format("plugin class '%s' is not %s's instance, please check plugin's type", pluginClassName, ParsedNodeSchemaHandlePlugin.class.getCanonicalName()));
+            throw new IllegalArgumentException(String.format("class '%s' is not %s's subtype, please check plugin's type", pluginClassName, ParsedNodeSchemaHandlePlugin.class.getCanonicalName()));
         }
 
         try {
             return (ParsedNodeSchemaHandlePlugin) pluginClass.newInstance();
         } catch (ReflectiveOperationException e) {
-            throw new IllegalArgumentException(String.format("can't create '%s's instance: %s", pluginClassName, e.getMessage()), e);
+            throw new IllegalStateException(String.format("can't create '%s's instance: %s", pluginClassName, e.getMessage()), e);
         }
     }
 
@@ -295,7 +308,7 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                 if (repeatPathEntity != null) {
                     throw new AptProcessException(
                             String.format(
-                                    "found repeat root node type '%s' on %s and %s, please check root type or path's link",
+                                    "found repeat root node type '%s' on %s and %s, please check root type or path's link relations",
                                     node.type,
                                     repeatPathEntity.host.getQualifiedName(),
                                     pathEntity.host.getQualifiedName()
@@ -336,7 +349,13 @@ public class PathNodeAnnotationProcessor extends AbstractProcessor {
                 }
             }
 
-            throw new AptProcessException(String.format("PathAptGlobalConfig only can exist one, but found these: %s", elementsTip), repeatElements.get(0));
+            throw new AptProcessException(
+                    String.format(
+                            "%s annotation only can exist one, but found more: %s",
+                            PathAptGlobalConfig.class.getSimpleName(), elementsTip
+                    ),
+                    repeatElements.get(0)
+            );
         }
 
         final TypeElement host = annotationElements.iterator().next();
