@@ -9,8 +9,10 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -59,9 +61,19 @@ class PathNodeAnnotationParser {
 
         try {
             for (TypeElement typeElement : annotatedPathTypeElements) {
-                results.add(
-                        parsePathWrapper(typeElement)
-                );
+                try {
+                    results.add(
+                            parsePath(typeElement)
+                    );
+                } catch (AptProcessException e) {
+                    throw new AptProcessException(
+                            String.format(
+                                    "%s: %s",
+                                    typeElement.getQualifiedName(), e.getMessage()
+                            ),
+                            e
+                    );
+                }
             }
         } finally {
             pathEntityPoll.clear();
@@ -69,17 +81,6 @@ class PathNodeAnnotationParser {
         }
 
         return results;
-    }
-
-    private PathEntity parsePathWrapper(TypeElement annotatedPathTypeElement) throws AptProcessException {
-        try {
-            return parsePath(annotatedPathTypeElement);
-        } catch (AptProcessException e) {
-            throw new AptProcessException(
-                    String.format("found error on parse type %s's PathAnnotation: %s", annotatedPathTypeElement.getQualifiedName(), e.getMessage()),
-                    e
-            );
-        }
     }
 
     private PathEntity parsePath(TypeElement annotatedPathTypeElement) throws AptProcessException {
@@ -104,17 +105,32 @@ class PathNodeAnnotationParser {
 
         // check circular reference
         if (parsingTypeElements.contains(annotatedPathTypeElement)) {
-            final StringBuilder stack = new StringBuilder();
             List<TypeElement> copyParsingTypeElements = new LinkedList<>(parsingTypeElements);
             copyParsingTypeElements.add(annotatedPathTypeElement);
-            for (TypeElement parsingTypeElement : copyParsingTypeElements) {
-                stack.append('\n')
-                        .append(parsingTypeElement.getQualifiedName());
+
+            // A>B>C>B: [A,#B,C,#B]
+            final StringBuilder stack = new StringBuilder();
+            stack.append('[');
+            Iterator<TypeElement> iterator = copyParsingTypeElements.iterator();
+            while (iterator.hasNext()) {
+                TypeElement stackElement = iterator.next();
+
+                boolean isCircle = stackElement == annotatedPathTypeElement;
+                if (isCircle) { stack.append('*'); }
+
+                stack.append(stackElement.getQualifiedName());
+
+                if (isCircle) { stack.append('*'); }
+
+                if (iterator.hasNext()) {
+                    stack.append(',').append(' ');
+                }
             }
+            stack.append(']');
+
             throw new AptProcessException(
                     String.format(
-                            "found Path circular reference on '%s', this is circular reference stack: %s",
-                            annotatedPathTypeElement.getQualifiedName(),
+                            "circular reference, this is stack: %s",
                             stack
                     ),
                     annotatedPathTypeElement,
@@ -122,23 +138,26 @@ class PathNodeAnnotationParser {
             );
         }
 
+        // reuse parsed path entity
         final PathEntity pollPathEntity = pathEntityPoll.get(annotatedPathTypeElement);
         if (pollPathEntity != null) {
             return pollPathEntity;
         }
 
-        // for check circular reference
+        // use for check circular reference
         parsingTypeElements.add(annotatedPathTypeElement);
         final PathEntity resultPathEntity;
         try {
             // raw parse
             resultPathEntity = parsePathRaw(annotatedPathTypeElement, path, pathMirror);
         } finally {
-            // for check circular reference
+            // use for check circular reference
             parsingTypeElements.remove(annotatedPathTypeElement);
         }
 
+        // use for reuse parsed path entity
         pathEntityPoll.put(annotatedPathTypeElement, resultPathEntity);
+
         return resultPathEntity;
     }
 
@@ -153,14 +172,14 @@ class PathNodeAnnotationParser {
             try {
                 nodeEntities.addAll(pathNodeToNodeEntity(annotatedPathTypeElement, path, pathMirror));
             } catch (AptProcessException e) {
-                throw new AptProcessException(String.format("found error on parse nodes: %s", e.getMessage()), e);
+                throw new AptProcessException(String.format("value(nodes): %s", e.getMessage()), e);
             }
         }
         if (jsonMode) {
             try {
                 nodeEntities.addAll(pathNodeJsonToNodeEntity(annotatedPathTypeElement, path, pathMirror));
             } catch (AptProcessException e) {
-                throw new AptProcessException(String.format("found error on parse nodesJson: %s", e.getMessage()), e);
+                throw new AptProcessException(String.format("nodesJson: %s", e.getMessage()), e);
             }
         }
 
@@ -168,7 +187,10 @@ class PathNodeAnnotationParser {
         final Set<String> repeatElements = new HashSet<>();
         for (PathEntity.Node nodeEntity : nodeEntities) {
             if (!repeatElements.add(nodeEntity.type)) {
-                throw new AptProcessException("find repeat type in nodes and nodesJson: " + nodeEntity.type, annotatedPathTypeElement, pathMirror);
+                throw new AptProcessException(
+                        String.format("repeat type in nodes and nodesJson: %s", nodeEntity.type),
+                        annotatedPathTypeElement, pathMirror
+                );
             }
         }
 
@@ -182,16 +204,21 @@ class PathNodeAnnotationParser {
         final List<PathEntity.Node> results = new LinkedList<>();
 
         final Map<String, TypeElement> nodeJsonRefTypeMapper = new HashMap<>();
-        List<AnnotationMirror> nodesJsonRefClassMappers = PathNodeAnnotationParser.<List<AnnotationMirror>>getAnnotionMirrorValue(pathMirror, "nodesJsonRefClassMapper");
+        List<AnnotationMirror> nodesJsonRefClassMappers = PathNodeAnnotationParser.<List<AnnotationMirror>>getAnnotionMirrorValue(pathMirror, "nodesJsonRefClassMapper"/* todo runtime check */);
         if (nodesJsonRefClassMappers == null) {
             nodesJsonRefClassMappers = Collections.emptyList();
         }
-        for (AnnotationMirror mapperMirror : nodesJsonRefClassMappers) {
-            String key = PathNodeAnnotationParser.getAnnotionMirrorValue(mapperMirror, "key");
-            TypeElement value = (TypeElement) PathNodeAnnotationParser.<DeclaredType>getAnnotionMirrorValue(mapperMirror, "value").asElement();
+
+        ListIterator<AnnotationMirror> mapperIterator = nodesJsonRefClassMappers.listIterator();
+        while (mapperIterator.hasNext()) {
+            int index = mapperIterator.nextIndex();
+            AnnotationMirror mapperMirror = mapperIterator.next();
+
+            String key = PathNodeAnnotationParser.getAnnotionMirrorValue(mapperMirror, "key" /* todo runtime check */);
+            TypeElement value = (TypeElement) PathNodeAnnotationParser.<DeclaredType>getAnnotionMirrorValue(mapperMirror, "value" /* todo runtime check */).asElement();
             if (nodeJsonRefTypeMapper.put(key, value) != null) {
                 throw new AptProcessException(
-                        String.format("found repeat subNodeRef key: '%s'", key),
+                        String.format("subNodeRef[%d]: key(%s): repeat key", index, key),
                         annotatedPathTypeElement,
                         pathMirror
                 );
@@ -201,10 +228,12 @@ class PathNodeAnnotationParser {
         for (int i = 0; i < path.nodesJson().length; i++) {
             String nodeJson = path.nodesJson()[i];
             try {
-                results.add(nodeJsonToNodeEntity(annotatedPathTypeElement, nodeJson, nodeJsonRefTypeMapper));
+                results.add(
+                        nodeJsonToNodeEntity(annotatedPathTypeElement, nodeJson, nodeJsonRefTypeMapper)
+                );
             } catch (AptProcessException e) {
                 throw new AptProcessException(
-                        String.format("found error in parse nodeJson[%s]: %s", i, e.getMessage()),
+                        String.format("[%d]: %s", i, e.getMessage()),
                         e
                 );
             }
@@ -216,7 +245,7 @@ class PathNodeAnnotationParser {
     private List<PathEntity.Node> pathNodeToNodeEntity(TypeElement annotatedPathTypeElement, Path path, AnnotationMirror pathMirror) throws AptProcessException {
         final LinkedList<PathEntity.Node> results = new LinkedList<>();
 
-        final List<AnnotationMirror> nodeMirrors = PathNodeAnnotationParser.getAnnotionMirrorValue(pathMirror, "value");
+        final List<AnnotationMirror> nodeMirrors = PathNodeAnnotationParser.getAnnotionMirrorValue(pathMirror, "value" /* todo runtime check */);
 
         for (int i = 0; i < path.value().length; i++) {
             SubNode node = path.value()[i];
@@ -228,7 +257,7 @@ class PathNodeAnnotationParser {
                 );
             } catch (AptProcessException e) {
                 throw new AptProcessException(
-                        String.format("found error in parse value[%s]: %s", i, e.getMessage()),
+                        String.format("[%s]: %s", i, e.getMessage()),
                         e, annotatedPathTypeElement, nodeMirror
                 );
             }
@@ -284,7 +313,7 @@ class PathNodeAnnotationParser {
         try {
             jsonNodeObj = gson.fromJson(nodeJson, JsonNode.class);
         } catch (Exception e) {
-            throw new AptProcessException(String.format("nodeJson parse error: %s", e.getMessage()), e, annotatedPathTypeElement);
+            throw new AptProcessException(String.format("error on parsing json: %s", e.getMessage()), e, annotatedPathTypeElement);
         }
 
         // convert to parseEntity
@@ -292,7 +321,7 @@ class PathNodeAnnotationParser {
         try {
             nodeParseEntity = jsonNodeConvertToNodeParseEntity(jsonNodeObj, nodeJsonRefTypeMapper);
         } catch (AptProcessException e) {
-            throw new AptProcessException(String.format("nodeJson parse error: %s", e.getMessage()), e, annotatedPathTypeElement);
+            throw new AptProcessException(e.getMessage(), e, annotatedPathTypeElement);
         }
 
         return nodeParseEntityToPathNodeEntity(annotatedPathTypeElement, nodeParseEntity);
@@ -309,7 +338,12 @@ class PathNodeAnnotationParser {
 
             int nullIndex = Arrays.asList(jsonNode.args).indexOf(null);
             if (nullIndex >= 0) {
-                throw new AptProcessException(String.format("args can't contain null value, but found on index '%d'", nullIndex));
+                throw new AptProcessException(
+                        String.format(
+                                "args[%d]: null value",
+                                nullIndex
+                        )
+                );
             }
 
             nodeParseEntity.args = new ArrayList<>(jsonNode.args.length);
@@ -335,7 +369,13 @@ class PathNodeAnnotationParser {
                 try {
                     subNodeParseEntity = jsonNodeConvertToNodeParseEntity(subJsonNode, nodeJsonRefTypeMapper);
                 } catch (AptProcessException e) {
-                    throw new AptProcessException(String.format("found error on convert subNodes[%d]: %s", i, e.getMessage()), e);
+                    throw new AptProcessException(
+                            String.format(
+                                    "subNodes[%d](%s): %s",
+                                    i, subJsonNode.type, e.getMessage()
+                            ),
+                            e
+                    );
                 }
 
                 nodeParseEntity.subNodes.add(subNodeParseEntity);
@@ -345,7 +385,12 @@ class PathNodeAnnotationParser {
         if (jsonNode.subNodeRef != null) {
             TypeElement typeElement = nodeJsonRefTypeMapper.get(jsonNode.subNodeRef);
             if (typeElement == null) {
-                throw new AptProcessException(String.format("can't find nodeJson's subNodeRef's '%s's refClass in nodeJsonRefTypeMapper", jsonNode.subNodeRef));
+                throw new AptProcessException(
+                        String.format(
+                                "subNodeRef(%s): can't find refClass in nodeJsonRefTypeMapper",
+                                jsonNode.subNodeRef
+                        )
+                );
             }
             nodeParseEntity.subNodeRef = typeElement;
         }
@@ -359,7 +404,7 @@ class PathNodeAnnotationParser {
         // type convert
         if (nodeParseEntity.type == null
                 || nodeParseEntity.type.isEmpty()) {
-            throw new AptProcessException("nodeJson's type can't be null", annotatedPathTypeElement);
+            throw new AptProcessException("type can't be null", annotatedPathTypeElement);
         }
         resultNodeEntity.type = nodeParseEntity.type;
 
@@ -370,18 +415,21 @@ class PathNodeAnnotationParser {
             int nullIndex = nodeParseEntity.args.indexOf(null);
             if (nullIndex >= 0) {
                 throw new AptProcessException(
-                        String.format("nodeJson's args can't contains null value, but found in index '%d'", nullIndex),
+                        String.format("args[%d]: null value", nullIndex),
                         annotatedPathTypeElement
                 );
             }
 
             // check repeat
             final Set<String> repeatArgNames = new HashSet<>();
-            for (NodeParseEntity.NodeArg arg : nodeParseEntity.args) {
+            ListIterator<NodeParseEntity.NodeArg> argIterator = nodeParseEntity.args.listIterator();
+            while (argIterator.hasNext()) {
+                int index = argIterator.nextIndex();
+                NodeParseEntity.NodeArg arg = argIterator.next();
 
-                // arg name
+                // check arg name repeat
                 if (!repeatArgNames.add(arg.name)) {
-                    throw new AptProcessException("find repeat arg: " + arg.name, annotatedPathTypeElement);
+                    throw new AptProcessException(String.format("args[%d](%s): repeat arg", index, arg.name), annotatedPathTypeElement);
                 }
 
                 // arg valueLimits
@@ -389,14 +437,35 @@ class PathNodeAnnotationParser {
 
                     int valueLimitNullIndex = arg.valueLimits.indexOf(null);
                     if (valueLimitNullIndex >= 0) {
-                        throw new AptProcessException(String.format("find null value in arg '%s'.valueLimits[%s]", arg.name, valueLimitNullIndex), annotatedPathTypeElement);
+                        throw new AptProcessException(
+                                String.format(
+                                        "args[%d](%s): valueLimits[%d]: null value",
+                                        index, arg.name, valueLimitNullIndex
+                                ),
+                                annotatedPathTypeElement
+                        );
                     }
 
                     final Set<String> repeatValueLimits = new HashSet<>();
-                    for (String valueLimit : arg.valueLimits) {
+
+                    ListIterator<String> valueLimitIterator = arg.valueLimits.listIterator();
+
+                    while (valueLimitIterator.hasNext()) {
+                        int valueLimitIndex = valueLimitIterator.nextIndex();
+                        String valueLimit = valueLimitIterator.next();
+
                         if (!repeatValueLimits.add(valueLimit)) {
-                            throw new AptProcessException(String.format("find repeat arg's valueLimit '%s' in arg '%s'", valueLimit, arg.name), annotatedPathTypeElement);
+                            throw new AptProcessException(
+                                    String.format("args[%d](%s): valueLimits[%d](%s): repeat valueLimit value",
+                                            index,
+                                            arg.name,
+                                            valueLimitIndex,
+                                            valueLimit
+                                    ),
+                                    annotatedPathTypeElement
+                            );
                         }
+
                     }
                 }
             }
@@ -416,7 +485,7 @@ class PathNodeAnnotationParser {
         boolean existSubNodes = nodeParseEntity.subNodes != null && !nodeParseEntity.subNodes.isEmpty();
         boolean existSubNodeRef = nodeParseEntity.subNodeRef != null && !nodeParseEntity.subNodeRef.getQualifiedName().toString().equals(Void.class.getCanonicalName());
         if (existSubNodes && existSubNodeRef) {
-            throw new AptProcessException("nodeJson's subNodes and subNodeRef only can exist one", annotatedPathTypeElement);
+            throw new AptProcessException("subNodes and subRef only can exist one", annotatedPathTypeElement);
         }
 
         // parse subNodes
@@ -430,7 +499,10 @@ class PathNodeAnnotationParser {
                     );
                 } catch (AptProcessException e) {
                     throw new AptProcessException(
-                            String.format("found error in nodeJson's subNodes[%s]: %s", i, e.getMessage()),
+                            String.format(
+                                    "subNodes[%d](%s): %s",
+                                    i, subEntity.type, e.getMessage()
+                            ),
                             e
                     );
                 }
@@ -440,7 +512,17 @@ class PathNodeAnnotationParser {
 
         // parse subNodeRef
         if (existSubNodeRef) {
-            resultNodeEntity.subRef = parsePathWrapper(nodeParseEntity.subNodeRef);
+            try {
+                resultNodeEntity.subRef = parsePath(nodeParseEntity.subNodeRef);
+            } catch (AptProcessException e) {
+                throw new AptProcessException(
+                        String.format(
+                                "subRef(%s): %s",
+                                nodeParseEntity.subNodeRef.getQualifiedName(), e.getMessage()
+                        ),
+                        e
+                );
+            }
         }
 
         return resultNodeEntity;

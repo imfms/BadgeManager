@@ -83,16 +83,15 @@ public class ArgCheckUtil {
             ConvertRule convertRule = convertRules.get(i);
 
             if (convertRule == null) {
-                throw new IllegalArgumentException(String.format("convertRules can't contain null value , but found on index '%d'", i));
+                throw new IllegalArgumentException(String.format("[%d]: found null value", i));
             }
 
-            if (convertRule.type == null
-                    || convertRule.type.length() <= 0) {
-                throw new IllegalArgumentException(String.format("convertRule.type can't be null or empty, but found on convertRules[%d]", i));
+            if (convertRule.type == null) {
+                throw new IllegalArgumentException(String.format("[%d].type: found null value", i));
             }
 
             if (!repeatCheckTypeNames.add(convertRule.type)) {
-                throw new IllegalArgumentException(String.format("found repeat type in same level: %s", convertRule.type));
+                throw new IllegalArgumentException(String.format("[%d].type(%s) repeat type in same node level", i, convertRule.type));
             }
 
             if (convertRule.args != null) {
@@ -100,7 +99,7 @@ public class ArgCheckUtil {
                     String arg = convertRule.args.get(j);
                     if (arg == null
                             || arg.length() <= 0) {
-                        throw new IllegalArgumentException(String.format("convertRule.args can't contain null or empty, but found on convertRules[%d].args[%d]", i, j));
+                        throw new IllegalArgumentException(String.format("[%d](%s).args[%d]: found null value", i, convertRule.type, j));
                     }
                 }
             }
@@ -108,14 +107,14 @@ public class ArgCheckUtil {
             try {
                 checkConvertTo(convertRule.convertTo);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(String.format("found error on check convertRules[%s].convertTo: %s", i, e.getMessage()), e);
+                throw new IllegalArgumentException(String.format("[%d](%s).convertTo: %s", i, convertRule.type, e.getMessage()), e);
             }
 
             if (convertRule.sub != null) {
                 try {
                     checkConvertRules(convertRule.sub);
                 } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException(String.format("found error on check convertRules[%d].sub: %s", i, e.getMessage()), e);
+                    throw new IllegalArgumentException(String.format("[%d](%s).sub: %s", i, convertRule.type, e.getMessage()), e);
                 }
             }
         }
@@ -129,50 +128,61 @@ public class ArgCheckUtil {
             ConvertRule.ConvertTo convertTo = convertTos.get(i);
 
             if (convertTo == null) {
-                throw new IllegalArgumentException(String.format("can't contain null value, but found on index '%d'", i));
+                throw new IllegalArgumentException(String.format("[%d]: found null value", i));
             }
 
-            if (convertTo.type == null
-                    || convertTo.type.isEmpty()) {
-                throw new IllegalArgumentException(String.format("type can't be null or empty, but found on index '%d'", i));
+            if (convertTo.type == null) {
+                throw new IllegalArgumentException(String.format("[%d].type: found null value", i));
             }
 
             if (convertTo.args != null) {
-                for (int j = 0; j < convertTo.args.size(); j++) {
-                    ConvertRule.Arg arg = convertTo.args.get(j);
+                try {
+                    checkConvertToArgs(convertTo);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                            String.format("[%d](%s): %s", i, convertTo.type, e.getMessage()), e
+                    );
+                }
+            }
+        }
+    }
 
-                    if (arg == null) {
-                        throw new IllegalArgumentException(String.format("args can't be null but found on convertTos[%d].args[%d]", i, j));
+    private static void checkConvertToArgs(ConvertRule.ConvertTo convertTo) {
+        for (int i = 0; i < convertTo.args.size(); i++) {
+            ConvertRule.Arg arg = convertTo.args.get(i);
+
+            try {
+
+                if (arg == null) { throw new IllegalArgumentException("found null value"); }
+
+                if (arg.hisArg == null) { throw new IllegalArgumentException("found null value"); }
+
+                if (arg.value == null
+                        && arg.refValue == null) {
+                    throw new IllegalArgumentException("value and refValue must exist one, but found none");
+                }
+
+                if (arg.value != null
+                        && arg.refValue != null) {
+                    throw new IllegalArgumentException("value and refValue only can exist one, but found more");
+                }
+
+                if (arg.refValue != null) {
+                    if (arg.refValue.myLevel == null) {
+                        throw new IllegalArgumentException("refValue.myLevel: myLevel can't be null, but found null value");
                     }
-
-                    if (arg.hisArg == null
-                            || arg.hisArg.length() <= 0) {
-                        throw new IllegalArgumentException(String.format("args.hisArg can't be null or empty but found on convertTos[%d].args[%d]", i, j));
+                    if (arg.refValue.myLevel < 0) {
+                        throw new IllegalArgumentException(String.format("refValue.myLevel(%d): myLevel can't less 0", arg.refValue.myLevel));
                     }
-
-                    if (arg.value == null
-                            && arg.refValue == null) {
-                        throw new IllegalArgumentException(String.format("args' value and refValue must and only exist one but found none on convertTos[%d].args[%d]", i, j));
-                    }
-
-                    if (arg.value != null
-                            && arg.refValue != null) {
-                        throw new IllegalArgumentException(String.format("args' value and refValue only can exist one but found more on convertTos[%d].args[%d]", i, j));
-                    }
-
-                    if (arg.refValue != null) {
-                        if (arg.refValue.myLevel == null) {
-                            throw new IllegalArgumentException(String.format("args.refValue.myLevel can't be null but found on convertTos[%d].args[%d]", i, j));
-                        }
-                        if (arg.refValue.myLevel < 0) {
-                            throw new IllegalArgumentException(String.format("args.refValue.myLevel can't less 0 but found '%d' on convertTos[%d].args[%d]", arg.refValue.myLevel, i, j));
-                        }
-                        if (arg.refValue.myArg == null
-                                || arg.refValue.myArg.length() <= 0) {
-                            throw new IllegalArgumentException(String.format("args.refValue.myArg can't be null or empty but found on convertTos[%d].args[%d]", i, j));
-                        }
+                    if (arg.refValue.myArg == null) {
+                        throw new IllegalArgumentException("refValue.myArg: found null value");
                     }
                 }
+
+            } catch (Exception e) {
+                throw new IllegalArgumentException(
+                        String.format("args[%d]: %s", i, e.getMessage()), e
+                );
             }
         }
     }
@@ -188,7 +198,13 @@ public class ArgCheckUtil {
 
             // convertRule.convertTo
             if (convertRule.convertTo != null) {
-                checkConvertRuleConvertTo(concatToNew(upToNowConvertRules, convertRule), targetPathsSchema, ruleIndex, convertRule);
+                try {
+                    checkConvertRuleConvertTo(concatToNew(upToNowConvertRules, convertRule), targetPathsSchema, convertRule);
+                } catch (Exception e) {
+                    throw new IllegalArgumentException(
+                            String.format("[%d](%s): %s", ruleIndex, convertRule.type, e.getMessage()), e
+                    );
+                }
             }
 
             // convertRule.sub
@@ -196,7 +212,7 @@ public class ArgCheckUtil {
                 try {
                     checkConvertRulesConvertToArgValidity(convertRule.sub, concatToNew(upToNowConvertRules, convertRule), targetPathsSchema);
                 } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException(String.format("found error on check convertRule[%d].sub: %s", ruleIndex, e.getMessage()), e);
+                    throw new IllegalArgumentException(String.format("[%d](%s).sub: %s", ruleIndex, convertRule.type, e.getMessage()), e);
                 }
             }
         }
@@ -227,16 +243,17 @@ public class ArgCheckUtil {
                     ConvertRule.ConvertTo next = iterator.next();
 
                     if (next == convertTo) {
-                        errorNodesTipSb.append('[');
+                        errorNodesTipSb.append('*');
                     }
-                    errorNodesTipSb
-                            .append(next.type)
-                            .append(
-                                    iterator.hasNext() ? '/' : ']'
-                            );
+
+                    errorNodesTipSb.append(next.type);
+
+                    errorNodesTipSb.append(
+                            iterator.hasNext() ? '/' : '*'
+                    );
                 }
 
-                throw new IllegalArgumentException(String.format("convertTos not matched targetPathsSchema: %s", errorNodesTipSb));
+                throw new IllegalArgumentException(String.format("not match: %s", errorNodesTipSb));
             } else {
                 results.add(rightNodeSchema);
                 compareNodeSchemas = rightNodeSchema.sub;
@@ -250,55 +267,70 @@ public class ArgCheckUtil {
 
         final HashSet<String> repeatCheckTypeNames = new HashSet<>();
 
-        for (int i = 0; i < targetPathsSchema.size(); i++) {
-            NodeSchema nodeSchema = targetPathsSchema.get(i);
+        for (int schemaIndex = 0; schemaIndex < targetPathsSchema.size(); schemaIndex++) {
+            NodeSchema nodeSchema = targetPathsSchema.get(schemaIndex);
 
-            if (nodeSchema == null) {
-                throw new IllegalArgumentException(String.format("nodeSchema can't be null, but found on targetPathsSchema[%d]", i));
-            }
+            try {
 
-            if (nodeSchema.type == null
-                    || nodeSchema.type.length() <= 0) {
-                throw new IllegalArgumentException(String.format("nodeSchema.type can't be null or empty, but found on targetPathsSchema[%d]", i));
-            }
+                if (nodeSchema == null) {
+                    throw new IllegalArgumentException("found null value");
+                }
 
-            if (!repeatCheckTypeNames.add(nodeSchema.type)) {
-                throw new IllegalArgumentException(String.format("found repeat type in same level: %s", nodeSchema.type));
-            }
+                if (nodeSchema.type == null) {
+                    throw new IllegalArgumentException("type: found null value");
+                }
 
-            if (nodeSchema.args != null) {
-                for (int j = 0; j < nodeSchema.args.size(); j++) {
-                    NodeSchema.NodeArg arg = nodeSchema.args.get(j);
-                    if (arg == null) {
-                        throw new IllegalArgumentException(String.format("nodeSchema.args can't contain null value, but found on targetPathsSchema[%d].args[%d]", i, j));
-                    }
+                if (!repeatCheckTypeNames.add(nodeSchema.type)) {
+                    throw new IllegalArgumentException("repeat type in same level");
+                }
 
-                    if (arg.name == null) {
-                        throw new IllegalArgumentException(String.format("nodeSchema.args.name can't be null, but found on targetPathsSchema[%d].args[%d].name", i, j));
-                    }
+                if (nodeSchema.args != null) {
+                    for (int schemaArgIndex = 0; schemaArgIndex < nodeSchema.args.size(); schemaArgIndex++) {
+                        NodeSchema.NodeArg arg = nodeSchema.args.get(schemaArgIndex);
+                        if (arg == null) {
+                            throw new IllegalArgumentException(String.format("args[%d]: found null value", schemaArgIndex));
+                        }
 
-                    if (arg.valueLimits != null) {
-                        int nullIndex = arg.valueLimits.indexOf(null);
-                        if (nullIndex >= 0) {
-                            throw new IllegalArgumentException(String.format("nodeSchema.args.name.valueLimits can't contain null value, but found on targetPathsSchema[%d].args[%d].valueLimits[%d]", i, j, nullIndex));
+                        if (arg.name == null) {
+                            throw new IllegalArgumentException(String.format("args[%d].name: found null value", schemaArgIndex));
+                        }
+
+                        if (arg.valueLimits != null) {
+                            int nullIndex = arg.valueLimits.indexOf(null);
+                            if (nullIndex >= 0) {
+                                throw new IllegalArgumentException(String.format("args[%d].valueLimits[%d]: found null value", schemaArgIndex, nullIndex));
+                            }
                         }
                     }
                 }
-            }
 
-            if (nodeSchema.sub != null) {
-                try {
-                    checkTargetPathsSchema(nodeSchema.sub);
-                } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException(String.format("found error on check nodeSchema[%d].sub: %s", i, e.getMessage()));
+                if (nodeSchema.sub != null) {
+                    try {
+                        checkTargetPathsSchema(nodeSchema.sub);
+                    } catch (IllegalArgumentException e) {
+                        throw new IllegalArgumentException(String.format("sub: %s", e.getMessage()));
+                    }
                 }
+
+            } catch (Exception e) {
+                throw new IllegalArgumentException(
+                        String.format(
+                                "[%d]%s: %s",
+                                schemaIndex,
+                                nodeSchema != null && nodeSchema.type != null
+                                        ? String.format("(%s)", nodeSchema.type)
+                                        : "",
+                                e.getMessage()
+                        ),
+                        e
+                );
             }
 
         }
 
     }
 
-    private static void checkConvertRuleConvertTo(List<ConvertRule> upToNowConvertRules, List<NodeSchema> targetPathsSchema, int ruleIndex, ConvertRule convertRule) {
+    private static void checkConvertRuleConvertTo(List<ConvertRule> upToNowConvertRules, List<NodeSchema> targetPathsSchema, ConvertRule convertRule) {
 
         // check types
         final List<NodeSchema> matchedNodeSchemas;
@@ -308,7 +340,7 @@ public class ArgCheckUtil {
             try {
                 matchedNodeSchemas = matchNodeSchema(targetPathsSchema, convertRule.convertTo);
             } catch (Exception e) {
-                throw new IllegalArgumentException(String.format("found error on match convertRule[%d]: %s", ruleIndex, e.getMessage()), e);
+                throw new IllegalArgumentException(String.format("matching nodeSchema: %s", e.getMessage()), e);
             }
         }
 
@@ -324,8 +356,8 @@ public class ArgCheckUtil {
                 continue;
             }
 
-            for (int argIndex = 0; argIndex < convertTo.args.size(); argIndex++) {
-                ConvertRule.Arg arg = convertTo.args.get(argIndex);
+            for (int convertToArgIndex = 0; convertToArgIndex < convertTo.args.size(); convertToArgIndex++) {
+                ConvertRule.Arg arg = convertTo.args.get(convertToArgIndex);
                 NodeSchema.NodeArg matchedNodeArg = matchedNodeSchema != null
                         ? getNodeSchemaNodeArgFromArgName(arg.hisArg, matchedNodeSchema)
                         : null;
@@ -334,8 +366,8 @@ public class ArgCheckUtil {
                 if (matchedNodeSchema != null) {
                     if (!nodeSchemaContainsArgName(arg.hisArg, matchedNodeSchema)) {
                         throw new IllegalArgumentException(String.format(
-                                "found error on check convertRule[%d].convertTo[%d].args[%d].hisArg '%s': target nodeSchema.args('%s') not contains arg '%s'",
-                                ruleIndex, convertToIndex, argIndex,
+                                "convertTo[%d](%s).args[%d].hisArg(%s): target nodeSchema.args('%s') not contains arg '%s'",
+                                convertToIndex, convertTo.type, convertToArgIndex,
                                 arg.hisArg, matchedNodeSchema.args, arg.hisArg
                         ));
                     }
@@ -348,9 +380,9 @@ public class ArgCheckUtil {
                                 && !matchedNodeArg.valueLimits.isEmpty()) {
                             if (!matchedNodeArg.valueLimits.contains(arg.value)) {
                                 throw new IllegalArgumentException(String.format(
-                                        "found error on check convertRule[%d].convertTo[%d].args[%d].value '%s': target nodeSchema.args('%s').valueLimits not contains value '%s'",
-                                        ruleIndex, convertToIndex, argIndex,
-                                        arg.hisArg, matchedNodeSchema.args, arg.value
+                                        "convertTo[%d](%s).args[%d].value(%s): target nodeSchema.arg(%s).valueLimits(%s) not contains value '%s'",
+                                        convertToIndex, convertTo.type, convertToArgIndex,
+                                        arg.hisArg, matchedNodeArg.name, matchedNodeArg.valueLimits, arg.value
                                 ));
                             }
                         }
@@ -363,9 +395,9 @@ public class ArgCheckUtil {
                     // refValue.myLevel
                     if (arg.refValue.myLevel > upToNowConvertRules.size() - 1) {
                         throw new IllegalArgumentException(String.format(
-                                "found error on check convertRule[%d].convertTo[%d].args[%d].refValue.myLevel '%d': up to now convertRules(size = %d, %s) not contain level '%d' (level start from 0)",
-                                ruleIndex, convertToIndex, argIndex,
-                                arg.refValue.myLevel, upToNowConvertRules.size(), getMultiLevelConvertRuleTipStr(upToNowConvertRules), arg.refValue.myLevel
+                                "convertTo[%d](%s).args[%d].refValue.myLevel(%d): up to now convertRules(size = %d, %s) not contain level '%d' (level start from 0)",
+                                convertToIndex, convertTo.type, convertToArgIndex, arg.refValue.myLevel,
+                                upToNowConvertRules.size(), getMultiLevelConvertRuleTipStr(upToNowConvertRules), arg.refValue.myLevel
                         ));
                     }
 
@@ -374,9 +406,9 @@ public class ArgCheckUtil {
                     if (targetLevelConvertRule.args == null
                             || !targetLevelConvertRule.args.contains(arg.refValue.myArg)) {
                         throw new IllegalArgumentException(String.format(
-                                "found error on check convertRule[%d].convertTo[%d].args[%d].refValue.myArg '%s': target level(%d) convertRule's args('%s') not contains arg '%s'",
-                                ruleIndex, convertToIndex, argIndex,
-                                arg.refValue.myArg, arg.refValue.myLevel, targetLevelConvertRule.args, arg.refValue.myArg
+                                "convertTo[%d](%s).args[%d].refValue.myArg(%s): target level(%d) convertRule's args(%s) not contains arg '%s'",
+                                convertToIndex, convertTo.type, convertToArgIndex, arg.refValue.myArg,
+                                arg.refValue.myLevel, targetLevelConvertRule.args, arg.refValue.myArg
                         ));
                     }
                 }
@@ -408,13 +440,19 @@ public class ArgCheckUtil {
     }
 
     private static StringBuffer getMultiLevelConvertRuleTipStr(List<ConvertRule> convertRules) {
-        final StringBuffer upToNowRulesTipStr = new StringBuffer("convertRules");
-        for (ConvertRule rule : convertRules) {
-            upToNowRulesTipStr
-                    .append('[')
-                    .append(rule.type)
-                    .append(']');
+        final StringBuffer upToNowRulesTipStr = new StringBuffer();
+
+        Iterator<ConvertRule> iterator = convertRules.iterator();
+        while (iterator.hasNext()) {
+            ConvertRule rule = iterator.next();
+
+            upToNowRulesTipStr.append(rule.type);
+
+            if (iterator.hasNext()) {
+                upToNowRulesTipStr.append('/');
+            }
         }
+
         return upToNowRulesTipStr;
     }
 
