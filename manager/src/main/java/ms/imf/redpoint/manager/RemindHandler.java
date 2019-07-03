@@ -60,11 +60,11 @@ public abstract class RemindHandler {
         }
     }
 
-    List<NodePath> getPaths() {
+    public List<NodePath> getPaths() {
         return paths;
     }
 
-    boolean isPathsEmpty() {
+    public boolean isPathsEmpty() {
         return paths.isEmpty();
     }
 
