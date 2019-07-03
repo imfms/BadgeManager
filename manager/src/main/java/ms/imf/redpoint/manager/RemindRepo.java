@@ -15,7 +15,8 @@ public interface RemindRepo {
 
     Collection<Remind> getAllReminds();
 
-    Collection<Remind> getSubPathRemind(List<Node> path);
+    Collection<Remind> getMatchReminds(List<Node> path);
+    Collection<Remind> getMatchSubReminds(List<Node> path);
 
     void insertRemind(Remind remind);
     void insertReminds(Iterable<Remind> reminds);

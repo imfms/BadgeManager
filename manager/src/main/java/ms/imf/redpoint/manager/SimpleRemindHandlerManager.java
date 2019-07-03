@@ -77,7 +77,7 @@ public class SimpleRemindHandlerManager extends AbstractRemindHandlerManager {
 
         List<Remind> reminds = new LinkedList<>();
         for (NodePath path : handler.getPaths()) {
-            reminds.addAll(remindRepo().getSubPathRemind(path.nodes()));
+            reminds.addAll(remindRepo().getMatchSubReminds(path.nodes()));
         }
 
         handler.showReminds(reminds);

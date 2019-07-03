@@ -12,7 +12,20 @@ public abstract class AbstractRemindRepo implements RemindRepo {
     private RemindChangedListener mRemindChangedListener;
 
     @Override
-    public Collection<Remind> getSubPathRemind(List<Node> path) {
+    public Collection<Remind> getMatchReminds(List<Node> path) {
+        List<Remind> results = new LinkedList<>();
+
+        for (Remind remind : getAllReminds()) {
+            if (isMatched(path, remind.path.nodes())) {
+                results.add(remind);
+            }
+        }
+
+        return results;
+    }
+
+    @Override
+    public Collection<Remind> getMatchSubReminds(List<Node> path) {
         List<Remind> results = new LinkedList<>();
 
         for (Remind remind : getAllReminds()) {
@@ -54,7 +67,7 @@ public abstract class AbstractRemindRepo implements RemindRepo {
 
     @Override
     public long removeMatchSubReminds(List<Node> path) {
-        return removeReminds(getSubPathRemind(path));
+        return removeReminds(getMatchSubReminds(path));
     }
 
     @Override
