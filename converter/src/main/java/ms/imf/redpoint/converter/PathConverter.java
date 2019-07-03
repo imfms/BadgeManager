@@ -29,8 +29,18 @@ public class PathConverter {
      * @throws IllegalArgumentException 格式校验未通过
      */
     public PathConverter(String convertRulesJson) throws IllegalArgumentException {
-        this(convertRulesJson, null);
+        this(convertRulesJson, true);
     }
+
+    /**
+     * @param convertRulesJson 转换规则 格式为 toJson(List<{@link ConvertRule}>)
+     * @param isNeedCheckArg   是否校验参数是否合法
+     * @throws IllegalArgumentException 格式校验未通过
+     */
+    public PathConverter(String convertRulesJson, boolean isNeedCheckArg) throws IllegalArgumentException {
+        this(convertRulesJson, null, isNeedCheckArg);
+    }
+
 
     /**
      * @param convertRulesJson  转换规则 格式为 toJson(List<{@link ConvertRule}>)
@@ -38,18 +48,39 @@ public class PathConverter {
      * @throws IllegalArgumentException 格式校验未通过
      */
     public PathConverter(String convertRulesJson, String targetPathsSchemaJson) throws IllegalArgumentException {
-        this(new Gson(), convertRulesJson, targetPathsSchemaJson);
+        this(convertRulesJson, targetPathsSchemaJson, true);
     }
+
+    /**
+     * @param convertRulesJson  转换规则 格式为 toJson(List<{@link ConvertRule}>)
+     * @param targetPathsSchemaJson 可选,目标Path的全貌,用于参与转换规则的校验以发现更多规则本身的错误,格式为 toJson(List<{@link NodeSchema}>)
+     *                              @param isNeedCheckArg    是否校验参数是否合法
+     * @throws IllegalArgumentException 格式校验未通过
+     */
+    public PathConverter(String convertRulesJson, String targetPathsSchemaJson, boolean isNeedCheckArg) throws IllegalArgumentException {
+        this(new Gson(), convertRulesJson, targetPathsSchemaJson, isNeedCheckArg);
+    }
+
     /**
      * @param convertRulesJsonInputStream  转换规则 格式为 toJson(List<{@link ConvertRule}>)
      * @param targetPathsSchemaJsonInputStream 可选,目标Path的全貌,用于参与转换规则的校验以发现更多规则本身的错误,格式为 toJson(List<{@link NodeSchema}>)
      * @throws IllegalArgumentException 格式校验未通过
      */
     public PathConverter(InputStream convertRulesJsonInputStream, InputStream targetPathsSchemaJsonInputStream) throws IllegalArgumentException {
-        this(new Gson(), convertRulesJsonInputStream, targetPathsSchemaJsonInputStream);
+        this(convertRulesJsonInputStream, targetPathsSchemaJsonInputStream, true);
     }
 
-    private PathConverter(Gson gson, InputStream convertRulesJsonInputStream, InputStream targetPathsSchemaJsonInputStream) throws IllegalArgumentException {
+    /**
+     * @param convertRulesJsonInputStream  转换规则 格式为 toJson(List<{@link ConvertRule}>)
+     * @param targetPathsSchemaJsonInputStream 可选,目标Path的全貌,用于参与转换规则的校验以发现更多规则本身的错误,格式为 toJson(List<{@link NodeSchema}>)
+     *                                         @param isNeedCheckArg    是否校验参数是否合法
+     * @throws IllegalArgumentException 格式校验未通过
+     */
+    public PathConverter(InputStream convertRulesJsonInputStream, InputStream targetPathsSchemaJsonInputStream, boolean isNeedCheckArg) throws IllegalArgumentException {
+        this(new Gson(), convertRulesJsonInputStream, targetPathsSchemaJsonInputStream, isNeedCheckArg);
+    }
+
+    private PathConverter(Gson gson, InputStream convertRulesJsonInputStream, InputStream targetPathsSchemaJsonInputStream, boolean isNeedCheckArg) throws IllegalArgumentException {
         this(
                 ArgCheckUtil.<List<ConvertRule>>parseJson(
                         gson,
@@ -64,10 +95,12 @@ public class PathConverter {
                         new TypeToken<List<NodeSchema>>() {
                         }.getType(),
                         "found error on parse targetPathsSchemaJsonInputStream"
-                )
+                ),
+                isNeedCheckArg
         );
     }
-    private PathConverter(Gson gson, String convertRulesJson, String targetPathsSchemaJson) throws IllegalArgumentException {
+
+    private PathConverter(Gson gson, String convertRulesJson, String targetPathsSchemaJson, boolean isNeedCheckArg) throws IllegalArgumentException {
         this(
                 ArgCheckUtil.<List<ConvertRule>>parseJson(
                         gson,
@@ -82,7 +115,8 @@ public class PathConverter {
                         new TypeToken<List<NodeSchema>>() {
                         }.getType(),
                         "found error on parse targetPathsSchemaJson"
-                )
+                ),
+                isNeedCheckArg
         );
     }
 
@@ -95,12 +129,33 @@ public class PathConverter {
     }
 
     /**
+     * @param convertRules 转换规则 格式为 toJson(List<{@link ConvertRule}>)
+     *                     @param isNeedCheckArg    是否校验参数是否合法
+     * @throws IllegalArgumentException 格式校验未通过
+     */
+    public PathConverter(List<ConvertRule> convertRules, boolean isNeedCheckArg) throws IllegalArgumentException {
+        this(convertRules, null, isNeedCheckArg);
+    }
+
+    /**
      * @param convertRules      转换规则 格式为 toJson(List<{@link ConvertRule}>)
      * @param targetPathsSchema 可选,目标Path的全貌,用于参与转换规则的校验以发现更多规则本身的错误,格式为 toJson(List<{@link NodeSchema}>)
      * @throws IllegalArgumentException 格式校验未通过
      */
     public PathConverter(List<ConvertRule> convertRules, List<NodeSchema> targetPathsSchema) throws IllegalArgumentException {
-        ArgCheckUtil.checkArg(convertRules, targetPathsSchema);
+        this(convertRules, targetPathsSchema, true);
+    }
+
+    /**
+     * @param convertRules      转换规则 格式为 toJson(List<{@link ConvertRule}>)
+     * @param targetPathsSchema 可选,目标Path的全貌,用于参与转换规则的校验以发现更多规则本身的错误,格式为 toJson(List<{@link NodeSchema}>)
+     * @param isNeedCheckArg    是否校验参数是否合法
+     * @throws IllegalArgumentException 格式校验未通过
+     */
+    public PathConverter(List<ConvertRule> convertRules, List<NodeSchema> targetPathsSchema, boolean isNeedCheckArg) throws IllegalArgumentException {
+        if (isNeedCheckArg) {
+            ArgCheckUtil.checkArg(convertRules, targetPathsSchema);
+        }
         this.convertRules = convertRules;
     }
 
