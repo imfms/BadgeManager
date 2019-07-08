@@ -30,7 +30,7 @@ import ms.imf.redpoint.compiler.plugin.PluginContext;
  * 文件位置支持以下类型, 方括号[]包裹的内容为可选项:
  * <p>
  * <p>
- * [file://][/]filePath: 常规文件系统绝对、相对位置
+ * file://[/]filePath: 常规文件系统绝对、相对位置
  * <p>
  * &nbsp;&nbsp;例如: file:///home/user/resource.txt, /home/user/resource.txt, resource.txt
  * <p>
