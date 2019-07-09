@@ -93,13 +93,33 @@ public class FileMoverCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
         JAVA_RESOURCE("javaResource") {
             @Override
             InputStream read(ProcessingEnvironment processingEnvironment, String type, String location) throws Exception {
+
                 /*
-                a.b.c/d.txt -> a/b/c/d.txt
+                javaStylePath    package  resourceName
+                -------------    -------  ------------
+                'a.b.c/d.txt' -> 'a.b.c', 'd.txt'
+                'd.txt'       -> ''     , 'd.txt'
                  */
-                String rawLocation = location.replace('.', '/');
-                if (!rawLocation.startsWith("/")) {
-                    rawLocation = '/' + rawLocation;
+
+                final String packageName;
+                final String resourceName;
+
+                int pathSymbolIndex = location.indexOf('/');
+                if (pathSymbolIndex < 0) {
+                    packageName = "";
+                    resourceName = location;
+                } else {
+                    packageName = location.substring(0, pathSymbolIndex);
+                    resourceName = location.substring(pathSymbolIndex + 1, location.length());
                 }
+
+                // 'a.b.c/d.txt' -> '/a/b/c/d.txt'
+                final String rawLocation = String.format(
+                        "/%s/%s",
+                        packageName.replace('.', '/'),
+                        resourceName
+                );
+
                 return FileMoverCompilerPlugin.class.getClassLoader().getResourceAsStream(rawLocation);
             }
 
