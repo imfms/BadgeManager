@@ -236,7 +236,7 @@ public class ArgCheckUtil {
 
             if (rightNodeSchema == null) {
 
-                // errorNodesTipSb == true/true/[false/false/false]
+                // errorNodesTipSb == true/true/*false/false/false*
                 Iterator<ConvertRule.ConvertTo> iterator = convertTos.iterator();
                 final StringBuilder errorNodesTipSb = new StringBuilder();
                 while (iterator.hasNext()) {
@@ -253,7 +253,7 @@ public class ArgCheckUtil {
                     );
                 }
 
-                throw new IllegalArgumentException(String.format("not match: %s", errorNodesTipSb));
+                throw new IllegalArgumentException(String.format("not match target node schema: %s", errorNodesTipSb));
             } else {
                 results.add(rightNodeSchema);
                 compareNodeSchemas = rightNodeSchema.sub;
@@ -340,7 +340,7 @@ public class ArgCheckUtil {
             try {
                 matchedNodeSchemas = matchNodeSchema(targetPathsSchema, convertRule.convertTo);
             } catch (Exception e) {
-                throw new IllegalArgumentException(String.format("matching nodeSchema: %s", e.getMessage()), e);
+                throw new IllegalArgumentException(String.format("convertTo: %s", e.getMessage()), e);
             }
         }
 
