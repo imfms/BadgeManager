@@ -93,7 +93,7 @@ public class SimpleRemindHandlerManager extends AbstractRemindHandlerManager {
 
     @Override
     public void happenedRemind(Remind remind) {
-        remindRepo().removeRemind(remind.id);
+        remindRepo().removeRemind(remind);
         notifyRemindDataChanged();
     }
 }

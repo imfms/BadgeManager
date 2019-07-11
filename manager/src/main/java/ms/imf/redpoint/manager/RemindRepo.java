@@ -21,8 +21,8 @@ public interface RemindRepo {
     void insertRemind(Remind remind);
     void insertReminds(Iterable<Remind> reminds);
 
-    void removeRemind(Long remindId);
-    void removeReminds(Iterable<Long> remindIds);
+    void removeRemind(Remind remind);
+    void removeReminds(Iterable<Remind> reminds);
 
     long removeMatchReminds(List<Node> path);
     long removeMatchSubReminds(List<Node> path);

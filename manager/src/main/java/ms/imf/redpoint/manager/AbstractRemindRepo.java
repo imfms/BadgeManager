@@ -1,6 +1,5 @@
 package ms.imf.redpoint.manager;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
@@ -45,9 +44,9 @@ public abstract class AbstractRemindRepo implements RemindRepo {
     }
 
     @Override
-    public void removeReminds(Iterable<Long> remindIds) {
-        for (Long remindId : remindIds) {
-            removeRemind(remindId);
+    public void removeReminds(Iterable<Remind> reminds) {
+        for (Remind remind : reminds) {
+            removeRemind(remind);
         }
     }
 
@@ -95,12 +94,8 @@ public abstract class AbstractRemindRepo implements RemindRepo {
         if (reminds.isEmpty()) {
             return 0;
         }
-        List<Long> remindIds = new ArrayList<>(reminds.size());
-        for (Remind remind : reminds) {
-            remindIds.add(remind.id);
-        }
-        removeReminds(remindIds);
-        return remindIds.size();
+        removeReminds((Iterable<Remind>) reminds);
+        return reminds.size();
     }
 
     private boolean isMySubPathWithMe(List<Node> me, List<Node> him) {
