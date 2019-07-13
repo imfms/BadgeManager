@@ -8,16 +8,16 @@ import java.util.Set;
 import ms.imf.redpoint.entity.NodePath;
 
 
-public class SimpleRemindHandlerManager extends AbstractRemindHandlerManager {
+public class SimpleRemindHandlerManager<RemindType extends Remind> extends AbstractRemindHandlerManager<RemindType> {
 
-    private final Set<RemindHandler> remindHandlers = new LinkedHashSet<>();
+    private final Set<RemindHandler<RemindType>> remindHandlers = new LinkedHashSet<>();
 
-    public SimpleRemindHandlerManager(RemindRepo repo) {
+    public SimpleRemindHandlerManager(RemindRepo<RemindType> repo) {
         super(repo);
     }
 
     @Override
-    public void addRemindHandler(RemindHandler handler) {
+    public void addRemindHandler(RemindHandler<RemindType> handler) {
         if (handler == null) { throw new IllegalArgumentException("handler can't be null"); }
         if (remindHandlers.contains(handler)) {
             return;
@@ -27,7 +27,7 @@ public class SimpleRemindHandlerManager extends AbstractRemindHandlerManager {
     }
 
     @Override
-    public void removeRemindHandler(RemindHandler handler) {
+    public void removeRemindHandler(RemindHandler<RemindType> handler) {
         if (handler == null) {
             return;
         }
@@ -35,7 +35,7 @@ public class SimpleRemindHandlerManager extends AbstractRemindHandlerManager {
     }
 
     @Override
-    public void happenedRemindHandler(RemindHandler handler) {
+    public void happenedRemindHandler(RemindHandler<RemindType> handler) {
 
         if (!remindHandlerAttached(handler)) {
             return;
@@ -55,7 +55,7 @@ public class SimpleRemindHandlerManager extends AbstractRemindHandlerManager {
      * 消费指定handler节点下所有消息(包括handler节点本身)
      */
     @Override
-    public void happenedRemindHandlerWithSubNodeAll(RemindHandler handler) {
+    public void happenedRemindHandlerWithSubNodeAll(RemindHandler<RemindType> handler) {
         if (!remindHandlerAttached(handler)) {
             return;
         }
@@ -67,15 +67,15 @@ public class SimpleRemindHandlerManager extends AbstractRemindHandlerManager {
 
     @Override
     public void notifyRemindDataChanged() {
-        for (RemindHandler handler : remindHandlers) {
+        for (RemindHandler<RemindType> handler : remindHandlers) {
             notifyRemindHandlerChanged(handler);
         }
     }
 
     @Override
-    public void notifyRemindHandlerChanged(RemindHandler handler) {
+    public void notifyRemindHandlerChanged(RemindHandler<RemindType> handler) {
 
-        List<Remind> reminds = new LinkedList<>();
+        List<RemindType> reminds = new LinkedList<>();
         for (NodePath path : handler.getPaths()) {
             reminds.addAll(remindRepo().getMatchSubReminds(path.nodes()));
         }
@@ -84,7 +84,7 @@ public class SimpleRemindHandlerManager extends AbstractRemindHandlerManager {
     }
 
     @Override
-    public boolean remindHandlerAttached(RemindHandler handler) {
+    public boolean remindHandlerAttached(RemindHandler<RemindType> handler) {
         if (handler == null) {
             return false;
         }
@@ -92,8 +92,8 @@ public class SimpleRemindHandlerManager extends AbstractRemindHandlerManager {
     }
 
     @Override
-    public void happenedRemind(Remind remind) {
-        remindRepo().removeRemind(remind.id);
+    public void happenedRemind(RemindType remind) {
+        remindRepo().removeRemind(remind);
         notifyRemindDataChanged();
     }
 }

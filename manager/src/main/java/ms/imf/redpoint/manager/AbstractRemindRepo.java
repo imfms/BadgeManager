@@ -1,21 +1,20 @@
 package ms.imf.redpoint.manager;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
 
 import ms.imf.redpoint.entity.Node;
 
-public abstract class AbstractRemindRepo implements RemindRepo {
+public abstract class AbstractRemindRepo<RemindType extends Remind> implements RemindRepo<RemindType> {
 
     private RemindChangedListener mRemindChangedListener;
 
     @Override
-    public Collection<Remind> getMatchReminds(List<Node> path) {
-        List<Remind> results = new LinkedList<>();
+    public Collection<RemindType> getMatchReminds(List<Node> path) {
+        List<RemindType> results = new LinkedList<>();
 
-        for (Remind remind : getAllReminds()) {
+        for (RemindType remind : getAllReminds()) {
             if (isMatched(path, remind.path.nodes())) {
                 results.add(remind);
             }
@@ -25,10 +24,10 @@ public abstract class AbstractRemindRepo implements RemindRepo {
     }
 
     @Override
-    public Collection<Remind> getMatchSubReminds(List<Node> path) {
-        List<Remind> results = new LinkedList<>();
+    public Collection<RemindType> getMatchSubReminds(List<Node> path) {
+        List<RemindType> results = new LinkedList<>();
 
-        for (Remind remind : getAllReminds()) {
+        for (RemindType remind : getAllReminds()) {
             if (isMySubPathWithMe(path, remind.path.nodes())) {
                 results.add(remind);
             }
@@ -38,25 +37,25 @@ public abstract class AbstractRemindRepo implements RemindRepo {
     }
 
     @Override
-    public void insertReminds(Iterable<Remind> reminds) {
-        for (Remind remind : reminds) {
+    public void insertReminds(Iterable<? extends RemindType> reminds) {
+        for (RemindType remind : reminds) {
             insertRemind(remind);
         }
     }
 
     @Override
-    public void removeReminds(Iterable<Long> remindIds) {
-        for (Long remindId : remindIds) {
-            removeRemind(remindId);
+    public void removeReminds(Iterable<? extends RemindType> reminds) {
+        for (RemindType remind : reminds) {
+            removeRemind(remind);
         }
     }
 
     @Override
     public long removeMatchReminds(List<Node> path) {
 
-        List<Remind> handledReminds = new LinkedList<>();
+        List<RemindType> handledReminds = new LinkedList<>();
 
-        for (Remind remind : getAllReminds()) {
+        for (RemindType remind : getAllReminds()) {
             if (isMatched(path, remind.path.nodes())) {
                 handledReminds.add(remind);
             }
@@ -91,16 +90,12 @@ public abstract class AbstractRemindRepo implements RemindRepo {
         return mRemindChangedListener;
     }
 
-    private long removeReminds(Collection<Remind> reminds) {
+    private long removeReminds(Collection<? extends RemindType> reminds) {
         if (reminds.isEmpty()) {
             return 0;
         }
-        List<Long> remindIds = new ArrayList<>(reminds.size());
-        for (Remind remind : reminds) {
-            remindIds.add(remind.id);
-        }
-        removeReminds(remindIds);
-        return remindIds.size();
+        removeReminds((Iterable<? extends RemindType>) reminds);
+        return reminds.size();
     }
 
     private boolean isMySubPathWithMe(List<Node> me, List<Node> him) {
