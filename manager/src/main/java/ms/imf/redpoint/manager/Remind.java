@@ -6,11 +6,9 @@ import ms.imf.redpoint.entity.NodePath;
 
 public class Remind implements Serializable {
 
-    public final int num;
     public final NodePath path;
 
-    public Remind(int num, NodePath path) {
-        this.num = num;
+    public Remind(NodePath path) {
         if (path == null) { throw new IllegalArgumentException("path can't be null"); }
         this.path = path;
     }
@@ -22,22 +20,18 @@ public class Remind implements Serializable {
 
         Remind remind = (Remind) o;
 
-        if (num != remind.num) return false;
         return path != null ? path.equals(remind.path) : remind.path == null;
     }
 
     @Override
     public int hashCode() {
-        int result = num;
-        result = 31 * result + (path != null ? path.hashCode() : 0);
-        return result;
+        return path != null ? path.hashCode() : 0;
     }
 
     @Override
     public String toString() {
         return "Remind{" +
-                "num=" + num +
-                ", path=" + path +
+                "path=" + path +
                 '}';
     }
 }

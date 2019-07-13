@@ -80,21 +80,7 @@ public abstract class RemindHandler<RemindType extends Remind> {
         remindController.removeRemindHandler(this);
     }
 
-    public void showReminds(List<? extends RemindType> reminds) {
-        int totalNum;
-        if (reminds == null || reminds.isEmpty()) {
-            totalNum = -1;
-        } else {
-            totalNum = 0;
-            for (RemindType remind : reminds) {
-                totalNum += remind.num;
-            }
-        }
-
-        showReminds(totalNum);
-    }
-
-    protected abstract void showReminds(int num);
+    public abstract void showReminds(List<? extends RemindType> reminds);
 
     public void onHappend() {
         remindController.happenedRemindHandler(this);
