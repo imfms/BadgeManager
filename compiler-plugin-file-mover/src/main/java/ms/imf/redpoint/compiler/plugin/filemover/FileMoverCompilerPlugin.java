@@ -78,7 +78,9 @@ public class FileMoverCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
     }
 
     enum ResourceTypeHandler {
-
+        /**
+         * file
+         */
         FILE("file") {
             @Override
             InputStream read(ProcessingEnvironment processingEnvironment, String type, String location) throws Exception {
@@ -90,6 +92,9 @@ public class FileMoverCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
                 return new FileOutputStream(location);
             }
         },
+        /**
+         * java-style-resource
+         */
         JAVA_RESOURCE("javaResource") {
             @Override
             InputStream read(ProcessingEnvironment processingEnvironment, String type, String location) throws Exception {
@@ -113,12 +118,20 @@ public class FileMoverCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
                     resourceName = location.substring(pathSymbolIndex + 1, location.length());
                 }
 
-                // 'a.b.c/d.txt' -> '/a/b/c/d.txt'
-                final String rawLocation = String.format(
-                        "/%s/%s",
-                        packageName.replace('.', '/'),
-                        resourceName
-                );
+                /*
+                 'd.txt' -> '/d.txt'
+                 'a.b.c/d.txt' -> '/a/b/c/d.txt'
+                  */
+                final String rawLocation;
+                if (packageName.isEmpty()) {
+                    rawLocation = "/" + resourceName;
+                } else {
+                    rawLocation = String.format(
+                            "/%s/%s",
+                            packageName.replace('.', '/'),
+                            resourceName
+                    );
+                }
 
                 return FileMoverCompilerPlugin.class.getClassLoader().getResourceAsStream(rawLocation);
             }
