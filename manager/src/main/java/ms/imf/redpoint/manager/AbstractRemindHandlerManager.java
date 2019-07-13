@@ -14,7 +14,7 @@ public abstract class AbstractRemindHandlerManager<RemindType extends Remind> ex
     }
 
     @Override
-    public void happenedReminds(Iterable<RemindType> reminds) {
+    public void happenedReminds(Iterable<? extends RemindType> reminds) {
         for (RemindType remind : reminds) {
             happenedRemind(remind);
         }
@@ -28,7 +28,7 @@ public abstract class AbstractRemindHandlerManager<RemindType extends Remind> ex
     }
 
     @Override
-    public void notifyRemindDataChanged(Iterable<RemindType> changedReminds) {
+    public void notifyRemindDataChanged(Iterable<? extends RemindType> changedReminds) {
         notifyRemindDataChanged();
     }
 

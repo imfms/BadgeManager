@@ -9,7 +9,7 @@ import ms.imf.redpoint.entity.NodePath;
 
 public abstract class RemindHandler<RemindType extends Remind> {
 
-    private final RemindHandlerManager remindController = RemindHandlerManager.instance();
+    private final RemindHandlerManager<RemindType> remindController = RemindHandlerManager.instance();
     private final List<NodePath> paths = new LinkedList<>();
 
     public void setPath(NodePath... paths) {
@@ -80,7 +80,7 @@ public abstract class RemindHandler<RemindType extends Remind> {
         remindController.removeRemindHandler(this);
     }
 
-    public void showReminds(List<RemindType> reminds) {
+    public void showReminds(List<? extends RemindType> reminds) {
         int totalNum;
         if (reminds == null || reminds.isEmpty()) {
             totalNum = -1;

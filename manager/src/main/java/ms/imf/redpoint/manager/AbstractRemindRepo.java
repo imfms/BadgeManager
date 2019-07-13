@@ -37,14 +37,14 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
     }
 
     @Override
-    public void insertReminds(Iterable<RemindType> reminds) {
+    public void insertReminds(Iterable<? extends RemindType> reminds) {
         for (RemindType remind : reminds) {
             insertRemind(remind);
         }
     }
 
     @Override
-    public void removeReminds(Iterable<RemindType> reminds) {
+    public void removeReminds(Iterable<? extends RemindType> reminds) {
         for (RemindType remind : reminds) {
             removeRemind(remind);
         }
@@ -90,11 +90,11 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
         return mRemindChangedListener;
     }
 
-    private long removeReminds(Collection<RemindType> reminds) {
+    private long removeReminds(Collection<? extends RemindType> reminds) {
         if (reminds.isEmpty()) {
             return 0;
         }
-        removeReminds((Iterable<RemindType>) reminds);
+        removeReminds((Iterable<? extends RemindType>) reminds);
         return reminds.size();
     }
 

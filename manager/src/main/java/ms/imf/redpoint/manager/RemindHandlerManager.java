@@ -51,7 +51,7 @@ public abstract class RemindHandlerManager<RemindType extends Remind> {
     public abstract void happenedRemindHandlers(Iterable<RemindHandler<RemindType>> handler);
 
     public abstract void happenedRemind(RemindType remind);
-    public abstract void happenedReminds(Iterable<RemindType> reminds);
+    public abstract void happenedReminds(Iterable<? extends RemindType> reminds);
 
     /**
      * 消费指定handler节点下所有消息(包括handler节点本身)
@@ -61,7 +61,7 @@ public abstract class RemindHandlerManager<RemindType extends Remind> {
 
     public abstract void notifyRemindDataChanged();
 
-    public abstract void notifyRemindDataChanged(Iterable<RemindType> changedReminds);
+    public abstract void notifyRemindDataChanged(Iterable<? extends RemindType> changedReminds);
 
     public abstract void notifyRemindHandlerChanged(RemindHandler<RemindType> handler);
 }

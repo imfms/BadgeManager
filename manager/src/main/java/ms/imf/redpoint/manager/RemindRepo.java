@@ -13,23 +13,23 @@ import ms.imf.redpoint.entity.Node;
  */
 public interface RemindRepo<RemindType extends Remind> {
 
-    Collection<RemindType> getAllReminds();
+    Collection<? extends RemindType> getAllReminds();
 
-    Collection<RemindType> getMatchReminds(List<Node> path);
-    Collection<RemindType> getMatchSubReminds(List<Node> path);
+    Collection<? extends RemindType> getMatchReminds(List<Node> path);
+    Collection<? extends RemindType> getMatchSubReminds(List<Node> path);
 
     void insertRemind(RemindType remind);
-    void insertReminds(Iterable<RemindType> reminds);
+    void insertReminds(Iterable<? extends RemindType> reminds);
 
     void removeRemind(RemindType remind);
-    void removeReminds(Iterable<RemindType> reminds);
+    void removeReminds(Iterable<? extends RemindType> reminds);
 
     long removeMatchReminds(List<Node> path);
     long removeMatchSubReminds(List<Node> path);
 
     long removeAllReminds();
 
-    void setRemindChangedListener(RemindChangedListener listener);
+    void setRemindChangedListener(RemindChangedListener<? super RemindType> listener);
 
     void notifyRepoRemindChanged();
 }
