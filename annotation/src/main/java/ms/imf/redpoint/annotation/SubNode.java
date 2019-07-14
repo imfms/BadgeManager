@@ -8,21 +8,28 @@ import java.lang.annotation.Target;
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface SubNode {
-    String type();
-
-    NodeArg[] args() default {};
 
     /**
-     * 子节点列表, 与 {@link #subRef()} 只能指定一项
+     * type
+     */
+    String value();
+
+    /**
+     * args
+     */
+    Arg[] args() default {};
+
+    /**
+     * 子节点列表, 与 {@link #subNodeContainerRef()} 只能指定一项
      */
     SubNode2[] subNodes() default {};
 
     /**
-     * 子节点：被{@link Path}所标注的类的Class
+     * 子节点：被{@link NodeContainer}所标注的类的Class
      * <p>
      * 如果当前节点是最后一个节点的情况下(没有子节点)可使用{@link Void}.class
      * <p>
      * 与 {@link #subNodes()} 只能指定一项
      */
-    Class subRef() default Void.class;
+    Class subNodeContainerRef() default Void.class;
 }

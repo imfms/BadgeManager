@@ -5,16 +5,16 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
+import ms.imf.redpoint.compiler.plugin.NodeTreeParsedHandlerPlugin;
 
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface Plugin {
 
     /**
-     * parsed node schemas handle plugin's class
+     * the plugin's class after the node tree is parsed
      */
-    Class<? extends ParsedNodeSchemaHandlePlugin> value();
+    Class<? extends NodeTreeParsedHandlerPlugin> value();
 
     /**
      * plugin's arguments

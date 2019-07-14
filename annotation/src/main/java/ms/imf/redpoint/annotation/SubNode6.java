@@ -9,14 +9,14 @@ import java.lang.annotation.Target;
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface SubNode6 {
     /**
-     * @see SubNode#type()
+     * @see SubNode#value()
      */
-    String type();
+    String value();
 
     /**
      * @see SubNode#args()
      */
-    NodeArg[] args() default {};
+    Arg[] args() default {};
 
     /**
      * @see SubNode#subNodes()
@@ -24,7 +24,7 @@ public @interface SubNode6 {
     SubNode7[] subNodes() default {};
 
     /**
-     * @see SubNode#subRef()
+     * @see SubNode#subNodeContainerRef()
      */
-    Class subRef() default Void.class;
+    Class subNodeContainerRef() default Void.class;
 }

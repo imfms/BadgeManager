@@ -7,24 +7,14 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.ANNOTATION_TYPE)
-public @interface SubNode7 {
+public @interface Arg {
     /**
-     * @see SubNode#value()
+     * arg name
      */
     String value();
 
     /**
-     * @see SubNode#args()
+     * limits of arg values
      */
-    Arg[] args() default {};
-
-    /**
-     * @see SubNode#subNodes()
-     */
-    SubNode8[] subNodes() default {};
-
-    /**
-     * @see SubNode#subNodeContainerRef()
-     */
-    Class subNodeContainerRef() default Void.class;
+    String[] valueLimits() default {};
 }

@@ -12,7 +12,7 @@ public @interface Mapper {
     String key();
 
     /**
-     * @see SubNode#subRef()
+     * @see SubNode#subNodeContainerRef()
      */
     Class value();
 }
