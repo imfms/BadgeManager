@@ -70,14 +70,14 @@ class Generator {
 
     private TypeSpec generateNode(NodeContainerAnnotationEntity.Node node, Set<String> parentLockedClassNames) {
 
-        // node.type
-        final String className = generateStandardIdentifier(parentLockedClassNames, node.type);
+        // node.name
+        final String className = generateStandardIdentifier(parentLockedClassNames, node.name);
         TypeSpec.Builder typeBuilder = TypeSpec.interfaceBuilder(className)
                 .addModifiers(Modifier.PUBLIC, Modifier.STATIC);
 
         typeBuilder.addField(
                 FieldSpec.builder(String.class, "name$", Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
-                        .initializer("$S", node.type)
+                        .initializer("$S", node.name)
                         .build()
         );
 

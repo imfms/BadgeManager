@@ -6,8 +6,8 @@ import java.util.List;
 
 public class ConvertRule {
 
-    @SerializedName("type")
-    public String type;
+    @SerializedName("name")
+    public String name;
     @SerializedName("args")
     public List<String> args;
     @SerializedName("sub")
@@ -16,8 +16,8 @@ public class ConvertRule {
     public List<ConvertTo> convertTo;
 
     public static class ConvertTo {
-        @SerializedName("type")
-        public String type;
+        @SerializedName("name")
+        public String name;
         @SerializedName("args")
         public List<Arg> args;
     }

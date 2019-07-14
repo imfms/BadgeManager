@@ -11,7 +11,7 @@ public @interface SubNode5 {
     /**
      * @see SubNode#value()
      */
-    String type();
+    String value();
 
     /**
      * @see SubNode#args()

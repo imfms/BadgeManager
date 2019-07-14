@@ -186,9 +186,9 @@ class NodeContainerAnnotationParser {
         // check repeat value
         final Set<String> repeatElements = new HashSet<>();
         for (NodeContainerAnnotationEntity.Node nodeEntity : nodeEntities) {
-            if (!repeatElements.add(nodeEntity.type)) {
+            if (!repeatElements.add(nodeEntity.name)) {
                 throw new AptProcessException(
-                        String.format("repeat type in nodes and nodesJson: %s", nodeEntity.type),
+                        String.format("repeat node name in nodes and nodesJson: %s", nodeEntity.name),
                         annotatedPathTypeElement, pathMirror
                 );
             }
@@ -270,7 +270,7 @@ class NodeContainerAnnotationParser {
 
         NodeParseEntity nodeParseEntity = new NodeParseEntity();
 
-        nodeParseEntity.type = subNodeWrapperType.type();
+        nodeParseEntity.name = subNodeWrapperType.name();
 
         if (subNodeWrapperType.args() != null) {
             nodeParseEntity.args = new ArrayList<>(subNodeWrapperType.args().length);
@@ -331,7 +331,7 @@ class NodeContainerAnnotationParser {
 
         NodeParseEntity nodeParseEntity = new NodeParseEntity();
 
-        nodeParseEntity.type = jsonNode.type;
+        nodeParseEntity.name = jsonNode.name;
 
         if (jsonNode.args != null
                 && jsonNode.args.length > 0) {
@@ -372,7 +372,7 @@ class NodeContainerAnnotationParser {
                     throw new AptProcessException(
                             String.format(
                                     "subNodes[%d](%s): %s",
-                                    i, subJsonNode.type, e.getMessage()
+                                    i, subJsonNode.name, e.getMessage()
                             ),
                             e
                     );
@@ -401,12 +401,12 @@ class NodeContainerAnnotationParser {
     private NodeContainerAnnotationEntity.Node nodeParseEntityToPathNodeEntity(TypeElement annotatedPathTypeElement, NodeParseEntity nodeParseEntity) throws AptProcessException {
         final NodeContainerAnnotationEntity.Node resultNodeEntity = new NodeContainerAnnotationEntity.Node();
 
-        // type convert
-        if (nodeParseEntity.type == null
-                || nodeParseEntity.type.isEmpty()) {
-            throw new AptProcessException("type can't be null", annotatedPathTypeElement);
+        // name convert
+        if (nodeParseEntity.name == null
+                || nodeParseEntity.name.isEmpty()) {
+            throw new AptProcessException("name can't be null", annotatedPathTypeElement);
         }
-        resultNodeEntity.type = nodeParseEntity.type;
+        resultNodeEntity.name = nodeParseEntity.name;
 
         // args convert
         if (nodeParseEntity.args != null) {
@@ -501,7 +501,7 @@ class NodeContainerAnnotationParser {
                     throw new AptProcessException(
                             String.format(
                                     "subNodes[%d](%s): %s",
-                                    i, subEntity.type, e.getMessage()
+                                    i, subEntity.name, e.getMessage()
                             ),
                             e
                     );
@@ -532,8 +532,8 @@ class NodeContainerAnnotationParser {
      * @see NodeContainer#nodesJson()
      */
     private static class JsonNode {
-        @SerializedName("type")
-        String type;
+        @SerializedName("name")
+        String name;
         @SerializedName("args")
         Arg[] args;
         @SerializedName("subNodes")
@@ -550,7 +550,7 @@ class NodeContainerAnnotationParser {
     }
 
     private static class NodeParseEntity {
-        public String type;
+        public String name;
         public List<NodeArg> args;
         public List<NodeParseEntity> subNodes;
         public TypeElement subNodeRef;
@@ -659,7 +659,7 @@ class NodeContainerAnnotationParser {
 
         NodeTree nodeTree = new NodeTree();
 
-        nodeTree.type = nodeEntity.type;
+        nodeTree.name = nodeEntity.name;
 
         if (nodeEntity.args != null) {
             nodeTree.args = new ArrayList<>(nodeEntity.args.size());

@@ -303,12 +303,12 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
         Map<String, NodeContainerAnnotationEntity> repeatCheckContainer = new HashMap<>();
         for (NodeContainerAnnotationEntity nodeTreeEntity : treePathEntities) {
             for (NodeContainerAnnotationEntity.Node node : nodeTreeEntity.nodes) {
-                NodeContainerAnnotationEntity repeatNodeTreeEntity = repeatCheckContainer.put(node.type, nodeTreeEntity);
+                NodeContainerAnnotationEntity repeatNodeTreeEntity = repeatCheckContainer.put(node.name, nodeTreeEntity);
                 if (repeatNodeTreeEntity != null) {
                     throw new AptProcessException(
                             String.format(
-                                    "found repeat root node type '%s' on %s and %s, please check root type or path's link relations",
-                                    node.type,
+                                    "found repeat root node name '%s' on %s and %s, please check root node or path's link relations",
+                                    node.name,
                                     repeatNodeTreeEntity.host.getQualifiedName(),
                                     nodeTreeEntity.host.getQualifiedName()
                             ),

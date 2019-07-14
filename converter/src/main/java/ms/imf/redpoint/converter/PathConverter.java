@@ -216,7 +216,7 @@ public class PathConverter {
                 }
             }
 
-            result.add(new Node(convertTo.type, args));
+            result.add(new Node(convertTo.name, args));
         }
 
         return result;
@@ -233,7 +233,7 @@ public class PathConverter {
 
             if (currentLevelRules != null) {
                 for (ConvertRule convertRule : currentLevelRules) {
-                    if (convertRule.type.equals(node.type)) {
+                    if (convertRule.name.equals(node.name)) {
                         matchedConvertRule = convertRule;
                         break;
                     }

@@ -14,7 +14,7 @@ public @interface NodeContainer {
     /**
      * Node {
      * <p>
-     * | String type; {@link SubNode#value()}
+     * | String name; {@link SubNode#value()}
      * <p>
      * | Arg[] args; {@link SubNode#args()}}
      * <p>

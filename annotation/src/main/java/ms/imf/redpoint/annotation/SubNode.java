@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
 public @interface SubNode {
 
     /**
-     * type
+     * name
      */
     String value();
 

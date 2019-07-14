@@ -10,7 +10,7 @@ package ms.imf.redpoint.annotation;
  */
 public enum ContainerType {
     /**
-     * unlimited node type
+     * unlimit node type
      */
     UNLIMIT,
     /**

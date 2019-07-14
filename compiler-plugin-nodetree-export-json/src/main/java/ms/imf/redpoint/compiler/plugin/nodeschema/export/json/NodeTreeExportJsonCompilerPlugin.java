@@ -26,7 +26,7 @@ import ms.imf.redpoint.entity.NodeTree;
  * <p>
  * [NodeTree {
  * <p>
- * &nbsp;&nbsp;String type;
+ * &nbsp;&nbsp;String name;
  * <p>
  * &nbsp;&nbsp;List&lt;String&gt; args;
  * <p>
@@ -39,7 +39,7 @@ import ms.imf.redpoint.entity.NodeTree;
  */
 public class NodeTreeExportJsonCompilerPlugin implements NodeTreeParsedHandlerPlugin {
 
-    public static final String JSON_KEY_TYPE = "type";
+    public static final String JSON_KEY_NAME = "name";
     public static final String JSON_KEY_ARGS = "args";
     public static final String JSON_KEY_SUB = "sub";
 
@@ -89,7 +89,7 @@ public class NodeTreeExportJsonCompilerPlugin implements NodeTreeParsedHandlerPl
                     public JsonElement serialize(NodeTree src, Type typeOfSrc, JsonSerializationContext context) {
                         JsonObject jsonObject = new JsonObject();
 
-                        jsonObject.addProperty(JSON_KEY_TYPE, src.type);
+                        jsonObject.addProperty(JSON_KEY_NAME, src.name);
                         jsonObject.add(JSON_KEY_ARGS, context.serialize(src.args));
                         jsonObject.add(JSON_KEY_SUB, context.serialize(src.sub));
 

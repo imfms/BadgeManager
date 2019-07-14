@@ -86,12 +86,12 @@ public class ArgCheckUtil {
                 throw new IllegalArgumentException(String.format("[%d]: found null value", i));
             }
 
-            if (convertRule.type == null) {
-                throw new IllegalArgumentException(String.format("[%d].type: found null value", i));
+            if (convertRule.name == null) {
+                throw new IllegalArgumentException(String.format("[%d].name: found null value", i));
             }
 
-            if (!repeatCheckTypeNames.add(convertRule.type)) {
-                throw new IllegalArgumentException(String.format("[%d].type(%s) repeat type in same node level", i, convertRule.type));
+            if (!repeatCheckTypeNames.add(convertRule.name)) {
+                throw new IllegalArgumentException(String.format("[%d].name(%s) repeat node name in same node level", i, convertRule.name));
             }
 
             if (convertRule.args != null) {
@@ -99,7 +99,7 @@ public class ArgCheckUtil {
                     String arg = convertRule.args.get(j);
                     if (arg == null
                             || arg.length() <= 0) {
-                        throw new IllegalArgumentException(String.format("[%d](%s).args[%d]: found null value", i, convertRule.type, j));
+                        throw new IllegalArgumentException(String.format("[%d](%s).args[%d]: found null value", i, convertRule.name, j));
                     }
                 }
             }
@@ -107,14 +107,14 @@ public class ArgCheckUtil {
             try {
                 checkConvertTo(convertRule.convertTo);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(String.format("[%d](%s).convertTo: %s", i, convertRule.type, e.getMessage()), e);
+                throw new IllegalArgumentException(String.format("[%d](%s).convertTo: %s", i, convertRule.name, e.getMessage()), e);
             }
 
             if (convertRule.sub != null) {
                 try {
                     checkConvertRules(convertRule.sub);
                 } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException(String.format("[%d](%s).sub: %s", i, convertRule.type, e.getMessage()), e);
+                    throw new IllegalArgumentException(String.format("[%d](%s).sub: %s", i, convertRule.name, e.getMessage()), e);
                 }
             }
         }
@@ -131,8 +131,8 @@ public class ArgCheckUtil {
                 throw new IllegalArgumentException(String.format("[%d]: found null value", i));
             }
 
-            if (convertTo.type == null) {
-                throw new IllegalArgumentException(String.format("[%d].type: found null value", i));
+            if (convertTo.name == null) {
+                throw new IllegalArgumentException(String.format("[%d].name: found null value", i));
             }
 
             if (convertTo.args != null) {
@@ -140,7 +140,7 @@ public class ArgCheckUtil {
                     checkConvertToArgs(convertTo);
                 } catch (Exception e) {
                     throw new IllegalArgumentException(
-                            String.format("[%d](%s): %s", i, convertTo.type, e.getMessage()), e
+                            String.format("[%d](%s): %s", i, convertTo.name, e.getMessage()), e
                     );
                 }
             }
@@ -202,7 +202,7 @@ public class ArgCheckUtil {
                     checkConvertRuleConvertTo(concatToNew(upToNowConvertRules, convertRule), targetPathsSchema, convertRule);
                 } catch (Exception e) {
                     throw new IllegalArgumentException(
-                            String.format("[%d](%s): %s", ruleIndex, convertRule.type, e.getMessage()), e
+                            String.format("[%d](%s): %s", ruleIndex, convertRule.name, e.getMessage()), e
                     );
                 }
             }
@@ -212,7 +212,7 @@ public class ArgCheckUtil {
                 try {
                     checkConvertRulesConvertToArgValidity(convertRule.sub, concatToNew(upToNowConvertRules, convertRule), targetPathsSchema);
                 } catch (IllegalArgumentException e) {
-                    throw new IllegalArgumentException(String.format("[%d](%s).sub: %s", ruleIndex, convertRule.type, e.getMessage()), e);
+                    throw new IllegalArgumentException(String.format("[%d](%s).sub: %s", ruleIndex, convertRule.name, e.getMessage()), e);
                 }
             }
         }
@@ -228,7 +228,7 @@ public class ArgCheckUtil {
 
             if (compareNodeTrees != null) {
                 for (NodeTree compareNodeTree : compareNodeTrees) {
-                    if (compareNodeTree.type.equals(convertTo.type)) {
+                    if (compareNodeTree.name.equals(convertTo.name)) {
                         rightNodeTree = compareNodeTree;
                     }
                 }
@@ -246,7 +246,7 @@ public class ArgCheckUtil {
                         errorNodesTipSb.append('*');
                     }
 
-                    errorNodesTipSb.append(next.type);
+                    errorNodesTipSb.append(next.name);
 
                     errorNodesTipSb.append(
                             iterator.hasNext() ? '/' : '*'
@@ -276,12 +276,12 @@ public class ArgCheckUtil {
                     throw new IllegalArgumentException("found null value");
                 }
 
-                if (nodeTree.type == null) {
-                    throw new IllegalArgumentException("type: found null value");
+                if (nodeTree.name == null) {
+                    throw new IllegalArgumentException("name: found null value");
                 }
 
-                if (!repeatCheckTypeNames.add(nodeTree.type)) {
-                    throw new IllegalArgumentException("repeat type in same level");
+                if (!repeatCheckTypeNames.add(nodeTree.name)) {
+                    throw new IllegalArgumentException("repeat node name in same level");
                 }
 
                 if (nodeTree.args != null) {
@@ -317,8 +317,8 @@ public class ArgCheckUtil {
                         String.format(
                                 "[%d]%s: %s",
                                 schemaIndex,
-                                nodeTree != null && nodeTree.type != null
-                                        ? String.format("(%s)", nodeTree.type)
+                                nodeTree != null && nodeTree.name != null
+                                        ? String.format("(%s)", nodeTree.name)
                                         : "",
                                 e.getMessage()
                         ),
@@ -367,7 +367,7 @@ public class ArgCheckUtil {
                     if (!nodeSchemaContainsArgName(arg.hisArg, matchedNodeTree)) {
                         throw new IllegalArgumentException(String.format(
                                 "convertTo[%d](%s).args[%d].hisArg(%s): target nodeSchema.args('%s') not contains arg '%s'",
-                                convertToIndex, convertTo.type, convertToArgIndex,
+                                convertToIndex, convertTo.name, convertToArgIndex,
                                 arg.hisArg, matchedNodeTree.args, arg.hisArg
                         ));
                     }
@@ -381,7 +381,7 @@ public class ArgCheckUtil {
                             if (!matchedNodeArg.valueLimits.contains(arg.value)) {
                                 throw new IllegalArgumentException(String.format(
                                         "convertTo[%d](%s).args[%d].value(%s): target nodeSchema.arg(%s).valueLimits(%s) not contains value '%s'",
-                                        convertToIndex, convertTo.type, convertToArgIndex,
+                                        convertToIndex, convertTo.name, convertToArgIndex,
                                         arg.hisArg, matchedNodeArg.name, matchedNodeArg.valueLimits, arg.value
                                 ));
                             }
@@ -396,7 +396,7 @@ public class ArgCheckUtil {
                     if (arg.refValue.myLevel > upToNowConvertRules.size() - 1) {
                         throw new IllegalArgumentException(String.format(
                                 "convertTo[%d](%s).args[%d].refValue.myLevel(%d): up to now convertRules(size = %d, %s) not contain level '%d' (level start from 0)",
-                                convertToIndex, convertTo.type, convertToArgIndex, arg.refValue.myLevel,
+                                convertToIndex, convertTo.name, convertToArgIndex, arg.refValue.myLevel,
                                 upToNowConvertRules.size(), getMultiLevelConvertRuleTipStr(upToNowConvertRules), arg.refValue.myLevel
                         ));
                     }
@@ -407,7 +407,7 @@ public class ArgCheckUtil {
                             || !targetLevelConvertRule.args.contains(arg.refValue.myArg)) {
                         throw new IllegalArgumentException(String.format(
                                 "convertTo[%d](%s).args[%d].refValue.myArg(%s): target level(%d) convertRule's args(%s) not contains arg '%s'",
-                                convertToIndex, convertTo.type, convertToArgIndex, arg.refValue.myArg,
+                                convertToIndex, convertTo.name, convertToArgIndex, arg.refValue.myArg,
                                 arg.refValue.myLevel, targetLevelConvertRule.args, arg.refValue.myArg
                         ));
                     }
@@ -446,7 +446,7 @@ public class ArgCheckUtil {
         while (iterator.hasNext()) {
             ConvertRule rule = iterator.next();
 
-            upToNowRulesTipStr.append(rule.type);
+            upToNowRulesTipStr.append(rule.name);
 
             if (iterator.hasNext()) {
                 upToNowRulesTipStr.append('/');

@@ -33,18 +33,18 @@ public class Node implements Serializable {
         return instance(type, (String[]) null);
     }
 
-    public final String type;
+    public final String name;
     public final Map<String, String> args;
 
-    public Node(String type) {
-        this(type, null);
+    public Node(String name) {
+        this(name, null);
     }
 
     /**
      * todo 20190521 对args的key can't be null参数校验重申
      */
-    public Node(String type, Map<String, String> args) {
-        if (type == null) { throw new IllegalArgumentException("type can't be null"); }
+    public Node(String name, Map<String, String> args) {
+        if (name == null) { throw new IllegalArgumentException("name can't be null"); }
 
         if (args != null) {
             int index = -1;
@@ -56,7 +56,7 @@ public class Node implements Serializable {
             }
         }
 
-        this.type = type;
+        this.name = name;
         this.args = args == null
                 ? Collections.<String, String>emptyMap()
                 : Collections.unmodifiableMap(new HashMap<>(args));
@@ -65,7 +65,7 @@ public class Node implements Serializable {
     @Override
     public String toString() {
         return "Node{" +
-                "type='" + type + '\'' +
+                "name='" + name + '\'' +
                 ", args=" + args +
                 '}';
     }
@@ -77,13 +77,13 @@ public class Node implements Serializable {
 
         Node node = (Node) o;
 
-        if (type != null ? !type.equals(node.type) : node.type != null) return false;
+        if (name != null ? !name.equals(node.name) : node.name != null) return false;
         return args != null ? args.equals(node.args) : node.args == null;
     }
 
     @Override
     public int hashCode() {
-        int result = type != null ? type.hashCode() : 0;
+        int result = name != null ? name.hashCode() : 0;
         result = 31 * result + (args != null ? args.hashCode() : 0);
         return result;
     }

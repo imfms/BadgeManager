@@ -19,12 +19,12 @@ import ms.imf.redpoint.compiler.plugin.nodeschema.export.json.NodeTreeExportJson
         value = {
                 @SubNode(value = "home"),
                 @SubNode(value = "mine", args = @Arg("uid"), subNodes = {
-                        @SubNode2(value = "type", args = @Arg(value = "arg1", valueLimits = {"a", "b", "c"}))
+                        @SubNode2(value = "name", args = @Arg(value = "arg1", valueLimits = {"a", "b", "c"}))
                 })
         },
         nodesJson = {
-                "{\"type\":\"nodeJsonType1\",\"args\":[{\"name\":\"nodeJsonType1Arg1\"},{\"name\":\"nodeJsonType1Arg2\",\"limits\":[\"limit1\", \"limit2\",\"limit3\"]}]}",
-                "{\"type\":\"nodeJsonType2\",\"args\":[{\"name\":\"nodeJsonType2Arg1\"},{\"name\":\"nodeJsonType2Arg2\",\"limits\":[\"limit1\",\"limit2\",\"limit3\"]}]}"
+                "{\"name\":\"nodeJsonType1\",\"args\":[{\"name\":\"nodeJsonType1Arg1\"},{\"name\":\"nodeJsonType1Arg2\",\"limits\":[\"limit1\", \"limit2\",\"limit3\"]}]}",
+                "{\"name\":\"nodeJsonType2\",\"args\":[{\"name\":\"nodeJsonType2Arg1\"},{\"name\":\"nodeJsonType2Arg2\",\"limits\":[\"limit1\",\"limit2\",\"limit3\"]}]}"
         }
 )
 @NodeParserGlobalConfig(

@@ -10,7 +10,7 @@ public class NodeContainerAnnotationEntity {
     public TypeElement host;
 
     public static class Node {
-        public String type;
+        public String name;
         public List<Arg> args;
         public List<Node> sub;
         public NodeContainerAnnotationEntity subRef;
