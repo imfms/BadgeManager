@@ -7,17 +7,20 @@ import java.lang.annotation.Target;
 
 import ms.imf.redpoint.compiler.plugin.NodeTreeParsedHandlerPlugin;
 
+/**
+ * 节点解析器插件
+ */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface Plugin {
 
     /**
-     * the plugin's class after the node tree is parsed
+     * 插件类class
      */
     Class<? extends NodeTreeParsedHandlerPlugin> value();
 
     /**
-     * plugin's arguments
+     * 插件执行参数，该字段将会在插件运行时提供给插件类的实例，用于对插件的定制化功能提供支持
      */
     String[] args() default {};
 }

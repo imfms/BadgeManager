@@ -8,7 +8,7 @@ import ms.imf.redpoint.entity.Node;
 /**
  * 消息仓库
  *
- * @author imf_m
+ * @author f_ms
  * @date 2019/3/25
  */
 public interface RemindRepo<RemindType extends Remind> {

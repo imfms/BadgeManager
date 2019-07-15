@@ -22,14 +22,14 @@ import ms.imf.redpoint.compiler.plugin.nodeschema.export.json.NodeTreeExportJson
                         @SubNode2(value = "name", args = @Arg(value = "arg1", valueLimits = {"a", "b", "c"}))
                 })
         },
-        nodesJson = {
+        nodeJson = {
                 "{\"name\":\"nodeJsonType1\",\"args\":[{\"name\":\"nodeJsonType1Arg1\"},{\"name\":\"nodeJsonType1Arg2\",\"limits\":[\"limit1\", \"limit2\",\"limit3\"]}]}",
                 "{\"name\":\"nodeJsonType2\",\"args\":[{\"name\":\"nodeJsonType2Arg1\"},{\"name\":\"nodeJsonType2Arg2\",\"limits\":[\"limit1\",\"limit2\",\"limit3\"]}]}"
         }
 )
 @NodeParserGlobalConfig(
-        eachAptRoundPlugins = @Plugin(NodeContainerHelperCodeGeneratorPlugin.class),
-        lastAptRoundPlugins = @Plugin(value = NodeTreeExportJsonCompilerPlugin.class, args = "a.b.c/hi.json")
+        eachAptRoundNodeTreeParsedPlugins = @Plugin(NodeContainerHelperCodeGeneratorPlugin.class),
+        lastAptRoundNodeTreeParsedPlugins = @Plugin(value = NodeTreeExportJsonCompilerPlugin.class, args = "a.b.c/hi.json")
 )
 public class TestPath {
     public static void main(String[] args) {

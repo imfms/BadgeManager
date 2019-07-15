@@ -164,7 +164,7 @@ class NodeContainerAnnotationParser {
     private NodeContainerAnnotationEntity parsePathRaw(TypeElement annotatedPathTypeElement, NodeContainer nodeContainer, AnnotationMirror pathMirror) throws AptProcessException {
 
         final boolean nodeMode = nodeContainer.value().length > 0;
-        final boolean jsonMode = nodeContainer.nodesJson().length > 0;
+        final boolean jsonMode = nodeContainer.nodeJson().length > 0;
 
         final List<NodeContainerAnnotationEntity.Node> nodeEntities = new LinkedList<>();
 
@@ -179,7 +179,7 @@ class NodeContainerAnnotationParser {
             try {
                 nodeEntities.addAll(pathNodeJsonToNodeEntity(annotatedPathTypeElement, nodeContainer, pathMirror));
             } catch (AptProcessException e) {
-                throw new AptProcessException(String.format("nodesJson: %s", e.getMessage()), e);
+                throw new AptProcessException(String.format("nodeJson: %s", e.getMessage()), e);
             }
         }
 
@@ -188,7 +188,7 @@ class NodeContainerAnnotationParser {
         for (NodeContainerAnnotationEntity.Node nodeEntity : nodeEntities) {
             if (!repeatElements.add(nodeEntity.name)) {
                 throw new AptProcessException(
-                        String.format("repeat node name in nodes and nodesJson: %s", nodeEntity.name),
+                        String.format("repeat node name in nodes and nodeJson: %s", nodeEntity.name),
                         annotatedPathTypeElement, pathMirror
                 );
             }
@@ -204,7 +204,7 @@ class NodeContainerAnnotationParser {
         final List<NodeContainerAnnotationEntity.Node> results = new LinkedList<>();
 
         final Map<String, TypeElement> nodeJsonRefTypeMapper = new HashMap<>();
-        List<AnnotationMirror> nodesJsonRefClassMappers = NodeContainerAnnotationParser.<List<AnnotationMirror>>getAnnotionMirrorValue(pathMirror, "nodesJsonTreeRefMapper"/* todo runtime check */);
+        List<AnnotationMirror> nodesJsonRefClassMappers = NodeContainerAnnotationParser.<List<AnnotationMirror>>getAnnotionMirrorValue(pathMirror, "nodeJsonRefContainerMapper"/* todo runtime check */);
         if (nodesJsonRefClassMappers == null) {
             nodesJsonRefClassMappers = Collections.emptyList();
         }
@@ -225,8 +225,8 @@ class NodeContainerAnnotationParser {
             }
         }
 
-        for (int i = 0; i < nodeContainer.nodesJson().length; i++) {
-            String nodeJson = nodeContainer.nodesJson()[i];
+        for (int i = 0; i < nodeContainer.nodeJson().length; i++) {
+            String nodeJson = nodeContainer.nodeJson()[i];
             try {
                 results.add(
                         nodeJsonToNodeEntity(annotatedPathTypeElement, nodeJson, nodeJsonRefTypeMapper)
@@ -529,7 +529,7 @@ class NodeContainerAnnotationParser {
     }
 
     /**
-     * @see NodeContainer#nodesJson()
+     * @see NodeContainer#nodeJson()
      */
     private static class JsonNode {
         @SerializedName("name")

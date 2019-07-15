@@ -5,7 +5,7 @@ package ms.imf.redpoint.annotation;
  *
  * @see NodeContainer#type()
  *
- * @author imf_m
+ * @author f_ms
  * @date 2019/6/19
  */
 public enum ContainerType {

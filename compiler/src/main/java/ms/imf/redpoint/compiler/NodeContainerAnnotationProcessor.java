@@ -94,8 +94,8 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
             try {
                 processPlugins(
                         "each apt round plugin",
-                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "eachAptRoundPlugins" /* todo runtime check */),
-                        nodeParserGlobalConfig.eachAptRoundPlugins(),
+                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "eachAptRoundNodeTreeParsedPlugins" /* todo runtime check */),
+                        nodeParserGlobalConfig.eachAptRoundNodeTreeParsedPlugins(),
                         pathEntities
                 );
             } catch (AptProcessException e) {
@@ -135,8 +135,8 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
             try {
                 processPlugins(
                         "last apt round plugin",
-                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "lastAptRoundPlugins" /* todo runtime check */),
-                        nodeParserGlobalConfig.lastAptRoundPlugins(),
+                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "lastAptRoundNodeTreeParsedPlugins" /* todo runtime check */),
+                        nodeParserGlobalConfig.lastAptRoundNodeTreeParsedPlugins(),
                         allNodeTreeEntities
                 );
             } catch (AptProcessException e) {
