@@ -11,8 +11,8 @@ public interface NodeTreeParsedHandlerPlugin {
     interface PluginContext {
         ProcessingEnvironment processingEnvironment();
         String[] args();
-        List<NodeContainerAnnotationEntity> flatNodeContainerEntities();
-        List<NodeContainerAnnotationEntity> treeNodeContainerEntities();
+        List<NodeContainerEntity> flatNodeContainerEntities();
+        List<NodeContainerEntity> treeNodeContainerEntities();
         List<NodeTree> nodeTree();
     }
 

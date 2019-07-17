@@ -4,7 +4,7 @@ import java.util.List;
 
 import javax.lang.model.element.TypeElement;
 
-public class NodeContainerAnnotationEntity {
+public class NodeContainerEntity {
 
     public List<Node> nodes;
     public TypeElement host;
@@ -13,7 +13,7 @@ public class NodeContainerAnnotationEntity {
         public String name;
         public List<Arg> args;
         public List<Node> sub;
-        public NodeContainerAnnotationEntity subRef;
+        public NodeContainerEntity subRef;
 
         public static class Arg {
             public String name;

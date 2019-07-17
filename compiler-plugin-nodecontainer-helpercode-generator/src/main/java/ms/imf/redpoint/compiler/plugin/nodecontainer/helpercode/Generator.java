@@ -17,7 +17,7 @@ import javax.lang.model.element.Modifier;
 import javax.lang.model.element.PackageElement;
 
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
-import ms.imf.redpoint.compiler.plugin.NodeContainerAnnotationEntity;
+import ms.imf.redpoint.compiler.plugin.NodeContainerEntity;
 
 /**
  * @see NodeContainerHelperCodeGeneratorPlugin
@@ -33,13 +33,13 @@ class Generator {
         this.aptFiler = aptFiler;
     }
 
-    void generate(List<NodeContainerAnnotationEntity> paths) throws AptProcessException {
-        for (NodeContainerAnnotationEntity path : paths) {
+    void generate(List<NodeContainerEntity> paths) throws AptProcessException {
+        for (NodeContainerEntity path : paths) {
             generatePath(path);
         }
     }
 
-    private void generatePath(NodeContainerAnnotationEntity path) throws AptProcessException {
+    private void generatePath(NodeContainerEntity path) throws AptProcessException {
 
         final String packageName = getElementPackage(path.host).getQualifiedName().toString();
         final String className = path.host.getSimpleName().toString() + "_Path";
@@ -48,7 +48,7 @@ class Generator {
                 .addJavadoc("@see $T", path.host)
                 .addModifiers(Modifier.PUBLIC);
 
-        for (NodeContainerAnnotationEntity.Node node : path.nodes) {
+        for (NodeContainerEntity.Node node : path.nodes) {
             builder.addType(
                     generateNode(node, new HashSet<>(Collections.singletonList(className)))
             );
@@ -68,7 +68,7 @@ class Generator {
         }
     }
 
-    private TypeSpec generateNode(NodeContainerAnnotationEntity.Node node, Set<String> parentLockedClassNames) {
+    private TypeSpec generateNode(NodeContainerEntity.Node node, Set<String> parentLockedClassNames) {
 
         // node.name
         final String className = generateStandardIdentifier(parentLockedClassNames, node.name);
@@ -83,7 +83,7 @@ class Generator {
 
         // node.args
         if (node.args != null) {
-            for (NodeContainerAnnotationEntity.Node.Arg arg : node.args) {
+            for (NodeContainerEntity.Node.Arg arg : node.args) {
                 String argFieldName = generateStandardIdentifier(String.format("arg$%s", arg.name));
                 typeBuilder.addField(
                         FieldSpec.builder(String.class, argFieldName, Modifier.PUBLIC, Modifier.STATIC, Modifier.FINAL)
@@ -113,7 +113,7 @@ class Generator {
 
         // node.sub
         if (node.sub != null) {
-            for (NodeContainerAnnotationEntity.Node subNode : node.sub) {
+            for (NodeContainerEntity.Node subNode : node.sub) {
                 HashSet<String> lockedClassNames = new HashSet<>(parentLockedClassNames);
                 lockedClassNames.add(className);
                 typeBuilder.addType(generateNode(subNode, lockedClassNames));

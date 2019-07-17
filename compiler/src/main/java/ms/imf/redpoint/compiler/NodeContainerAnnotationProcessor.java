@@ -30,7 +30,7 @@ import ms.imf.redpoint.annotation.NodeParserGlobalConfig;
 import ms.imf.redpoint.annotation.Plugin;
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.NodeTreeParsedHandlerPlugin;
-import ms.imf.redpoint.compiler.plugin.NodeContainerAnnotationEntity;
+import ms.imf.redpoint.compiler.plugin.NodeContainerEntity;
 import ms.imf.redpoint.entity.NodeTree;
 
 @AutoService(Processor.class)
@@ -52,7 +52,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
         return supportedTypes;
     }
 
-    private final List<NodeContainerAnnotationEntity> allNodeTreeEntities = new LinkedList<>();
+    private final List<NodeContainerEntity> allNodeTreeEntities = new LinkedList<>();
 
     private TypeElement lastPathAptGlobalConfigAnnotationHost;
     private NodeParserGlobalConfig nodeParserGlobalConfig;
@@ -81,9 +81,9 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
 
         // parse paths
         final NodeContainerAnnotationParser nodeContainerAnnotationParser = new NodeContainerAnnotationParser(processingEnv.getElementUtils());
-        final List<NodeContainerAnnotationEntity> pathEntities;
+        final List<NodeContainerEntity> pathEntities;
         try {
-            pathEntities = nodeContainerAnnotationParser.parsePaths(pathAnnotationTypes);
+            pathEntities = nodeContainerAnnotationParser.parseNodeContainerHostsToEntities(pathAnnotationTypes);
         } catch (AptProcessException e) {
             showErrorTip(new AptProcessException(String.format("found error on parsing @NodeContainer: %s", e.getMessage()), e));
             return false;
@@ -94,7 +94,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
             try {
                 processPlugins(
                         "each apt round plugin",
-                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "eachAptRoundNodeTreeParsedPlugins" /* todo runtime check */),
+                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotationMirrorValue(pathAptGlobalConfigMirror, "eachAptRoundNodeTreeParsedPlugins" /* todo runtime check */),
                         nodeParserGlobalConfig.eachAptRoundNodeTreeParsedPlugins(),
                         pathEntities
                 );
@@ -112,7 +112,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
         }
         // process finish task
 
-        final List<NodeContainerAnnotationEntity> treePathEntities = NodeContainerAnnotationParser.convertPathTree(allNodeTreeEntities);
+        final List<NodeContainerEntity> treePathEntities = NodeContainerAnnotationParser.convertNodeContainersToTree(allNodeTreeEntities);
 
         // root node repeat check
         try {
@@ -135,7 +135,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
             try {
                 processPlugins(
                         "last apt round plugin",
-                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotionMirrorValue(pathAptGlobalConfigMirror, "lastAptRoundNodeTreeParsedPlugins" /* todo runtime check */),
+                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotationMirrorValue(pathAptGlobalConfigMirror, "lastAptRoundNodeTreeParsedPlugins" /* todo runtime check */),
                         nodeParserGlobalConfig.lastAptRoundNodeTreeParsedPlugins(),
                         allNodeTreeEntities
                 );
@@ -148,13 +148,13 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
         return true;
     }
 
-    private void checkPathNodeType(List<NodeContainerAnnotationEntity> allPathEntities, List<NodeContainerAnnotationEntity> treePathEntities) throws AptProcessException {
-        for (NodeContainerAnnotationEntity nodeTreeEntity : allPathEntities) {
+    private void checkPathNodeType(List<NodeContainerEntity> allPathEntities, List<NodeContainerEntity> treePathEntities) throws AptProcessException {
+        for (NodeContainerEntity nodeTreeEntity : allPathEntities) {
             boolean isRootNode = treePathEntities.contains(nodeTreeEntity);
             switch (nodeTreeEntity.host.getAnnotation(NodeContainer.class).type()) {
                 case ROOT_NODE:
                     if (!isRootNode) {
-                        NodeContainerAnnotationEntity parentPathEntiity = findParentPathEntity(nodeTreeEntity, treePathEntities);
+                        NodeContainerEntity parentPathEntiity = findParentPathEntity(nodeTreeEntity, treePathEntities);
                         throw new AptProcessException(
                                 String.format(
                                         "'%s's PathNode should be a root node, but it's a sub node, it has a parent '%s', please check path's link relations",
@@ -183,9 +183,9 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
         }
     }
 
-    private NodeContainerAnnotationEntity findParentPathEntity(NodeContainerAnnotationEntity sourceNodeTreeEntity, List<NodeContainerAnnotationEntity> treePathEntities) {
-        for (NodeContainerAnnotationEntity nodeTreeEntity : treePathEntities) {
-            NodeContainerAnnotationEntity result = findParentPathEntity(sourceNodeTreeEntity, nodeTreeEntity);
+    private NodeContainerEntity findParentPathEntity(NodeContainerEntity sourceNodeTreeEntity, List<NodeContainerEntity> treePathEntities) {
+        for (NodeContainerEntity nodeTreeEntity : treePathEntities) {
+            NodeContainerEntity result = findParentPathEntity(sourceNodeTreeEntity, nodeTreeEntity);
             if (result != null) {
                 return result;
             }
@@ -193,8 +193,8 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
         return null;
     }
 
-    private NodeContainerAnnotationEntity findParentPathEntity(NodeContainerAnnotationEntity sourceNodeTreeEntity, NodeContainerAnnotationEntity nodeTreeEntity) {
-        for (NodeContainerAnnotationEntity.Node node : nodeTreeEntity.nodes) {
+    private NodeContainerEntity findParentPathEntity(NodeContainerEntity sourceNodeTreeEntity, NodeContainerEntity nodeTreeEntity) {
+        for (NodeContainerEntity.Node node : nodeTreeEntity.nodes) {
             if (node.subRef == sourceNodeTreeEntity) {
                 return nodeTreeEntity;
             } else {
@@ -204,7 +204,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
         return null;
     }
 
-    private void processPlugins(String pluginProcessDesc, List<AnnotationValue> pluginAnnotationValues, Plugin[] plugins, final List<NodeContainerAnnotationEntity> allPathEntities) throws AptProcessException {
+    private void processPlugins(String pluginProcessDesc, List<AnnotationValue> pluginAnnotationValues, Plugin[] plugins, final List<NodeContainerEntity> allPathEntities) throws AptProcessException {
 
         if (pluginAnnotationValues == null
                 || pluginAnnotationValues.isEmpty()
@@ -217,7 +217,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
             Plugin pluginAnnotation = plugins[i];
             AnnotationValue pluginAnnotationValue = pluginAnnotationValues.get(i);
 
-            final String pluginClassName = ((TypeElement) ((DeclaredType) NodeContainerAnnotationParser.getAnnotionMirrorValue((AnnotationMirror) pluginAnnotationValue.getValue(), "value" /* todo runtime check */)).asElement()).getQualifiedName().toString();
+            final String pluginClassName = ((TypeElement) ((DeclaredType) NodeContainerAnnotationParser.getAnnotationMirrorValue((AnnotationMirror) pluginAnnotationValue.getValue(), "value" /* todo runtime check */)).asElement()).getQualifiedName().toString();
             final String[] pluginClassArguments = pluginAnnotation.args();
 
             final NodeTreeParsedHandlerPlugin plugin;
@@ -235,7 +235,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
 
             try {
 
-                @SuppressWarnings("unchecked") final List<NodeContainerAnnotationEntity>[] treePathEntities = new List[1];
+                @SuppressWarnings("unchecked") final List<NodeContainerEntity>[] treePathEntities = new List[1];
                 @SuppressWarnings("unchecked") final List<NodeTree>[] treeNodeSchemas = new List[1];
 
                 plugin.onNodeTreeParsed(new NodeTreeParsedHandlerPlugin.PluginContext() {
@@ -250,14 +250,14 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
                     }
 
                     @Override
-                    public List<NodeContainerAnnotationEntity> flatNodeContainerEntities() {
+                    public List<NodeContainerEntity> flatNodeContainerEntities() {
                         return allPathEntities;
                     }
 
                     @Override
-                    public List<NodeContainerAnnotationEntity> treeNodeContainerEntities() {
+                    public List<NodeContainerEntity> treeNodeContainerEntities() {
                         if (treePathEntities[0] == null) {
-                            treePathEntities[0] = NodeContainerAnnotationParser.convertPathTree(flatNodeContainerEntities());
+                            treePathEntities[0] = NodeContainerAnnotationParser.convertNodeContainersToTree(flatNodeContainerEntities());
                         }
                         return treePathEntities[0];
                     }
@@ -265,7 +265,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
                     @Override
                     public List<NodeTree> nodeTree() {
                         if (treeNodeSchemas[0] == null) {
-                            treeNodeSchemas[0] = NodeContainerAnnotationParser.generateNodeSchemaTree(treeNodeContainerEntities());
+                            treeNodeSchemas[0] = NodeContainerAnnotationParser.convertNodeContainersToNodeTree(treeNodeContainerEntities());
                         }
                         return treeNodeSchemas[0];
                     }
@@ -299,11 +299,11 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
         }
     }
 
-    private void pathNodeTypeRepeatCheck(List<NodeContainerAnnotationEntity> treePathEntities) throws AptProcessException {
-        Map<String, NodeContainerAnnotationEntity> repeatCheckContainer = new HashMap<>();
-        for (NodeContainerAnnotationEntity nodeTreeEntity : treePathEntities) {
-            for (NodeContainerAnnotationEntity.Node node : nodeTreeEntity.nodes) {
-                NodeContainerAnnotationEntity repeatNodeTreeEntity = repeatCheckContainer.put(node.name, nodeTreeEntity);
+    private void pathNodeTypeRepeatCheck(List<NodeContainerEntity> treePathEntities) throws AptProcessException {
+        Map<String, NodeContainerEntity> repeatCheckContainer = new HashMap<>();
+        for (NodeContainerEntity nodeTreeEntity : treePathEntities) {
+            for (NodeContainerEntity.Node node : nodeTreeEntity.nodes) {
+                NodeContainerEntity repeatNodeTreeEntity = repeatCheckContainer.put(node.name, nodeTreeEntity);
                 if (repeatNodeTreeEntity != null) {
                     throw new AptProcessException(
                             String.format(
