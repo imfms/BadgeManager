@@ -7,6 +7,8 @@ import java.lang.annotation.Target;
 
 /**
  * 节点解析器全局配置，用于设置注解处理器提供的一些个性化选项
+ *
+ * @see NodeContainer
  */
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.SOURCE)
