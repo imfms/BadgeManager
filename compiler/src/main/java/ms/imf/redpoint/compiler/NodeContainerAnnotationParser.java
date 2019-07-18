@@ -182,16 +182,22 @@ class NodeContainerAnnotationParser {
 
             if (annotationMode) {
                 try {
-                    nodeEntities.addAll(nodeAnnotationToNodeEntity(nodeContainerHost, nodeContainer, nodeContainerMirror));
+                    nodeEntities.addAll(nodeAnnotationToNodeEntity(nodeContainer, nodeContainerMirror));
                 } catch (AptProcessException e) {
-                    throw new AptProcessException(String.format("value(nodes): %s", e.getMessage()), e);
+                    throw new AptProcessException(
+                            String.format("value(nodes): %s", e.getMessage()),
+                            e, nodeContainerHost, nodeContainerMirror
+                    );
                 }
             }
             if (jsonMode) {
                 try {
-                    nodeEntities.addAll(nodeJsonToNodeEntity(nodeContainerHost, nodeContainer, nodeContainerMirror));
+                    nodeEntities.addAll(nodeJsonToNodeEntity(nodeContainer, nodeContainerMirror));
                 } catch (AptProcessException e) {
-                    throw new AptProcessException(String.format("nodeJson: %s", e.getMessage()), e);
+                    throw new AptProcessException(
+                            String.format("nodeJson: %s", e.getMessage()),
+                            e, nodeContainerHost, nodeContainerMirror
+                    );
                 }
             }
 
@@ -212,7 +218,7 @@ class NodeContainerAnnotationParser {
             return nodeTreeEntity;
         }
 
-        private List<NodeContainerEntity.Node> nodeJsonToNodeEntity(TypeElement nodeContainerHost, NodeContainer nodeContainer, AnnotationMirror nodeContainerMirror) throws AptProcessException {
+        private List<NodeContainerEntity.Node> nodeJsonToNodeEntity(NodeContainer nodeContainer, AnnotationMirror nodeContainerMirror) throws AptProcessException {
             final List<NodeContainerEntity.Node> results = new LinkedList<>();
 
             final Map<String, TypeElement> nodeJsonRefTypeMapper = new HashMap<>();
@@ -231,7 +237,7 @@ class NodeContainerAnnotationParser {
                 if (nodeJsonRefTypeMapper.put(key, value) != null) {
                     throw new AptProcessException(
                             String.format("subNodeRef[%d]: key(%s): repeat key", index, key),
-                            nodeContainerHost,
+                            null,
                             nodeContainerMirror
                     );
                 }
@@ -241,7 +247,7 @@ class NodeContainerAnnotationParser {
                 String nodeJson = nodeContainer.nodeJson()[i];
                 try {
                     results.add(
-                            nodeJsonToNodeEntity(nodeContainerHost, nodeJson, nodeJsonRefTypeMapper)
+                            nodeJsonToNodeEntity(nodeJson, nodeJsonRefTypeMapper)
                     );
                 } catch (AptProcessException e) {
                     throw new AptProcessException(
@@ -254,7 +260,7 @@ class NodeContainerAnnotationParser {
             return results;
         }
 
-        private List<NodeContainerEntity.Node> nodeAnnotationToNodeEntity(TypeElement nodeContainerHost, NodeContainer nodeContainer, AnnotationMirror nodeContainerMirror) throws AptProcessException {
+        private List<NodeContainerEntity.Node> nodeAnnotationToNodeEntity(NodeContainer nodeContainer, AnnotationMirror nodeContainerMirror) throws AptProcessException {
             final LinkedList<NodeContainerEntity.Node> results = new LinkedList<>();
 
             final List<AnnotationMirror> nodeMirrors = NodeContainerAnnotationParser.getAnnotationMirrorValue(nodeContainerMirror, "value" /* todo runtime check */);
@@ -265,12 +271,15 @@ class NodeContainerAnnotationParser {
                 try {
                     GeneralNode generalNode = nodeContainerNodeToGeneralNode(AnnotationNodeWrapper.instance(node, nodeMirror));
                     results.add(
-                            generalNodeToNodeEntity(nodeContainerHost, generalNode)
+                            generalNodeToNodeEntity(generalNode)
                     );
                 } catch (AptProcessException e) {
                     throw new AptProcessException(
-                            String.format("[%s]: %s", i, e.getMessage()),
-                            e, nodeContainerHost, nodeMirror
+                            String.format(
+                                    "[%d](%s): %s",
+                                    i, node.value(), e.getMessage()
+                            ),
+                            e, null, nodeMirror
                     );
                 }
             }
@@ -319,13 +328,13 @@ class NodeContainerAnnotationParser {
             return target;
         }
 
-        private NodeContainerEntity.Node nodeJsonToNodeEntity(TypeElement nodeContainerHost, String nodeJson, Map<String, TypeElement> nodeJsonRefTypeMapper) throws AptProcessException {
+        private NodeContainerEntity.Node nodeJsonToNodeEntity(String nodeJson, Map<String, TypeElement> nodeJsonRefTypeMapper) throws AptProcessException {
             // parse json
             JsonNode jsonNode;
             try {
                 jsonNode = gson.fromJson(nodeJson, JsonNode.class);
             } catch (Exception e) {
-                throw new AptProcessException(String.format("error on parsing json: %s", e.getMessage()), e, nodeContainerHost);
+                throw new AptProcessException(String.format("error on parsing json: %s", e.getMessage()), e);
             }
 
             // convert to parseEntity
@@ -333,10 +342,10 @@ class NodeContainerAnnotationParser {
             try {
                 generalNode = jsonNodeToGeneralNode(jsonNode, nodeJsonRefTypeMapper);
             } catch (AptProcessException e) {
-                throw new AptProcessException(e.getMessage(), e, nodeContainerHost);
+                throw new AptProcessException(e.getMessage(), e);
             }
 
-            return generalNodeToNodeEntity(nodeContainerHost, generalNode);
+            return generalNodeToNodeEntity(generalNode);
         }
 
         private GeneralNode jsonNodeToGeneralNode(JsonNode jsonNode, Map<String, TypeElement> nodeJsonRefTypeMapper) throws AptProcessException {
@@ -410,13 +419,13 @@ class NodeContainerAnnotationParser {
             return generalNode;
         }
 
-        private NodeContainerEntity.Node generalNodeToNodeEntity(TypeElement nodeContainerHost, GeneralNode source) throws AptProcessException {
+        private NodeContainerEntity.Node generalNodeToNodeEntity(GeneralNode source) throws AptProcessException {
             final NodeContainerEntity.Node target = new NodeContainerEntity.Node();
 
             // name convert
             if (source.name == null
                     || source.name.isEmpty()) {
-                throw new AptProcessException("name can't be null", nodeContainerHost);
+                throw new AptProcessException("name can't be null");
             }
             target.name = source.name;
 
@@ -427,8 +436,7 @@ class NodeContainerAnnotationParser {
                 int nullIndex = source.args.indexOf(null);
                 if (nullIndex >= 0) {
                     throw new AptProcessException(
-                            String.format("args[%d]: null value", nullIndex),
-                            nodeContainerHost
+                            String.format("args[%d]: null value", nullIndex)
                     );
                 }
 
@@ -441,7 +449,7 @@ class NodeContainerAnnotationParser {
 
                     // check arg name repeat
                     if (!repeatArgNames.add(arg.name)) {
-                        throw new AptProcessException(String.format("args[%d](%s): repeat arg", index, arg.name), nodeContainerHost);
+                        throw new AptProcessException(String.format("args[%d](%s): repeat arg", index, arg.name));
                     }
 
                     // arg valueLimits
@@ -453,8 +461,7 @@ class NodeContainerAnnotationParser {
                                     String.format(
                                             "args[%d](%s): valueLimits[%d]: null value",
                                             index, arg.name, valueLimitNullIndex
-                                    ),
-                                    nodeContainerHost
+                                    )
                             );
                         }
 
@@ -473,8 +480,7 @@ class NodeContainerAnnotationParser {
                                                 arg.name,
                                                 valueLimitIndex,
                                                 valueLimit
-                                        ),
-                                        nodeContainerHost
+                                        )
                                 );
                             }
 
@@ -497,7 +503,7 @@ class NodeContainerAnnotationParser {
             boolean existSubNodes = source.subNodes != null && !source.subNodes.isEmpty();
             boolean existSubNodeRef = source.subNodeRef != null && !source.subNodeRef.getQualifiedName().toString().equals(Void.class.getCanonicalName());
             if (existSubNodes && existSubNodeRef) {
-                throw new AptProcessException("subNodes and subNodeContainerRef only can exist one", nodeContainerHost);
+                throw new AptProcessException("subNodes and subNodeContainerRef only can exist one");
             }
 
             // parse subNodes
@@ -507,7 +513,7 @@ class NodeContainerAnnotationParser {
                     GeneralNode subEntity = source.subNodes.get(i);
                     try {
                         subNodes.add(
-                                generalNodeToNodeEntity(nodeContainerHost, subEntity)
+                                generalNodeToNodeEntity(subEntity)
                         );
                     } catch (AptProcessException e) {
                         throw new AptProcessException(
@@ -532,7 +538,8 @@ class NodeContainerAnnotationParser {
                                     "subNodeContainerRef(%s): %s",
                                     source.subNodeRef.getQualifiedName(), e.getMessage()
                             ),
-                            e
+                            e,
+                            source.subNodeRef
                     );
                 }
             }

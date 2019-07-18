@@ -40,18 +40,27 @@ public class AptProcessException extends Exception {
     public AptProcessException(String message, Throwable cause, Element e, AnnotationMirror a, AnnotationValue v) {
         super(message, cause);
 
-        if ((cause instanceof AptProcessException)
-                && e == null
-                && a == null
-                && v == null) {
-            this.e = ((AptProcessException) cause).e;
-            this.a = ((AptProcessException) cause).a;
-            this.v = ((AptProcessException) cause).v;
-        } else {
-            this.e = e;
-            this.a = a;
-            this.v = v;
+        if (cause instanceof AptProcessException) {
+            AptProcessException aptCause = (AptProcessException) cause;
+
+            v = aptCause.v != null
+                    ? aptCause.v
+                    : v;
+
+            a = aptCause.a != null
+                    ? aptCause.a
+                    : a;
+
+            e = aptCause.e != null
+                    ? aptCause.e
+                    : e;
+
         }
+
+        this.e = e;
+        this.a = a;
+        this.v = v;
+
     }
 
 }
