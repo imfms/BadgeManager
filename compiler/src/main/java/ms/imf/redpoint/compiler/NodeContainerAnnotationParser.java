@@ -30,6 +30,9 @@ import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.NodeContainerEntity;
 import ms.imf.redpoint.entity.NodeTree;
 
+/**
+ * 节点容器解析器
+ */
 class NodeContainerAnnotationParser {
 
     private final Gson gson = new Gson();
@@ -42,6 +45,14 @@ class NodeContainerAnnotationParser {
         this.elementUtil = elementUtil;
     }
 
+    /**
+     * 解析节点容器注解宿主类型为节点容器实体
+     * 如果节点容器之间有链接关系，解析时将根据链接关系在实体中对目标实体持有引用
+     *
+     * @param nodeContainerHosts 节点容器注解宿主类型
+     * @return 转换后的节点容器实体
+     * @throws AptProcessException 转换时异常，详细信息将在message中描述
+     */
     List<NodeContainerEntity> parseNodeContainerHostsToEntities(Set<TypeElement> nodeContainerHosts) throws AptProcessException {
         return new Parser().nodeContainerHostsToEntities(nodeContainerHosts);
     }
@@ -54,34 +65,34 @@ class NodeContainerAnnotationParser {
      * 所以对解析方法进行封装，抽取解析行为到内部类并在其内部创建成员变量，而对调用者提供的解析方法的每次调用都会创建一份该内部类的实例并调用真正的解析方法
      * 这样就保证了每次解析行为都拥有与其相同生命周期的'集合', 最终达到解析行为非阻塞式线程安全的目的
      *
-     * @see Parser#pathEntityPoll
-     * @see Parser#parsingTypeElements
+     * @see Parser#nodeContainerEntityPoll
+     * @see Parser#parsingNodeContainerHosts
      */
     private class Parser {
 
         /**
          * use for link sub node and reusing node
          */
-        private final Map<TypeElement, NodeContainerEntity> pathEntityPoll = new HashMap<>();
+        private final Map<TypeElement, NodeContainerEntity> nodeContainerEntityPoll = new HashMap<>();
 
         /**
          * use for check circular reference
          */
-        private final List<TypeElement> parsingTypeElements = new LinkedList<>();
+        private final List<TypeElement> parsingNodeContainerHosts = new LinkedList<>();
 
         List<NodeContainerEntity> nodeContainerHostsToEntities(Set<TypeElement> nodeContainerHosts) throws AptProcessException {
             final List<NodeContainerEntity> results = new LinkedList<>();
 
-            for (TypeElement typeElement : nodeContainerHosts) {
+            for (TypeElement nodeContainerHost : nodeContainerHosts) {
                 try {
                     results.add(
-                            nodeContainerHostToEntity(typeElement)
+                            nodeContainerHostToEntity(nodeContainerHost)
                     );
                 } catch (AptProcessException e) {
                     throw new AptProcessException(
                             String.format(
                                     "%s: %s",
-                                    typeElement.getQualifiedName(), e.getMessage()
+                                    nodeContainerHost.getQualifiedName(), e.getMessage()
                             ),
                             e
                     );
@@ -97,33 +108,33 @@ class NodeContainerAnnotationParser {
             if (nodeContainer == null) {
                 throw new AptProcessException("can't find NodeContainer Annotation", nodeContainerHost);
             }
-            AnnotationMirror pathMirror = null;
+            AnnotationMirror nodeContainerMirror = null;
             for (AnnotationMirror annotationMirror : nodeContainerHost.getAnnotationMirrors()) {
                 if (annotationMirror.getAnnotationType().equals(elementUtil.getTypeElement(NodeContainer.class.getCanonicalName()).asType())) {
-                    pathMirror = annotationMirror;
+                    nodeContainerMirror = annotationMirror;
                 }
             }
-            if (pathMirror == null) {
+            if (nodeContainerMirror == null) {
                 throw new AptProcessException("can't find NodeContainer Annotation", nodeContainerHost);
             }
-            return nodeContainerToEntity(nodeContainerHost, nodeContainer, pathMirror);
+            return nodeContainerToEntity(nodeContainerHost, nodeContainer, nodeContainerMirror);
         }
 
-        private NodeContainerEntity nodeContainerToEntity(TypeElement annotatedPathTypeElement, NodeContainer nodeContainer, AnnotationMirror pathMirror) throws AptProcessException {
+        private NodeContainerEntity nodeContainerToEntity(TypeElement nodeContainerHost, NodeContainer nodeContainer, AnnotationMirror nodeContainerMirror) throws AptProcessException {
 
             // check circular reference
-            if (parsingTypeElements.contains(annotatedPathTypeElement)) {
-                List<TypeElement> copyParsingTypeElements = new LinkedList<>(parsingTypeElements);
-                copyParsingTypeElements.add(annotatedPathTypeElement);
+            if (parsingNodeContainerHosts.contains(nodeContainerHost)) {
+                List<TypeElement> circularRefHostList = new LinkedList<>(parsingNodeContainerHosts);
+                circularRefHostList.add(nodeContainerHost);
 
                 // A>B>C>B: [A,*B*,C,*B*]
                 final StringBuilder stack = new StringBuilder();
                 stack.append('[');
-                Iterator<TypeElement> iterator = copyParsingTypeElements.iterator();
+                Iterator<TypeElement> iterator = circularRefHostList.iterator();
                 while (iterator.hasNext()) {
                     TypeElement stackElement = iterator.next();
 
-                    boolean isCircle = stackElement == annotatedPathTypeElement;
+                    boolean isCircle = stackElement == nodeContainerHost;
                     if (isCircle) {
                         stack.append('*');
                     }
@@ -145,30 +156,30 @@ class NodeContainerAnnotationParser {
                                 "circular reference, this is stack: %s",
                                 stack
                         ),
-                        annotatedPathTypeElement,
-                        pathMirror
+                        nodeContainerHost,
+                        nodeContainerMirror
                 );
             }
 
             // reuse parsed nodeContainer entity
-            final NodeContainerEntity pollNodeTreeEntity = pathEntityPoll.get(annotatedPathTypeElement);
-            if (pollNodeTreeEntity != null) {
-                return pollNodeTreeEntity;
+            final NodeContainerEntity pollNodeContainerEntity = nodeContainerEntityPoll.get(nodeContainerHost);
+            if (pollNodeContainerEntity != null) {
+                return pollNodeContainerEntity;
             }
 
             // use for check circular reference
-            parsingTypeElements.add(annotatedPathTypeElement);
+            parsingNodeContainerHosts.add(nodeContainerHost);
             final NodeContainerEntity resultNodeTreeEntity;
             try {
-                // raw parse
-                resultNodeTreeEntity = nodeContainerToEntityRaw(annotatedPathTypeElement, nodeContainer, pathMirror);
+                // do raw parse
+                resultNodeTreeEntity = nodeContainerToEntityRaw(nodeContainerHost, nodeContainer, nodeContainerMirror);
             } finally {
                 // use for check circular reference
-                parsingTypeElements.remove(annotatedPathTypeElement);
+                parsingNodeContainerHosts.remove(nodeContainerHost);
             }
 
             // use for reuse parsed nodeContainer entity
-            pathEntityPoll.put(annotatedPathTypeElement, resultNodeTreeEntity);
+            nodeContainerEntityPoll.put(nodeContainerHost, resultNodeTreeEntity);
 
             return resultNodeTreeEntity;
         }
@@ -182,7 +193,9 @@ class NodeContainerAnnotationParser {
 
             if (annotationMode) {
                 try {
-                    nodeEntities.addAll(nodeAnnotationToNodeEntity(nodeContainer, nodeContainerMirror));
+                    nodeEntities.addAll(
+                            nodeAnnotationToNodeEntity(nodeContainer, nodeContainerMirror)
+                    );
                 } catch (AptProcessException e) {
                     throw new AptProcessException(
                             String.format("value(nodes): %s", e.getMessage()),
@@ -192,7 +205,9 @@ class NodeContainerAnnotationParser {
             }
             if (jsonMode) {
                 try {
-                    nodeEntities.addAll(nodeJsonToNodeEntity(nodeContainer, nodeContainerMirror));
+                    nodeEntities.addAll(
+                            nodeJsonToNodeEntity(nodeContainer, nodeContainerMirror)
+                    );
                 } catch (AptProcessException e) {
                     throw new AptProcessException(
                             String.format("nodeJson: %s", e.getMessage()),
@@ -201,7 +216,7 @@ class NodeContainerAnnotationParser {
                 }
             }
 
-            // check repeat value
+            // check repeat node name
             final Set<String> repeatElements = new HashSet<>();
             for (NodeContainerEntity.Node nodeEntity : nodeEntities) {
                 if (!repeatElements.add(nodeEntity.name)) {
@@ -246,9 +261,8 @@ class NodeContainerAnnotationParser {
             for (int i = 0; i < nodeContainer.nodeJson().length; i++) {
                 String nodeJson = nodeContainer.nodeJson()[i];
                 try {
-                    results.add(
-                            nodeJsonToNodeEntity(nodeJson, nodeJsonRefTypeMapper)
-                    );
+                    NodeContainerEntity.Node nodeEntity = nodeJsonToNodeEntity(nodeJson, nodeJsonRefTypeMapper);
+                    results.add(nodeEntity);
                 } catch (AptProcessException e) {
                     throw new AptProcessException(
                             String.format("[%d]: %s", i, e.getMessage()),
@@ -268,11 +282,14 @@ class NodeContainerAnnotationParser {
             for (int i = 0; i < nodeContainer.value().length; i++) {
                 SubNode node = nodeContainer.value()[i];
                 AnnotationMirror nodeMirror = nodeMirrors.get(i);
+
                 try {
+
                     GeneralNode generalNode = nodeContainerNodeToGeneralNode(AnnotationNodeWrapper.instance(node, nodeMirror));
-                    results.add(
-                            generalNodeToNodeEntity(generalNode)
-                    );
+                    NodeContainerEntity.Node nodeEntity = generalNodeToNodeEntity(generalNode);
+
+                    results.add(nodeEntity);
+
                 } catch (AptProcessException e) {
                     throw new AptProcessException(
                             String.format(
@@ -422,14 +439,14 @@ class NodeContainerAnnotationParser {
         private NodeContainerEntity.Node generalNodeToNodeEntity(GeneralNode source) throws AptProcessException {
             final NodeContainerEntity.Node target = new NodeContainerEntity.Node();
 
-            // name convert
+            // convert name
             if (source.name == null
                     || source.name.isEmpty()) {
                 throw new AptProcessException("name can't be null");
             }
             target.name = source.name;
 
-            // args convert
+            // convert args
             if (source.args != null) {
 
                 // check null arg
@@ -547,44 +564,6 @@ class NodeContainerAnnotationParser {
             return target;
         }
 
-    }
-
-    /**
-     * Node包装类型
-     * 由于Node有不同的声明模式：{@link NodeContainer#value()}、{@link NodeContainer#nodeJson()}
-     * 为对解析过程进行重用，故抽取出新包装类型出来，解析时先将不同模式的的Node解析为本包装类型，而后进行真正的解析
-     */
-    private static class GeneralNode {
-        String name;
-        List<NodeArg> args;
-        List<GeneralNode> subNodes;
-        TypeElement subNodeRef;
-
-        static class NodeArg {
-            String name;
-            List<String> valueLimits;
-        }
-    }
-
-    /**
-     * @see NodeContainer#nodeJson()
-     */
-    private static class JsonNode {
-        @SerializedName("name")
-        String name;
-        @SerializedName("args")
-        Arg[] args;
-        @SerializedName("subNodes")
-        List<JsonNode> subNodes;
-        @SerializedName("subNodeRef")
-        String subNodeRef;
-
-        static class Arg {
-            @SerializedName("name")
-            String name;
-            @SerializedName("limits")
-            String[] limits;
-        }
     }
 
     static <T> T getAnnotationMirrorValue(AnnotationMirror annotationMirror, String key) {
@@ -705,5 +684,44 @@ class NodeContainerAnnotationParser {
         }
 
         return nodeTree;
+    }
+
+
+    /**
+     * Node包装类型
+     * 由于Node有不同的声明模式：{@link NodeContainer#value()}、{@link NodeContainer#nodeJson()}
+     * 为对解析过程进行重用，故抽取出新包装类型出来，解析时先将不同模式的的Node解析为本包装类型，而后进行真正的解析
+     */
+    private static class GeneralNode {
+        String name;
+        List<NodeArg> args;
+        List<GeneralNode> subNodes;
+        TypeElement subNodeRef;
+
+        static class NodeArg {
+            String name;
+            List<String> valueLimits;
+        }
+    }
+
+    /**
+     * @see NodeContainer#nodeJson()
+     */
+    private static class JsonNode {
+        @SerializedName("name")
+        String name;
+        @SerializedName("args")
+        Arg[] args;
+        @SerializedName("subNodes")
+        List<JsonNode> subNodes;
+        @SerializedName("subNodeRef")
+        String subNodeRef;
+
+        static class Arg {
+            @SerializedName("name")
+            String name;
+            @SerializedName("limits")
+            String[] limits;
+        }
     }
 }
