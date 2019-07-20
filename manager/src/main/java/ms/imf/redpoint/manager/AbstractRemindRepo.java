@@ -5,17 +5,23 @@ import java.util.LinkedList;
 import java.util.List;
 
 import ms.imf.redpoint.entity.Node;
+import ms.imf.redpoint.entity.NodePath;
 
+/**
+ * 消息数据仓库方法的简单封装
+ *
+ * @param <RemindType> {@link RemindRepo}
+ */
 public abstract class AbstractRemindRepo<RemindType extends Remind> implements RemindRepo<RemindType> {
 
-    private RemindChangedListener mRemindChangedListener;
+    private RemindDataChangedListener mRemindDataChangedListener;
 
     @Override
-    public Collection<RemindType> getMatchReminds(List<Node> path) {
+    public Collection<RemindType> getMatchReminds(NodePath nodePath) {
         List<RemindType> results = new LinkedList<>();
 
         for (RemindType remind : getAllReminds()) {
-            if (isMatched(path, remind.nodePath().nodes())) {
+            if (isMatched(nodePath.nodes(), remind.nodePath().nodes())) {
                 results.add(remind);
             }
         }
@@ -24,23 +30,16 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
     }
 
     @Override
-    public Collection<RemindType> getMatchSubReminds(List<Node> path) {
+    public Collection<RemindType> getMatchSubReminds(NodePath nodePath) {
         List<RemindType> results = new LinkedList<>();
 
         for (RemindType remind : getAllReminds()) {
-            if (isMySubPathWithMe(path, remind.nodePath().nodes())) {
+            if (isMySubPathWithMe(nodePath.nodes(), remind.nodePath().nodes())) {
                 results.add(remind);
             }
         }
 
         return results;
-    }
-
-    @Override
-    public void insertReminds(Iterable<? extends RemindType> reminds) {
-        for (RemindType remind : reminds) {
-            insertRemind(remind);
-        }
     }
 
     @Override
@@ -51,12 +50,12 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
     }
 
     @Override
-    public long removeMatchReminds(List<Node> path) {
+    public long removeMatchReminds(NodePath nodePath) {
 
         List<RemindType> handledReminds = new LinkedList<>();
 
         for (RemindType remind : getAllReminds()) {
-            if (isMatched(path, remind.nodePath().nodes())) {
+            if (isMatched(nodePath.nodes(), remind.nodePath().nodes())) {
                 handledReminds.add(remind);
             }
         }
@@ -65,8 +64,8 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
     }
 
     @Override
-    public long removeMatchSubReminds(List<Node> path) {
-        return removeReminds(getMatchSubReminds(path));
+    public long removeMatchSubReminds(NodePath nodePath) {
+        return removeReminds(getMatchSubReminds(nodePath));
     }
 
     @Override
@@ -75,19 +74,19 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
     }
 
     @Override
-    public void setRemindChangedListener(RemindChangedListener listener) {
-        mRemindChangedListener = listener;
+    public void setRemindDataChangedListener(RemindDataChangedListener listener) {
+        mRemindDataChangedListener = listener;
     }
 
     @Override
-    public void notifyRepoRemindChanged() {
-        if (mRemindChangedListener != null) {
-            mRemindChangedListener.onRemindChanged();
+    public void notifyRepoRemindDataChanged() {
+        if (mRemindDataChangedListener != null) {
+            mRemindDataChangedListener.onRemindChanged();
         }
     }
 
-    protected RemindChangedListener remindChangedListener() {
-        return mRemindChangedListener;
+    protected RemindDataChangedListener remindChangedListener() {
+        return mRemindDataChangedListener;
     }
 
     private long removeReminds(Collection<? extends RemindType> reminds) {
@@ -98,7 +97,7 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
         return reminds.size();
     }
 
-    private boolean isMySubPathWithMe(List<Node> me, List<Node> him) {
+    public static boolean isMySubPathWithMe(List<Node> me, List<Node> him) {
         if (him.size() < me.size()) {
             return false;
         }
@@ -114,7 +113,7 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
 
         return true;
     }
-    private boolean isMatched(List<Node> me, List<Node> him) {
+    public static boolean isMatched(List<Node> me, List<Node> him) {
         if (him.size() != me.size()) {
             return false;
         }

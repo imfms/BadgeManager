@@ -43,7 +43,7 @@ public class SimpleRemindHandlerManager<RemindType extends Remind> extends Abstr
 
         List<NodePath> remindChangedPaths = new LinkedList<>();
         for (NodePath path : handler.getPaths()) {
-            if (remindRepo().removeMatchReminds(path.nodes()) > 0) {
+            if (remindRepo().removeMatchReminds(NodePath.instance(path.nodes())) > 0) {
                 remindChangedPaths.add(path);
             }
         }
@@ -60,7 +60,7 @@ public class SimpleRemindHandlerManager<RemindType extends Remind> extends Abstr
             return;
         }
         for (NodePath path : handler.getPaths()) {
-            remindRepo().removeMatchSubReminds(path.nodes());
+            remindRepo().removeMatchSubReminds(NodePath.instance(path.nodes()));
         }
         notifyRemindDataChanged();
     }
@@ -77,7 +77,7 @@ public class SimpleRemindHandlerManager<RemindType extends Remind> extends Abstr
 
         List<RemindType> reminds = new LinkedList<>();
         for (NodePath path : handler.getPaths()) {
-            reminds.addAll(remindRepo().getMatchSubReminds(path.nodes()));
+            reminds.addAll(remindRepo().getMatchSubReminds(NodePath.instance(path.nodes())));
         }
 
         handler.showReminds(reminds);

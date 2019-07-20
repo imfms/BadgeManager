@@ -24,7 +24,7 @@ public abstract class RemindHandlerManager<RemindType extends Remind> {
     public RemindHandlerManager(RemindRepo<RemindType> repo) {
         if (repo == null) { throw new IllegalArgumentException("repo can't be null"); }
         mRemindRepo = repo;
-        repo.setRemindChangedListener(new RemindChangedListener<RemindType>() {
+        repo.setRemindDataChangedListener(new RemindDataChangedListener<RemindType>() {
             @Override
             public void onRemindChanged() {
                 notifyRemindDataChanged();

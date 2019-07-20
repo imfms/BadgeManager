@@ -33,6 +33,6 @@ import ms.imf.redpoint.compiler.plugin.nodetree.export.json.NodeTreeExportJsonCo
 )
 public class TestPath {
     public static void main(String[] args) {
-        System.out.println(TestPath_Path.class);
+        System.out.println(TestPath_Node.class);
     }
 }

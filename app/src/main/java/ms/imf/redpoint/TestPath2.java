@@ -26,6 +26,6 @@ import ms.imf.redpoint.annotation.SubNode2;
 )
 public class TestPath2 {
     public static void main(String[] args) {
-        System.out.println(TestPath_Path.class);
+        System.out.println(TestPath_Node.class);
     }
 }
