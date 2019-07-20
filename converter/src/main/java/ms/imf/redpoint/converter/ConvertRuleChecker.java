@@ -14,42 +14,52 @@ import java.util.List;
 
 import ms.imf.redpoint.entity.NodeTree;
 
-public class ArgCheckUtil {
+/**
+ * 节点转换规则检查工具
+ */
+public class ConvertRuleChecker {
 
-    public static void checkArg(String convertRulesJson, String targetPathsSchemaJson) throws IllegalArgumentException {
+    public static void check(String convertRulesJson, String targetNodeTreeSchemaJson) throws IllegalArgumentException {
         Gson gson = new Gson();
-        checkArg(
-                ArgCheckUtil.<List<ConvertRule>>parseJson(
+        check(
+                ConvertRuleChecker.<List<ConvertRule>>parseJson(
                         gson,
                         convertRulesJson,
                         new TypeToken<List<ConvertRule>>() {
                         }.getType(),
                         "found error on parse convertRulesJson"
                 ),
-                ArgCheckUtil.<List<NodeTree>>parseJson(
+                ConvertRuleChecker.<List<NodeTree>>parseJson(
                         gson,
-                        targetPathsSchemaJson,
+                        targetNodeTreeSchemaJson,
                         new TypeToken<List<NodeTree>>() {
                         }.getType(),
-                        "found error on parse targetPathsSchemaJson"
+                        "found error on parse targetNodeTreeSchemaJson"
                 )
         );
     }
 
-    public static void checkArg(InputStream convertRulesJsonReadStream, List<NodeTree> targetPathsSchema) throws IllegalArgumentException {
-        checkArg(
-                ArgCheckUtil.<List<ConvertRule>>parseJson(
+    public static void check(InputStream convertRulesJsonReadStream, List<NodeTree> targetNodeTreeSchema) throws IllegalArgumentException {
+        check(
+                ConvertRuleChecker.<List<ConvertRule>>parseJson(
                         new Gson(),
                         convertRulesJsonReadStream,
                         new TypeToken<List<ConvertRule>>() {
                         }.getType(),
                         "found error on parse convertRulesJsonReadStream"
                 ),
-                targetPathsSchema
+                targetNodeTreeSchema
         );
     }
 
-    public static void checkArg(List<ConvertRule> convertRules, List<NodeTree> targetPathsSchema) throws IllegalArgumentException {
+    /**
+     * 检查节点转换规则有效性
+     *
+     * @param convertRules      节点转换规则
+     * @param targetNodeTreeSchema 转换目标节点树的全貌，用于参与转换规则的校验以发现更多规则本身的错误
+     * @throws IllegalArgumentException
+     */
+    public static void check(List<ConvertRule> convertRules, List<NodeTree> targetNodeTreeSchema) throws IllegalArgumentException {
         if (convertRules == null) {
             throw new IllegalArgumentException("convertRules can't be null");
         }
@@ -60,16 +70,16 @@ public class ArgCheckUtil {
             throw new IllegalArgumentException(String.format("found error on check convertRules: %s", e.getMessage()));
         }
 
-        if (targetPathsSchema != null) {
+        if (targetNodeTreeSchema != null) {
             try {
-                checkTargetPathsSchema(targetPathsSchema);
+                checkTargetNodeTreeSchema(targetNodeTreeSchema);
             } catch (IllegalArgumentException e) {
-                throw new IllegalArgumentException(String.format("found error on check targetPathsSchema: %s", e.getMessage()), e);
+                throw new IllegalArgumentException(String.format("found error on check targetNodeTreeSchema: %s", e.getMessage()), e);
             }
         }
 
         try {
-            checkConvertRulesConvertToArgValidity(convertRules, targetPathsSchema);
+            checkConvertRulesConvertToArgValidity(convertRules, targetNodeTreeSchema);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException(String.format("found error on check convertRules: %s", e.getMessage()), e);
         }
@@ -187,11 +197,11 @@ public class ArgCheckUtil {
         }
     }
 
-    private static void checkConvertRulesConvertToArgValidity(List<ConvertRule> convertRules, List<NodeTree> targetPathsSchema) throws IllegalArgumentException {
-        checkConvertRulesConvertToArgValidity(convertRules, Collections.<ConvertRule>emptyList(), targetPathsSchema);
+    private static void checkConvertRulesConvertToArgValidity(List<ConvertRule> convertRules, List<NodeTree> targetNodeTreeSchema) throws IllegalArgumentException {
+        checkConvertRulesConvertToArgValidity(convertRules, Collections.<ConvertRule>emptyList(), targetNodeTreeSchema);
     }
 
-    private static void checkConvertRulesConvertToArgValidity(List<ConvertRule> checkConvertRules, List<ConvertRule> upToNowConvertRules, List<NodeTree> targetPathsSchema) throws IllegalArgumentException {
+    private static void checkConvertRulesConvertToArgValidity(List<ConvertRule> checkConvertRules, List<ConvertRule> upToNowConvertRules, List<NodeTree> targetNodeTreeSchema) throws IllegalArgumentException {
 
         for (int ruleIndex = 0; ruleIndex < checkConvertRules.size(); ruleIndex++) {
             ConvertRule convertRule = checkConvertRules.get(ruleIndex);
@@ -199,7 +209,7 @@ public class ArgCheckUtil {
             // convertRule.convertTo
             if (convertRule.convertTo != null) {
                 try {
-                    checkConvertRuleConvertTo(concatToNew(upToNowConvertRules, convertRule), targetPathsSchema, convertRule);
+                    checkConvertRuleConvertTo(concatToNew(upToNowConvertRules, convertRule), targetNodeTreeSchema, convertRule);
                 } catch (Exception e) {
                     throw new IllegalArgumentException(
                             String.format("[%d](%s): %s", ruleIndex, convertRule.name, e.getMessage()), e
@@ -210,7 +220,7 @@ public class ArgCheckUtil {
             // convertRule.sub
             if (convertRule.sub != null) {
                 try {
-                    checkConvertRulesConvertToArgValidity(convertRule.sub, concatToNew(upToNowConvertRules, convertRule), targetPathsSchema);
+                    checkConvertRulesConvertToArgValidity(convertRule.sub, concatToNew(upToNowConvertRules, convertRule), targetNodeTreeSchema);
                 } catch (IllegalArgumentException e) {
                     throw new IllegalArgumentException(String.format("[%d](%s).sub: %s", ruleIndex, convertRule.name, e.getMessage()), e);
                 }
@@ -218,10 +228,10 @@ public class ArgCheckUtil {
         }
     }
 
-    private static List<NodeTree> matchNodeSchema(List<NodeTree> targetPathsSchema, List<ConvertRule.ConvertTo> convertTos) throws IllegalArgumentException {
+    private static List<NodeTree> matchNodeSchema(List<NodeTree> targetNodeTreeSchema, List<ConvertRule.ConvertTo> convertTos) throws IllegalArgumentException {
         final List<NodeTree> results = new ArrayList<>(convertTos.size());
 
-        List<NodeTree> compareNodeTrees = targetPathsSchema;
+        List<NodeTree> compareNodeTrees = targetNodeTreeSchema;
         for (ConvertRule.ConvertTo convertTo : convertTos) {
 
             NodeTree rightNodeTree = null;
@@ -263,12 +273,12 @@ public class ArgCheckUtil {
         return results;
     }
 
-    private static void checkTargetPathsSchema(List<NodeTree> targetPathsSchema) throws IllegalArgumentException {
+    private static void checkTargetNodeTreeSchema(List<NodeTree> targetNodeTreeSchema) throws IllegalArgumentException {
 
         final HashSet<String> repeatCheckTypeNames = new HashSet<>();
 
-        for (int schemaIndex = 0; schemaIndex < targetPathsSchema.size(); schemaIndex++) {
-            NodeTree nodeTree = targetPathsSchema.get(schemaIndex);
+        for (int schemaIndex = 0; schemaIndex < targetNodeTreeSchema.size(); schemaIndex++) {
+            NodeTree nodeTree = targetNodeTreeSchema.get(schemaIndex);
 
             try {
 
@@ -306,7 +316,7 @@ public class ArgCheckUtil {
 
                 if (nodeTree.sub != null) {
                     try {
-                        checkTargetPathsSchema(nodeTree.sub);
+                        checkTargetNodeTreeSchema(nodeTree.sub);
                     } catch (IllegalArgumentException e) {
                         throw new IllegalArgumentException(String.format("sub: %s", e.getMessage()));
                     }
@@ -330,15 +340,15 @@ public class ArgCheckUtil {
 
     }
 
-    private static void checkConvertRuleConvertTo(List<ConvertRule> upToNowConvertRules, List<NodeTree> targetPathsSchema, ConvertRule convertRule) {
+    private static void checkConvertRuleConvertTo(List<ConvertRule> upToNowConvertRules, List<NodeTree> targetNodeTreeSchema, ConvertRule convertRule) {
 
         // check types
         final List<NodeTree> matchedNodeTrees;
-        if (targetPathsSchema == null) {
+        if (targetNodeTreeSchema == null) {
             matchedNodeTrees = null;
         } else {
             try {
-                matchedNodeTrees = matchNodeSchema(targetPathsSchema, convertRule.convertTo);
+                matchedNodeTrees = matchNodeSchema(targetNodeTreeSchema, convertRule.convertTo);
             } catch (Exception e) {
                 throw new IllegalArgumentException(String.format("convertTo: %s", e.getMessage()), e);
             }

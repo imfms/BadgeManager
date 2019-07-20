@@ -18,16 +18,12 @@ import ms.imf.redpoint.compiler.plugin.NodeTreeHandlePlugin;
  * <p>
  * 主要用于编译期将外部资源移入到java-resource，例如编译期将外部nodeConverterMappingFile复制到java-resource
  * <p>
- * <p>
- * 所需参数
- * <p>
- * 参数1: 源文件位置
- * <p>
- * 参数2: 文件移动后目标位置
- * <p>
- * <p>
- * 文件位置支持以下类型, 方括号[]包裹的内容为可选项:
  * <pre>
+ * 所需参数：
+ * 参数1: 源文件位置
+ * 参数2: 文件移动后目标位置
+ *
+ * 文件位置支持以下类型, 方括号[]包裹的内容为可选项:
  * file://filePath: 常规文件系统绝对、相对位置
  *   例如: file:///home/user/resource.txt, file://resource.txt
  * javaResource://[packageName/]resourceName: java-style资源位置

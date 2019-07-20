@@ -1,1 +1,1 @@
-include ':app', ':annotation', ':compiler', ':converter', ':entity', ':manager', ':compiler-plugin', ':compiler-plugin-node-converter-rule-checker', ':compiler-plugin-nodetree-export-json', ':compiler-plugin-nodecontainer-helpercode-generator', ':compiler-plugin-file-mover'
+include ':app', ':annotation', ':compiler', ':converter', ':entity', ':manager', ':compiler-plugin', ':compiler-plugin-node-convert-rule-checker', ':compiler-plugin-nodetree-export-json', ':compiler-plugin-nodecontainer-helpercode-generator', ':compiler-plugin-file-mover'
