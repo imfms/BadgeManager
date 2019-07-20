@@ -15,7 +15,7 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
         List<RemindType> results = new LinkedList<>();
 
         for (RemindType remind : getAllReminds()) {
-            if (isMatched(path, remind.path.nodes())) {
+            if (isMatched(path, remind.nodePath().nodes())) {
                 results.add(remind);
             }
         }
@@ -28,7 +28,7 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
         List<RemindType> results = new LinkedList<>();
 
         for (RemindType remind : getAllReminds()) {
-            if (isMySubPathWithMe(path, remind.path.nodes())) {
+            if (isMySubPathWithMe(path, remind.nodePath().nodes())) {
                 results.add(remind);
             }
         }
@@ -56,7 +56,7 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
         List<RemindType> handledReminds = new LinkedList<>();
 
         for (RemindType remind : getAllReminds()) {
-            if (isMatched(path, remind.path.nodes())) {
+            if (isMatched(path, remind.nodePath().nodes())) {
                 handledReminds.add(remind);
             }
         }

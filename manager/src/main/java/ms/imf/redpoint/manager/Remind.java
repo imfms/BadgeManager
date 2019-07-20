@@ -4,13 +4,23 @@ import java.io.Serializable;
 
 import ms.imf.redpoint.entity.NodePath;
 
+/**
+ * 消息提醒，代表一条消息
+ */
 public class Remind implements Serializable {
 
-    public final NodePath path;
+    /**
+     * 消息节点路径
+     */
+    private final NodePath nodePath;
 
-    public Remind(NodePath path) {
-        if (path == null) { throw new IllegalArgumentException("path can't be null"); }
-        this.path = path;
+    public Remind(NodePath nodePath) {
+        if (nodePath == null) { throw new IllegalArgumentException("nodePath can't be null"); }
+        this.nodePath = nodePath;
+    }
+
+    public NodePath nodePath() {
+        return nodePath;
     }
 
     @Override
@@ -20,18 +30,18 @@ public class Remind implements Serializable {
 
         Remind remind = (Remind) o;
 
-        return path != null ? path.equals(remind.path) : remind.path == null;
+        return nodePath != null ? nodePath.equals(remind.nodePath) : remind.nodePath == null;
     }
 
     @Override
     public int hashCode() {
-        return path != null ? path.hashCode() : 0;
+        return nodePath != null ? nodePath.hashCode() : 0;
     }
 
     @Override
     public String toString() {
         return "Remind{" +
-                "path=" + path +
+                "nodePath=" + nodePath +
                 '}';
     }
 }
