@@ -15,21 +15,37 @@ import ms.imf.redpoint.entity.NodePath;
  */
 public abstract class RemindHandler<RemindType extends Remind> {
 
-    private final RemindHandlerManager<RemindType> remindHandleManager = RemindHandlerManager.instance();
+    private final RemindHandlerManager<RemindType> remindHandleManager;
     private final List<NodePath> paths = new LinkedList<>();
+
+    /**
+     * 由于RemindHandler在程序中为高频使用的类，所以本构造的{@link RemindHandlerManager}参数的指定会挺麻烦
+     * <p>
+     * 所以推荐开发者继承此类时重写构造方法并对该参数进行封装，直接指向一个可以获取到{@link RemindHandlerManager}的固定方式
+     * <p>
+     * 本库之所以没有封装是为了不限制开发者的使用场景，有可能开发者的需求会需要两套不同消息机制同时存在
+     *
+     * @param remindHandleManager 要依附的{@link RemindHandlerManager}
+     */
+    protected RemindHandler(RemindHandlerManager<RemindType> remindHandleManager) {
+        if (remindHandleManager == null) {
+            throw new IllegalArgumentException("remindHandleManager can't be null");
+        }
+        this.remindHandleManager = remindHandleManager;
+    }
 
     /**
      * 依附到RemindHandlerManager
      */
     public void attachToManager() {
-        remindHandleManager.addRemindHandler(this);
+        remindHandleManager.attachRemindHandler(this);
     }
 
     /**
      * 从RemindHandlerManager解除依附关系
      */
-    public void detachToManager() {
-        remindHandleManager.removeRemindHandler(this);
+    public void detachFromManager() {
+        remindHandleManager.detachRemindHandler(this);
     }
 
     /**
@@ -154,12 +170,12 @@ public abstract class RemindHandler<RemindType extends Remind> {
     }
 
     /**
-     * 当消息处理器被触发，触发范围为消息处理器支持的节点路径及其的子路径
+     * 当消息处理器被触发，触发范围为支持的节点路径及其的子路径
      * <p>
      * 一般用于消息被用户直接移除的情况，例如用户以拖拽的方式消除红点，此时子路径的消息也应该被清空
      */
     public void onHappednWithSubPath() {
-        remindHandleManager.happenedRemindHandlerWithSubNodeAll(this);
+        remindHandleManager.happenedRemindHandlerWithSubPathAll(this);
     }
 
     @Override

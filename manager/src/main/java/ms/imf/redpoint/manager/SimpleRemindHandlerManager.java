@@ -7,8 +7,12 @@ import java.util.Set;
 
 import ms.imf.redpoint.entity.NodePath;
 
-
-public class SimpleRemindHandlerManager<RemindType extends Remind> extends AbstractRemindHandlerManager<RemindType> {
+/**
+ * {@link RemindHandlerManager}的简易实现，本实现为demo用途，没有良好的性能表现，推荐生产环境自行重写
+ *
+ * @param <RemindType> 支持的消息数据类型
+ */
+public class SimpleRemindHandlerManager<RemindType extends Remind> extends RemindHandlerManager<RemindType> {
 
     private final Set<RemindHandler<RemindType>> remindHandlers = new LinkedHashSet<>();
 
@@ -17,32 +21,34 @@ public class SimpleRemindHandlerManager<RemindType extends Remind> extends Abstr
     }
 
     @Override
-    public void addRemindHandler(RemindHandler<RemindType> handler) {
-        if (handler == null) { throw new IllegalArgumentException("handler can't be null"); }
-        if (remindHandlers.contains(handler)) {
+    public void attachRemindHandler(RemindHandler<RemindType> remindHandler) {
+        if (remindHandler == null) {
+            throw new IllegalArgumentException("handler can't be null");
+        }
+        if (remindHandlers.contains(remindHandler)) {
             return;
         }
-        remindHandlers.add(handler);
-        notifyRemindHandlerChanged(handler);
+        remindHandlers.add(remindHandler);
+        notifyRemindHandlerChanged(remindHandler);
     }
 
     @Override
-    public void removeRemindHandler(RemindHandler<RemindType> handler) {
-        if (handler == null) {
+    public void detachRemindHandler(RemindHandler<RemindType> remindHandler) {
+        if (remindHandler == null) {
             return;
         }
-        remindHandlers.remove(handler);
+        remindHandlers.remove(remindHandler);
     }
 
     @Override
-    public void happenedRemindHandler(RemindHandler<RemindType> handler) {
+    public void happenedRemindHandler(RemindHandler<RemindType> remindHandler) {
 
-        if (!remindHandlerAttached(handler)) {
+        if (!remindHandlerAttached(remindHandler)) {
             return;
         }
 
         List<NodePath> remindChangedPaths = new LinkedList<>();
-        for (NodePath path : handler.getPaths()) {
+        for (NodePath path : remindHandler.getPaths()) {
             if (remindRepo().removeMatchReminds(NodePath.instance(path.nodes())) > 0) {
                 remindChangedPaths.add(path);
             }
@@ -51,15 +57,12 @@ public class SimpleRemindHandlerManager<RemindType extends Remind> extends Abstr
         notifyRemindDataChanged();
     }
 
-    /**
-     * 消费指定handler节点下所有消息(包括handler节点本身)
-     */
     @Override
-    public void happenedRemindHandlerWithSubNodeAll(RemindHandler<RemindType> handler) {
-        if (!remindHandlerAttached(handler)) {
+    public void happenedRemindHandlerWithSubPathAll(RemindHandler<RemindType> remindHandler) {
+        if (!remindHandlerAttached(remindHandler)) {
             return;
         }
-        for (NodePath path : handler.getPaths()) {
+        for (NodePath path : remindHandler.getPaths()) {
             remindRepo().removeMatchSubReminds(NodePath.instance(path.nodes()));
         }
         notifyRemindDataChanged();
@@ -73,27 +76,26 @@ public class SimpleRemindHandlerManager<RemindType extends Remind> extends Abstr
     }
 
     @Override
-    public void notifyRemindHandlerChanged(RemindHandler<RemindType> handler) {
+    public void notifyRemindDataChanged(Iterable<? extends RemindType> changedReminds) {
+        notifyRemindDataChanged();
+    }
+
+    @Override
+    public void notifyRemindHandlerChanged(RemindHandler<RemindType> remindHandler) {
 
         List<RemindType> reminds = new LinkedList<>();
-        for (NodePath path : handler.getPaths()) {
+        for (NodePath path : remindHandler.getPaths()) {
             reminds.addAll(remindRepo().getMatchSubReminds(NodePath.instance(path.nodes())));
         }
 
-        handler.showReminds(reminds);
+        remindHandler.showReminds(reminds);
     }
 
     @Override
-    public boolean remindHandlerAttached(RemindHandler<RemindType> handler) {
-        if (handler == null) {
+    public boolean remindHandlerAttached(RemindHandler<RemindType> remindHandler) {
+        if (remindHandler == null) {
             return false;
         }
-        return remindHandlers.contains(handler);
-    }
-
-    @Override
-    public void happenedRemind(RemindType remind) {
-        remindRepo().removeRemind(remind);
-        notifyRemindDataChanged();
+        return remindHandlers.contains(remindHandler);
     }
 }

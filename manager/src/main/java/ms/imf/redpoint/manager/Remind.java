@@ -12,15 +12,15 @@ public class Remind implements Serializable {
     /**
      * 消息节点路径
      */
-    private final NodePath nodePath;
+    private final NodePath path;
 
-    public Remind(NodePath nodePath) {
-        if (nodePath == null) { throw new IllegalArgumentException("nodePath can't be null"); }
-        this.nodePath = nodePath;
+    public Remind(NodePath path) {
+        if (path == null) { throw new IllegalArgumentException("path can't be null"); }
+        this.path = path;
     }
 
-    public NodePath nodePath() {
-        return nodePath;
+    public NodePath path() {
+        return path;
     }
 
     @Override
@@ -30,18 +30,18 @@ public class Remind implements Serializable {
 
         Remind remind = (Remind) o;
 
-        return nodePath != null ? nodePath.equals(remind.nodePath) : remind.nodePath == null;
+        return path != null ? path.equals(remind.path) : remind.path == null;
     }
 
     @Override
     public int hashCode() {
-        return nodePath != null ? nodePath.hashCode() : 0;
+        return path != null ? path.hashCode() : 0;
     }
 
     @Override
     public String toString() {
         return "Remind{" +
-                "nodePath=" + nodePath +
+                "path=" + path +
                 '}';
     }
 }
