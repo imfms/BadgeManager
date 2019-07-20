@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 节点容器注解，用于标注一个类所对应的各节点
+ * 节点容器注解，用于声明一个类所支持的节点信息
  * <p>
  * 由于在Badge提醒中应用的各视图类代码与节点存在关联关系，但节点繁多且为静态固定内容，导致代码中对节点的引用有很大挑战：易出错、错误难以察觉、难以维护
  * 所以此注解处理器根据节点特性抽取出注解{@link NodeContainer}，可以根据代码类支持的节点内容，将{@link NodeContainer}标注给代码类
