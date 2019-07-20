@@ -7,7 +7,7 @@ import ms.imf.redpoint.annotation.Plugin;
 import ms.imf.redpoint.annotation.SubNode;
 import ms.imf.redpoint.annotation.SubNode2;
 import ms.imf.redpoint.compiler.plugin.nodecontainer.helpercode.NodeContainerHelperCodeGeneratorCompilePlugin;
-import ms.imf.redpoint.compiler.plugin.nodeschema.export.json.NodeTreeExportJsonCompilerPlugin;
+import ms.imf.redpoint.compiler.plugin.nodetree.export.json.NodeTreeExportJsonCompilerPlugin;
 
 /**
  * TestPath

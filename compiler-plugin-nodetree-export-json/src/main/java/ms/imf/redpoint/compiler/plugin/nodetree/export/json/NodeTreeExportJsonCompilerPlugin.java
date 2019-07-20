@@ -1,4 +1,4 @@
-package ms.imf.redpoint.compiler.plugin.nodeschema.export.json;
+package ms.imf.redpoint.compiler.plugin.nodetree.export.json;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -19,20 +19,20 @@ import ms.imf.redpoint.compiler.plugin.NodeTreeHandlePlugin;
 import ms.imf.redpoint.entity.NodeTree;
 
 /**
- * java style resource mode export node tree to json
- * - arg[0]: target java style resource location: packageName/resourceName
- * <p>
- * output json format:
- * <p>
+ * 以JSON格式导出节点树
+ *
+ * <pre>
+ * 所需参数，被方括号[]包裹的内容为可选项
+ *  参数1: Java风格资源导出目标：[packageName/]resourceName
+ *
+ * 导出JSON格式:
+ *
  * [NodeTree {
- * <p>
- * &nbsp;&nbsp;String name;
- * <p>
- * &nbsp;&nbsp;List&lt;String&gt; args;
- * <p>
- * &nbsp;&nbsp;List&lt;NodeTree&gt; sub;
- * <p>
+ *   String name;
+ *   List&lt;String&gt; args;
+ *   List&lt;NodeTree&gt; sub;
  * }]
+ * </pre>
  *
  * @author f_ms
  * @date 19-6-16
