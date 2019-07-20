@@ -33,7 +33,7 @@ import ms.imf.redpoint.compiler.plugin.NodeContainerEntity;
 import ms.imf.redpoint.entity.NodeTree;
 
 /**
- * 节点容器注解处理器，根据不同类标注的节点容器注解解析出一张完整的节点树，并对外提供插件机制用于定制编译期节点树处理行为
+ * 节点容器{@link NodeContainer}注解处理器，根据不同类标注的节点容器注解解析出一张完整的节点树，并对外提供插件机制用于定制编译期节点树处理行为
  *
  * @see NodeContainer
  * @see NodeParserGlobalConfig

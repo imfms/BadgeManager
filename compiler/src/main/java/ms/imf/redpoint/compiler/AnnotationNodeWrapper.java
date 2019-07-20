@@ -17,6 +17,10 @@ import ms.imf.redpoint.annotation.SubNode6;
 import ms.imf.redpoint.annotation.SubNode7;
 import ms.imf.redpoint.annotation.SubNode8;
 
+/**
+ * 由于注解类型不支持嵌套，所以通过创建独立注解类型层层上下级引用的方式进行规避。
+ * 为使注解处理器方便解析，对这些独立注解抽取出包装类型，对独立注解的不同实现细节进行统一
+ */
 abstract class AnnotationNodeWrapper
         <SourceNodeType extends Annotation, SubNodeType extends Annotation> {
 
@@ -38,19 +42,39 @@ abstract class AnnotationNodeWrapper
         this.sourceMirror = sourceMirror;
     }
 
-    final SourceNodeType source() { return source; }
-    final AnnotationMirror sourceMirror() { return sourceMirror; }
-    final List<AnnotationMirror> subNodeMirrors() { return NodeContainerAnnotationParser.getAnnotationMirrorValue(sourceMirror(), "subNodes"); }
+    SourceNodeType source() { return source; }
+    AnnotationMirror sourceMirror() { return sourceMirror; }
+
+    /**
+     * @see SubNode#value()
+     */
+    abstract String name();
+    /**
+     * @see SubNode#args()
+     */
+    abstract Arg[] args();
+    /**
+     * @see SubNode#subNodes()
+     */
+    abstract SubNodeType[] subNodes();
+    /**
+     * @see SubNode#subNodes()
+     */
+    final List<AnnotationMirror> subNodeMirrors() { return NodeContainerAnnotationParser.getAnnotationMirrorValue(sourceMirror(), "subNodes"/* todo runtime check */); }
+    /**
+     * @see SubNode#subNodeContainerRef()
+     */
     final TypeElement subRef() {
-        DeclaredType subRefType = NodeContainerAnnotationParser.getAnnotationMirrorValue(sourceMirror(), "subNodeContainerRef");
+        DeclaredType subRefType = NodeContainerAnnotationParser.getAnnotationMirrorValue(sourceMirror(), "subNodeContainerRef" /* todo runtime check */);
         return subRefType != null
                 ? (TypeElement) subRefType.asElement()
                 : null;
     }
 
-    abstract String name();
-    abstract Arg[] args();
-    abstract SubNodeType[] subNodes();
+    /**
+     * 转换自己引用的子注解类型为本通用包装类型
+     * 像链表一样每个类型引用下个类型
+     */
     protected abstract AnnotationNodeWrapper<SubNodeType, ?> subNodeWrapper(SubNodeType source, AnnotationMirror sourceMirror);
 
     private static class SubNode1Parser extends AnnotationNodeWrapper<SubNode, SubNode2> {
@@ -109,6 +133,4 @@ abstract class AnnotationNodeWrapper
         @Override protected Annotation[] subNodes() { return null; }
         @Override protected AnnotationNodeWrapper<Annotation, Annotation> subNodeWrapper(Annotation source, AnnotationMirror sourceMirror) { return null; }
     }
-
-
 }

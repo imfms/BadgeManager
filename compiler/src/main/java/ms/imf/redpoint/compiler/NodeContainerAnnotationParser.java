@@ -31,7 +31,7 @@ import ms.imf.redpoint.compiler.plugin.NodeContainerEntity;
 import ms.imf.redpoint.entity.NodeTree;
 
 /**
- * 节点容器解析器
+ * 节点容器{@link NodeContainer}解析器
  */
 class NodeContainerAnnotationParser {
 

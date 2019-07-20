@@ -6,7 +6,10 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 /**
- * 节点声明注解
+ * 声明一个节点
+ *
+ * 由于注解类型不支持嵌套，所以子节点{@link #subNodes()}使用独立注解类型层层上下级引用的方式进行规避，已经努力声明了足够多的子节点类型，可以满足大多数使用场景。
+ * 如果仍然不够使用可使用JSON字符串声明节点的方式{@link NodeContainer#nodeJson()}
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.ANNOTATION_TYPE)
