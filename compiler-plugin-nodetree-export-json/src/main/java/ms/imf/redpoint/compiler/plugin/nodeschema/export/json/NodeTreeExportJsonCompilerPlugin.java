@@ -15,7 +15,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.tools.StandardLocation;
 
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
-import ms.imf.redpoint.compiler.plugin.NodeTreeParsedHandlerPlugin;
+import ms.imf.redpoint.compiler.plugin.NodeTreeHandlePlugin;
 import ms.imf.redpoint.entity.NodeTree;
 
 /**
@@ -37,7 +37,7 @@ import ms.imf.redpoint.entity.NodeTree;
  * @author f_ms
  * @date 19-6-16
  */
-public class NodeTreeExportJsonCompilerPlugin implements NodeTreeParsedHandlerPlugin {
+public class NodeTreeExportJsonCompilerPlugin implements NodeTreeHandlePlugin {
 
     public static final String JSON_KEY_NAME = "name";
     public static final String JSON_KEY_ARGS = "args";

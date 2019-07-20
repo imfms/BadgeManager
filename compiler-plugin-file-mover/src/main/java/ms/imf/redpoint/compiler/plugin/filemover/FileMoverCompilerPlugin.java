@@ -11,7 +11,7 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.tools.StandardLocation;
 
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
-import ms.imf.redpoint.compiler.plugin.NodeTreeParsedHandlerPlugin;
+import ms.imf.redpoint.compiler.plugin.NodeTreeHandlePlugin;
 
 /**
  * 文件移动器，支持复制指定资源到指定位置。
@@ -40,7 +40,7 @@ import ms.imf.redpoint.compiler.plugin.NodeTreeParsedHandlerPlugin;
  * @author f_ms
  * @date 19-7-8
  */
-public class FileMoverCompilerPlugin implements NodeTreeParsedHandlerPlugin {
+public class FileMoverCompilerPlugin implements NodeTreeHandlePlugin {
 
     public static final int ARG_INDEX_SOURCE_LOCATION = 0;
     public static final int ARG_INDEX_TARGET_LOCATION = 1;
@@ -48,7 +48,7 @@ public class FileMoverCompilerPlugin implements NodeTreeParsedHandlerPlugin {
     public static final int COPY_BUFFER_SIZE = 4096;
 
     @Override
-    public void onNodeTreeParsed(NodeTreeParsedHandlerPlugin.PluginContext context) throws AptProcessException {
+    public void onNodeTreeParsed(NodeTreeHandlePlugin.PluginContext context) throws AptProcessException {
 
         InputStream sourceLocation = getInputStreamArg(
                 context.processingEnvironment(), context.args(), ARG_INDEX_SOURCE_LOCATION, "source resource location"

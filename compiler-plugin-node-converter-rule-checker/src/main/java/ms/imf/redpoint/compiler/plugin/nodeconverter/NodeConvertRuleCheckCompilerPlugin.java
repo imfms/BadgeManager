@@ -5,14 +5,14 @@ import java.io.FileNotFoundException;
 import java.io.InputStream;
 
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
-import ms.imf.redpoint.compiler.plugin.NodeTreeParsedHandlerPlugin;
+import ms.imf.redpoint.compiler.plugin.NodeTreeHandlePlugin;
 import ms.imf.redpoint.converter.ArgCheckUtil;
 
 /**
  * node convert checker compiler plugin
  * @author f_ms
  */
-public class NodeConvertRuleCheckCompilerPlugin implements NodeTreeParsedHandlerPlugin {
+public class NodeConvertRuleCheckCompilerPlugin implements NodeTreeHandlePlugin {
 
     @Override
     public void onNodeTreeParsed(PluginContext context) throws AptProcessException {

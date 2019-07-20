@@ -28,7 +28,7 @@ import ms.imf.redpoint.annotation.NodeContainer;
 import ms.imf.redpoint.annotation.NodeParserGlobalConfig;
 import ms.imf.redpoint.annotation.Plugin;
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
-import ms.imf.redpoint.compiler.plugin.NodeTreeParsedHandlerPlugin;
+import ms.imf.redpoint.compiler.plugin.NodeTreeHandlePlugin;
 import ms.imf.redpoint.compiler.plugin.NodeContainerEntity;
 import ms.imf.redpoint.entity.NodeTree;
 
@@ -225,7 +225,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
             final String pluginClassName = ((TypeElement) ((DeclaredType) NodeContainerAnnotationParser.getAnnotationMirrorValue((AnnotationMirror) pluginAnnotationValue.getValue(), "value" /* todo runtime check */)).asElement()).getQualifiedName().toString();
             final String[] pluginClassArguments = pluginAnnotation.args();
 
-            final NodeTreeParsedHandlerPlugin plugin;
+            final NodeTreeHandlePlugin plugin;
             try {
                 plugin = getPluginInstance(pluginClassName);
             } catch (Exception e) {
@@ -243,7 +243,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
                 @SuppressWarnings("unchecked") final List<NodeContainerEntity>[] treeNodeContainerEntities = new List[1];
                 @SuppressWarnings("unchecked") final List<NodeTree>[] nodeTrees = new List[1];
 
-                plugin.onNodeTreeParsed(new NodeTreeParsedHandlerPlugin.PluginContext() {
+                plugin.onNodeTreeParsed(new NodeTreeHandlePlugin.PluginContext() {
                     @Override public ProcessingEnvironment processingEnvironment() { return processingEnv; }
                     @Override public String[] args() { return pluginClassArguments; }
                     @Override public List<NodeContainerEntity> flatNodeContainerEntities() { return nodeContainerEntities; }
@@ -269,7 +269,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
         }
     }
 
-    private NodeTreeParsedHandlerPlugin getPluginInstance(String pluginClassName) {
+    private NodeTreeHandlePlugin getPluginInstance(String pluginClassName) {
 
         final Class<?> pluginClass;
         try {
@@ -278,12 +278,12 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
             throw new IllegalStateException(String.format("can't find plugin's class '%s', please check classpath", pluginClassName), e);
         }
 
-        if (!NodeTreeParsedHandlerPlugin.class.isAssignableFrom(pluginClass)) {
-            throw new IllegalArgumentException(String.format("class '%s' is not %s's subtype, please check plugin's type", pluginClassName, NodeTreeParsedHandlerPlugin.class.getCanonicalName()));
+        if (!NodeTreeHandlePlugin.class.isAssignableFrom(pluginClass)) {
+            throw new IllegalArgumentException(String.format("class '%s' is not %s's subtype, please check plugin's type", pluginClassName, NodeTreeHandlePlugin.class.getCanonicalName()));
         }
 
         try {
-            return (NodeTreeParsedHandlerPlugin) pluginClass.newInstance();
+            return (NodeTreeHandlePlugin) pluginClass.newInstance();
         } catch (ReflectiveOperationException e) {
             throw new IllegalStateException(String.format("can't create '%s's instance: %s", pluginClassName, e.getMessage()), e);
         }

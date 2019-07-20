@@ -1,7 +1,7 @@
 package ms.imf.redpoint.compiler.plugin.nodecontainer.helpercode;
 
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
-import ms.imf.redpoint.compiler.plugin.NodeTreeParsedHandlerPlugin;
+import ms.imf.redpoint.compiler.plugin.NodeTreeHandlePlugin;
 
 /*
 package ${CLASS_PACKAGE_NAME}
@@ -54,7 +54,7 @@ interface ${CLASS}_Path {
  * @author f_ms
  * @date 2019/6/18
  */
-public class NodeContainerHelperCodeGeneratorPlugin implements NodeTreeParsedHandlerPlugin {
+public class NodeContainerHelperCodeGeneratorPlugin implements NodeTreeHandlePlugin {
 
     @Override
     public void onNodeTreeParsed(PluginContext context) throws AptProcessException {
