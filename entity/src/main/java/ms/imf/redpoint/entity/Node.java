@@ -5,6 +5,9 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * 节点
+ */
 public class Node implements Serializable {
 
     public static Node instance(String type, String... argValues) {
@@ -33,16 +36,19 @@ public class Node implements Serializable {
         return instance(type, (String[]) null);
     }
 
+    /**
+     * 节点名
+     */
     public final String name;
+    /**
+     * 节点参数/参数值
+     */
     public final Map<String, String> args;
 
     public Node(String name) {
         this(name, null);
     }
 
-    /**
-     * todo 20190521 对args的key can't be null参数校验重申
-     */
     public Node(String name, Map<String, String> args) {
         if (name == null) { throw new IllegalArgumentException("name can't be null"); }
 

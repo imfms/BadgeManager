@@ -6,9 +6,14 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
+/**
+ * 节点路径，包含一条节点链
+ *
+ * @author f_ms
+ */
 public class NodePath implements Serializable {
 
-    public static final NodePath EMPTY = new NodePath(Collections.singletonList(Node.instance("_empty")));
+    public static final NodePath EMPTY = new NodePath(Collections.<Node>emptyList());
 
     public static NodePath instance(List<Node> nodes) {
         return new NodePath(nodes);
@@ -37,6 +42,9 @@ public class NodePath implements Serializable {
         return new NodePath(nodes);
     }
 
+    /**
+     * 包含的节点列表
+     */
     private final List<Node> nodes;
 
     public NodePath(List<Node> nodes) {
