@@ -6,7 +6,7 @@ import ms.imf.redpoint.annotation.NodeParserGlobalConfig;
 import ms.imf.redpoint.annotation.Plugin;
 import ms.imf.redpoint.annotation.SubNode;
 import ms.imf.redpoint.annotation.SubNode2;
-import ms.imf.redpoint.compiler.plugin.nodecontainer.helpercode.NodeContainerHelperCodeGeneratorPlugin;
+import ms.imf.redpoint.compiler.plugin.nodecontainer.helpercode.NodeContainerHelperCodeGeneratorCompilePlugin;
 import ms.imf.redpoint.compiler.plugin.nodeschema.export.json.NodeTreeExportJsonCompilerPlugin;
 
 /**
@@ -28,7 +28,7 @@ import ms.imf.redpoint.compiler.plugin.nodeschema.export.json.NodeTreeExportJson
         }
 )
 @NodeParserGlobalConfig(
-        eachAptRoundNodeTreeParsedPlugins = @Plugin(NodeContainerHelperCodeGeneratorPlugin.class),
+        eachAptRoundNodeTreeParsedPlugins = @Plugin(NodeContainerHelperCodeGeneratorCompilePlugin.class),
         lastAptRoundNodeTreeParsedPlugins = @Plugin(value = NodeTreeExportJsonCompilerPlugin.class, args = "a.b.c/hi.json")
 )
 public class TestPath {

@@ -20,7 +20,7 @@ import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.NodeContainerEntity;
 
 /**
- * @see NodeContainerHelperCodeGeneratorPlugin
+ * @see NodeContainerHelperCodeGeneratorCompilePlugin
  */
 class Generator {
 
@@ -33,22 +33,22 @@ class Generator {
         this.aptFiler = aptFiler;
     }
 
-    void generate(List<NodeContainerEntity> paths) throws AptProcessException {
-        for (NodeContainerEntity path : paths) {
-            generatePath(path);
+    void generate(List<NodeContainerEntity> entities) throws AptProcessException {
+        for (NodeContainerEntity entity : entities) {
+            generateOne(entity);
         }
     }
 
-    private void generatePath(NodeContainerEntity path) throws AptProcessException {
+    private void generateOne(NodeContainerEntity entity) throws AptProcessException {
 
-        final String packageName = getElementPackage(path.host).getQualifiedName().toString();
-        final String className = path.host.getSimpleName().toString() + "_Path";
+        final String packageName = getElementPackage(entity.host).getQualifiedName().toString();
+        final String className = entity.host.getSimpleName().toString() + "_Node";
 
         TypeSpec.Builder builder = TypeSpec.interfaceBuilder(className)
-                .addJavadoc("@see $T", path.host)
+                .addJavadoc("@see $T", entity.host)
                 .addModifiers(Modifier.PUBLIC);
 
-        for (NodeContainerEntity.Node node : path.nodes) {
+        for (NodeContainerEntity.Node node : entity.nodes) {
             builder.addType(
                     generateNode(node, new HashSet<>(Collections.singletonList(className)))
             );
@@ -63,7 +63,7 @@ class Generator {
             throw new AptProcessException(
                     String.format("found error on generate helper code: %s", e.getMessage()),
                     e,
-                    path.host
+                    entity.host
             );
         }
     }
