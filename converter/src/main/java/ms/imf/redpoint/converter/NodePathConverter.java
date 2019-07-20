@@ -27,7 +27,7 @@ import ms.imf.redpoint.entity.NodeTree;
  * @date 19-5-18
  * @see ConvertRule
  */
-public class NodeConverter {
+public class NodePathConverter {
 
     private final List<ConvertRule> convertRules;
 
@@ -35,7 +35,7 @@ public class NodeConverter {
      * @param convertRulesJson 转换规则 格式为 toJson(List<{@link ConvertRule}>)
      * @throws IllegalArgumentException 格式校验未通过
      */
-    public NodeConverter(String convertRulesJson) throws IllegalArgumentException {
+    public NodePathConverter(String convertRulesJson) throws IllegalArgumentException {
         this(convertRulesJson, true);
     }
 
@@ -44,7 +44,7 @@ public class NodeConverter {
      * @param isCheckRules     是否校验转换规则合法性, 不校验情况提供给用于编译期已经校验，运行时无需二次校验的情况，实际校验任务由{@link ConvertRuleChecker}接管
      * @throws IllegalArgumentException 格式校验未通过
      */
-    public NodeConverter(String convertRulesJson, boolean isCheckRules) throws IllegalArgumentException {
+    public NodePathConverter(String convertRulesJson, boolean isCheckRules) throws IllegalArgumentException {
         this(convertRulesJson, null, isCheckRules);
     }
 
@@ -53,7 +53,7 @@ public class NodeConverter {
      * @param targetNodeTreeSchemaJson 可选,转换目标节点树的全貌，用于参与转换规则的校验以发现更多规则本身的错误，格式为 toJson(List<{@link NodeTree}>)
      * @throws IllegalArgumentException 格式校验未通过
      */
-    public NodeConverter(String convertRulesJson, String targetNodeTreeSchemaJson) throws IllegalArgumentException {
+    public NodePathConverter(String convertRulesJson, String targetNodeTreeSchemaJson) throws IllegalArgumentException {
         this(convertRulesJson, targetNodeTreeSchemaJson, true);
     }
 
@@ -63,7 +63,7 @@ public class NodeConverter {
      * @param isCheckRules             是否校验转换规则合法性, 不校验情况提供给用于编译期已经校验，运行时无需二次校验的情况，实际校验任务由{@link ConvertRuleChecker}接管
      * @throws IllegalArgumentException 格式校验未通过
      */
-    public NodeConverter(String convertRulesJson, String targetNodeTreeSchemaJson, boolean isCheckRules) throws IllegalArgumentException {
+    public NodePathConverter(String convertRulesJson, String targetNodeTreeSchemaJson, boolean isCheckRules) throws IllegalArgumentException {
         this(new Gson(), convertRulesJson, targetNodeTreeSchemaJson, isCheckRules);
     }
 
@@ -72,7 +72,7 @@ public class NodeConverter {
      * @param targetNodeTreeSchemaJsonInputStream 可选,转换目标节点树的全貌，用于参与转换规则的校验以发现更多规则本身的错误，格式为 toJson(List<{@link NodeTree}>)
      * @throws IllegalArgumentException 格式校验未通过
      */
-    public NodeConverter(InputStream convertRulesJsonInputStream, InputStream targetNodeTreeSchemaJsonInputStream) throws IllegalArgumentException {
+    public NodePathConverter(InputStream convertRulesJsonInputStream, InputStream targetNodeTreeSchemaJsonInputStream) throws IllegalArgumentException {
         this(convertRulesJsonInputStream, targetNodeTreeSchemaJsonInputStream, true);
     }
 
@@ -82,11 +82,11 @@ public class NodeConverter {
      * @param isCheckRules                        是否校验转换规则合法性, 不校验情况提供给用于编译期已经校验，运行时无需二次校验的情况，实际校验任务由{@link ConvertRuleChecker}接管
      * @throws IllegalArgumentException 格式校验未通过
      */
-    public NodeConverter(InputStream convertRulesJsonInputStream, InputStream targetNodeTreeSchemaJsonInputStream, boolean isCheckRules) throws IllegalArgumentException {
+    public NodePathConverter(InputStream convertRulesJsonInputStream, InputStream targetNodeTreeSchemaJsonInputStream, boolean isCheckRules) throws IllegalArgumentException {
         this(new Gson(), convertRulesJsonInputStream, targetNodeTreeSchemaJsonInputStream, isCheckRules);
     }
 
-    private NodeConverter(Gson gson, InputStream convertRulesJsonInputStream, InputStream targetNodeTreeSchemaJsonInputStream, boolean isCheckRules) throws IllegalArgumentException {
+    private NodePathConverter(Gson gson, InputStream convertRulesJsonInputStream, InputStream targetNodeTreeSchemaJsonInputStream, boolean isCheckRules) throws IllegalArgumentException {
         this(
                 ConvertRuleChecker.<List<ConvertRule>>parseJson(
                         gson,
@@ -106,7 +106,7 @@ public class NodeConverter {
         );
     }
 
-    private NodeConverter(Gson gson, String convertRulesJson, String targetNodeTreeSchemaJson, boolean isCheckRules) throws IllegalArgumentException {
+    private NodePathConverter(Gson gson, String convertRulesJson, String targetNodeTreeSchemaJson, boolean isCheckRules) throws IllegalArgumentException {
         this(
                 ConvertRuleChecker.<List<ConvertRule>>parseJson(
                         gson,
@@ -130,7 +130,7 @@ public class NodeConverter {
      * @param convertRules 转换规则 格式为 toJson(List<{@link ConvertRule}>)
      * @throws IllegalArgumentException 格式校验未通过
      */
-    public NodeConverter(List<ConvertRule> convertRules) throws IllegalArgumentException {
+    public NodePathConverter(List<ConvertRule> convertRules) throws IllegalArgumentException {
         this(convertRules, null);
     }
 
@@ -139,7 +139,7 @@ public class NodeConverter {
      * @param isCheckRules 是否校验转换规则合法性, 不校验情况提供给用于编译期已经校验，运行时无需二次校验的情况，实际校验任务由{@link ConvertRuleChecker}接管
      * @throws IllegalArgumentException 格式校验未通过
      */
-    public NodeConverter(List<ConvertRule> convertRules, boolean isCheckRules) throws IllegalArgumentException {
+    public NodePathConverter(List<ConvertRule> convertRules, boolean isCheckRules) throws IllegalArgumentException {
         this(convertRules, null, isCheckRules);
     }
 
@@ -148,7 +148,7 @@ public class NodeConverter {
      * @param targetNodeTreeSchema 可选,转换目标节点树的全貌，用于参与转换规则的校验以发现更多规则本身的错误
      * @throws IllegalArgumentException 格式校验未通过
      */
-    public NodeConverter(List<ConvertRule> convertRules, List<NodeTree> targetNodeTreeSchema) throws IllegalArgumentException {
+    public NodePathConverter(List<ConvertRule> convertRules, List<NodeTree> targetNodeTreeSchema) throws IllegalArgumentException {
         this(convertRules, targetNodeTreeSchema, true);
     }
 
@@ -158,7 +158,7 @@ public class NodeConverter {
      * @param isCheckRules         是否校验转换规则合法性, 不校验情况提供给用于编译期已经校验，运行时无需二次校验的情况，实际校验任务由{@link ConvertRuleChecker}接管
      * @throws IllegalArgumentException 格式校验未通过
      */
-    public NodeConverter(List<ConvertRule> convertRules, List<NodeTree> targetNodeTreeSchema, boolean isCheckRules) throws IllegalArgumentException {
+    public NodePathConverter(List<ConvertRule> convertRules, List<NodeTree> targetNodeTreeSchema, boolean isCheckRules) throws IllegalArgumentException {
         if (convertRules == null) {
             throw new IllegalArgumentException("convertRules can't be null");
         }
@@ -169,9 +169,9 @@ public class NodeConverter {
     }
 
     /**
-     * 根据规则转换节点列表到目标节点列表
+     * 根据规则转换节点链列表到目标节点链
      *
-     * @param sourceNodes 源路径
+     * @param sourceNodes 源节点链
      * @return 目标路径, null == 查无匹配
      */
     public List<Node> convert(List<Node> sourceNodes) {
