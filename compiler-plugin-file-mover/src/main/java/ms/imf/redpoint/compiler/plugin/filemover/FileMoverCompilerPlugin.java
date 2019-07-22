@@ -11,45 +11,44 @@ import javax.annotation.processing.ProcessingEnvironment;
 import javax.tools.StandardLocation;
 
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
-import ms.imf.redpoint.compiler.plugin.ParsedNodeSchemaHandlePlugin;
-import ms.imf.redpoint.compiler.plugin.PluginContext;
+import ms.imf.redpoint.compiler.plugin.NodeTreeHandlePlugin;
 
 /**
  * 文件移动器，支持复制指定资源到指定位置。
  * <p>
  * 主要用于编译期将外部资源移入到java-resource，例如编译期将外部nodeConverterMappingFile复制到java-resource
  * <p>
- * <p>
- * 所需参数
- * <p>
+ * <pre>
+ * 所需参数：
  * 参数1: 源文件位置
- * <p>
  * 参数2: 文件移动后目标位置
- * <p>
- * <p>
+ *
  * 文件位置支持以下类型, 方括号[]包裹的内容为可选项:
- * <p>
- * <p>
- * file://[/]filePath: 常规文件系统绝对、相对位置
- * <p>
- * &nbsp;&nbsp;例如: file:///home/user/resource.txt, /home/user/resource.txt, resource.txt
- * <p>
+ * file://filePath: 常规文件系统绝对、相对位置
+ *   例如: file:///home/user/resource.txt, file://resource.txt
  * javaResource://[packageName/]resourceName: java-style资源位置
- * <p>
- * &nbsp;&nbsp;例如: javaResource://com.foo/resource.txt, javaResource://resource.txt
+ *   例如: javaResource://com.foo/resource.txt, javaResource://resource.txt
+ * </pre>
  *
  * @author f_ms
  * @date 19-7-8
  */
-public class FileMoverCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
+public class FileMoverCompilerPlugin implements NodeTreeHandlePlugin {
 
     public static final int ARG_INDEX_SOURCE_LOCATION = 0;
     public static final int ARG_INDEX_TARGET_LOCATION = 1;
     public static final String RESOURCE_TYPE_SCHEMA_SYMBOL = "://";
-    public static final int COPY_BUFFER_SIZE = 4096;
+
+    private static final int COPY_BUFFER_SIZE = 4096;
+
+    private static final String RESOURCE_TYPE_NAME_FILE = "file";
+    private static final String RESOURCE_TYPE_NAME_JAVA_RESOURCE = "javaResource";
+
+    public static final String RESOURCE_TYPE_FILE = RESOURCE_TYPE_NAME_FILE + RESOURCE_TYPE_SCHEMA_SYMBOL;
+    public static final String RESOURCE_TYPE_JAVA_RESOURCE = RESOURCE_TYPE_NAME_JAVA_RESOURCE + RESOURCE_TYPE_SCHEMA_SYMBOL;
 
     @Override
-    public void onParsed(PluginContext context) throws AptProcessException {
+    public void onNodeTreeParsed(NodeTreeHandlePlugin.PluginContext context) throws AptProcessException {
 
         InputStream sourceLocation = getInputStreamArg(
                 context.processingEnvironment(), context.args(), ARG_INDEX_SOURCE_LOCATION, "source resource location"
@@ -77,11 +76,11 @@ public class FileMoverCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
         }
     }
 
-    enum ResourceTypeHandler {
+    private enum ResourceTypeHandler {
         /**
          * file
          */
-        FILE("file") {
+        FILE(RESOURCE_TYPE_NAME_FILE) {
             @Override
             InputStream read(ProcessingEnvironment processingEnvironment, String type, String location) throws Exception {
                 return new FileInputStream(location);
@@ -95,7 +94,7 @@ public class FileMoverCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
         /**
          * java-style-resource
          */
-        JAVA_RESOURCE("javaResource") {
+        JAVA_RESOURCE(RESOURCE_TYPE_NAME_JAVA_RESOURCE) {
             @Override
             InputStream read(ProcessingEnvironment processingEnvironment, String type, String location) throws Exception {
 
@@ -182,24 +181,17 @@ public class FileMoverCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
         }
     }
 
-    private static OutputStream getOutputStreamArg(ProcessingEnvironment processingEnvironment, String[] args, int index, String argDesc) throws AptProcessException {
-        String[] locationArg = getLocationArg(args, index, argDesc);
-
-        String type = locationArg[0];
-        String location = locationArg[1];
-
-        ResourceTypeHandler resourceTypeHandler = getResourceTypeHandler(type, location);
-        try {
-            return resourceTypeHandler.write(processingEnvironment, type, location);
-        } catch (Exception e) {
-            throw new AptProcessException(
-                    String.format(
-                            "found error on write resource %s://%s: %s",
-                            type, location, e.getMessage()
-                    ),
-                    e
-            );
+    private static String getArg(String[] args, int index, String argDesc) throws AptProcessException {
+        if (args == null
+                || args.length <= index
+                || args[index] == null
+                || args[index].isEmpty()) {
+            throw new AptProcessException(String.format(
+                    "args[%d](%s) can't be empty, please add it into args[%d]",
+                    index, argDesc, index
+            ));
         }
+        return args[index];
     }
 
     private static InputStream getInputStreamArg(ProcessingEnvironment processingEnvironment, String[] args, int index, String argDesc) throws AptProcessException {
@@ -226,18 +218,24 @@ public class FileMoverCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
         }
     }
 
-    private static ResourceTypeHandler getResourceTypeHandler(String type, String location) throws AptProcessException {
-        for (ResourceTypeHandler resourceTypeHandler : ResourceTypeHandler.values()) {
-            if (resourceTypeHandler.accept(type, location)) {
-                return resourceTypeHandler;
-            }
-        }
+    private static OutputStream getOutputStreamArg(ProcessingEnvironment processingEnvironment, String[] args, int index, String argDesc) throws AptProcessException {
+        String[] locationArg = getLocationArg(args, index, argDesc);
 
-        throw new AptProcessException(String.format(
-                "unaccept resource type '%s', I only accept resourceType: %s",
-                type,
-                Arrays.toString(ResourceTypeHandler.acceptTypes())
-        ));
+        String type = locationArg[0];
+        String location = locationArg[1];
+
+        ResourceTypeHandler resourceTypeHandler = getResourceTypeHandler(type, location);
+        try {
+            return resourceTypeHandler.write(processingEnvironment, type, location);
+        } catch (Exception e) {
+            throw new AptProcessException(
+                    String.format(
+                            "found error on write resource %s://%s: %s",
+                            type, location, e.getMessage()
+                    ),
+                    e
+            );
+        }
     }
 
     private static String[] getLocationArg(String[] args, int index, String argDesc) throws AptProcessException {
@@ -259,17 +257,17 @@ public class FileMoverCompilerPlugin implements ParsedNodeSchemaHandlePlugin {
         };
     }
 
-
-    private static String getArg(String[] args, int index, String argDesc) throws AptProcessException {
-        if (args == null
-                || args.length <= index
-                || args[index] == null
-                || args[index].isEmpty()) {
-            throw new AptProcessException(String.format(
-                    "args[%d](%s) can't be empty, please add it into args[%d]",
-                    index, argDesc, index
-            ));
+    private static ResourceTypeHandler getResourceTypeHandler(String type, String location) throws AptProcessException {
+        for (ResourceTypeHandler resourceTypeHandler : ResourceTypeHandler.values()) {
+            if (resourceTypeHandler.accept(type, location)) {
+                return resourceTypeHandler;
+            }
         }
-        return args[index];
+
+        throw new AptProcessException(String.format(
+                "unaccept resource type '%s', I only accept resourceType: %s",
+                type,
+                Arrays.toString(ResourceTypeHandler.acceptTypes())
+        ));
     }
 }

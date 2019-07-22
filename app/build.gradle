@@ -31,11 +31,11 @@ dependencies {
     implementation project(':compiler-plugin')
     annotationProcessor project(':compiler')
 
-    compileOnly project(':compiler-plugin-nodeschema-export-json')
-    annotationProcessor project(':compiler-plugin-nodeschema-export-json')
+    compileOnly project(':compiler-plugin-nodetree-export-json')
+    annotationProcessor project(':compiler-plugin-nodetree-export-json')
 
-    annotationProcessor project(':compiler-plugin-node-helper-hardcode-generator')
-    compileOnly project(':compiler-plugin-node-helper-hardcode-generator')
+    annotationProcessor project(':compiler-plugin-nodecontainer-helpercode-generator')
+    compileOnly project(':compiler-plugin-nodecontainer-helpercode-generator')
 
     annotationProcessor project(':compiler-plugin-file-mover')
     compileOnly project(':compiler-plugin-file-mover')

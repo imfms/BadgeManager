@@ -5,21 +5,29 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
+/**
+ * @see SubNode
+ */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.ANNOTATION_TYPE)
 public @interface SubNode8 {
     /**
-     * @see SubNode#type()
+     * @see SubNode#value()
      */
-    String type();
+    String value();
 
     /**
      * @see SubNode#args()
      */
-    NodeArg[] args() default {};
+    Arg[] args() default {};
 
     /**
-     * @see SubNode#subRef()
+     * @see SubNode#subNodes()
      */
-    Class subRef() default Void.class;
+    SubNode9[] subNodes() default {};
+
+    /**
+     * @see SubNode#subNodeContainerRef()
+     */
+    Class subNodeContainerRef() default Void.class;
 }

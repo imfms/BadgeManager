@@ -3,7 +3,7 @@ package ms.imf.redpoint.manager;
 /**
  * 红点消息获取、状态处理器
  *
- * @author imf_m
+ * @author f_ms
  * @date 2019/5/29
  */
 public interface RemindDaemon {
