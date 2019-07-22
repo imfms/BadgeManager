@@ -2,8 +2,8 @@ package ms.imf.redpoint.compiler;
 
 import com.google.auto.service.AutoService;
 
-import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
@@ -79,7 +79,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
         try {
             return processRaw(roundEnv);
         } catch (Exception e) {
-            showErrorTip(new AptProcessException(String.format("unexpected exception on processor: %s", e.getMessage()), e));
+            showErrorTip(new AptProcessException(String.format("unexpected exception on processor: %s", e.getMessage()), e), true);
             return false;
         }
     }
@@ -376,6 +376,10 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
     }
 
     private void showErrorTip(Exception exception) {
+        showErrorTip(exception, false);
+    }
+    private void showErrorTip(Exception exception, boolean isShowStack) {
+
         Element e = null;
         AnnotationMirror a = null;
         AnnotationValue v = null;
@@ -388,11 +392,16 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
             v = aptException.v;
         }
 
-        ByteArrayOutputStream os = new ByteArrayOutputStream();
-        exception.printStackTrace(new PrintStream(os));
+        StringWriter stringWriter = new StringWriter();
+        if (isShowStack) {
+            exception.printStackTrace(new PrintWriter(stringWriter));
+        } else {
+            stringWriter.write(exception.getMessage());
+        }
+
         processingEnv.getMessager().printMessage(
                 Diagnostic.Kind.ERROR,
-                os.toString(),
+                stringWriter.toString(),
                 e, a, v
         );
     }
