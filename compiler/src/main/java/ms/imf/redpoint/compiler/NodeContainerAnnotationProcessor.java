@@ -19,6 +19,7 @@ import javax.annotation.processing.RoundEnvironment;
 import javax.lang.model.SourceVersion;
 import javax.lang.model.element.AnnotationMirror;
 import javax.lang.model.element.AnnotationValue;
+import javax.lang.model.element.Element;
 import javax.lang.model.element.TypeElement;
 import javax.lang.model.type.DeclaredType;
 import javax.lang.model.util.ElementFilter;
@@ -28,8 +29,8 @@ import ms.imf.redpoint.annotation.NodeContainer;
 import ms.imf.redpoint.annotation.NodeParserGlobalConfig;
 import ms.imf.redpoint.annotation.Plugin;
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
-import ms.imf.redpoint.compiler.plugin.NodeTreeHandlePlugin;
 import ms.imf.redpoint.compiler.plugin.NodeContainerEntity;
+import ms.imf.redpoint.compiler.plugin.NodeTreeHandlePlugin;
 import ms.imf.redpoint.entity.NodeTree;
 
 /**
@@ -62,6 +63,16 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
     private TypeElement nodeParserGlobalConfigHost;
     private NodeParserGlobalConfig nodeParserGlobalConfig;
     private AnnotationMirror nodeParserGlobalConfigMirror;
+
+    @Override
+    public synchronized void init(ProcessingEnvironment processingEnvironment) {
+        super.init(processingEnvironment);
+        try {
+            Constants.selfCheck();
+        } catch (Exception e) {
+            showErrorTip(e);
+        }
+    }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -99,7 +110,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
             try {
                 processPlugins(
                         "each apt round plugin",
-                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotationMirrorValue(nodeParserGlobalConfigMirror, "eachAptRoundNodeTreeParsedPlugins" /* todo runtime check */),
+                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotationMirrorValue(nodeParserGlobalConfigMirror, Constants.NodeParserGlobalConfig_eachAptRoundNodeTreeParsedPlugins),
                         nodeParserGlobalConfig.eachAptRoundNodeTreeParsedPlugins(),
                         nodeContainerEntities
                 );
@@ -140,7 +151,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
             try {
                 processPlugins(
                         "last apt round plugin",
-                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotationMirrorValue(nodeParserGlobalConfigMirror, "lastAptRoundNodeTreeParsedPlugins" /* todo runtime check */),
+                        NodeContainerAnnotationParser.<List<AnnotationValue>>getAnnotationMirrorValue(nodeParserGlobalConfigMirror, Constants.NodeParserGlobalConfig_lastAptRoundNodeTreeParsedPlugins),
                         nodeParserGlobalConfig.lastAptRoundNodeTreeParsedPlugins(),
                         allNodeContainerEntities
                 );
@@ -222,7 +233,7 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
             Plugin pluginAnnotation = plugins[i];
             AnnotationValue pluginAnnotationValue = pluginAnnotationValues.get(i);
 
-            final String pluginClassName = ((TypeElement) ((DeclaredType) NodeContainerAnnotationParser.getAnnotationMirrorValue((AnnotationMirror) pluginAnnotationValue.getValue(), "value" /* todo runtime check */)).asElement()).getQualifiedName().toString();
+            final String pluginClassName = ((TypeElement) ((DeclaredType) NodeContainerAnnotationParser.getAnnotationMirrorValue((AnnotationMirror) pluginAnnotationValue.getValue(), Constants.Plugin_value)).asElement()).getQualifiedName().toString();
             final String[] pluginClassArguments = pluginAnnotation.args();
 
             final NodeTreeHandlePlugin plugin;
@@ -364,13 +375,25 @@ public class NodeContainerAnnotationProcessor extends AbstractProcessor {
         nodeParserGlobalConfig = config;
     }
 
-    private void showErrorTip(AptProcessException e) {
+    private void showErrorTip(Exception exception) {
+        Element e = null;
+        AnnotationMirror a = null;
+        AnnotationValue v = null;
+
+        if (exception instanceof AptProcessException) {
+            AptProcessException aptException = (AptProcessException) exception;
+
+            e = aptException.e;
+            a = aptException.a;
+            v = aptException.v;
+        }
+
         ByteArrayOutputStream os = new ByteArrayOutputStream();
-        e.printStackTrace(new PrintStream(os));
+        exception.printStackTrace(new PrintStream(os));
         processingEnv.getMessager().printMessage(
                 Diagnostic.Kind.ERROR,
                 os.toString(),
-                e.e, e.a, e.v
+                e, a, v
         );
     }
 }

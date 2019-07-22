@@ -237,7 +237,7 @@ class NodeContainerAnnotationParser {
             final List<NodeContainerEntity.Node> results = new LinkedList<>();
 
             final Map<String, TypeElement> nodeJsonRefTypeMapper = new HashMap<>();
-            List<AnnotationMirror> nodesJsonRefClassMappers = NodeContainerAnnotationParser.<List<AnnotationMirror>>getAnnotationMirrorValue(nodeContainerMirror, "nodeJsonRefContainerMapper"/* todo runtime check */);
+            List<AnnotationMirror> nodesJsonRefClassMappers = NodeContainerAnnotationParser.getAnnotationMirrorValue(nodeContainerMirror, Constants.NodeContainer_nodeJsonRefContainerMapper);
             if (nodesJsonRefClassMappers == null) {
                 nodesJsonRefClassMappers = Collections.emptyList();
             }
@@ -247,8 +247,8 @@ class NodeContainerAnnotationParser {
                 int index = mapperIterator.nextIndex();
                 AnnotationMirror mapperMirror = mapperIterator.next();
 
-                String key = NodeContainerAnnotationParser.getAnnotationMirrorValue(mapperMirror, "key" /* todo runtime check */);
-                TypeElement value = (TypeElement) NodeContainerAnnotationParser.<DeclaredType>getAnnotationMirrorValue(mapperMirror, "value" /* todo runtime check */).asElement();
+                String key = NodeContainerAnnotationParser.getAnnotationMirrorValue(mapperMirror, Constants.Mapper_key);
+                TypeElement value = (TypeElement) NodeContainerAnnotationParser.<DeclaredType>getAnnotationMirrorValue(mapperMirror, Constants.Mapper_value).asElement();
                 if (nodeJsonRefTypeMapper.put(key, value) != null) {
                     throw new AptProcessException(
                             String.format("subNodeRef[%d]: key(%s): repeat key", index, key),
@@ -277,7 +277,7 @@ class NodeContainerAnnotationParser {
         private List<NodeContainerEntity.Node> nodeAnnotationToNodeEntity(NodeContainer nodeContainer, AnnotationMirror nodeContainerMirror) throws AptProcessException {
             final LinkedList<NodeContainerEntity.Node> results = new LinkedList<>();
 
-            final List<AnnotationMirror> nodeMirrors = NodeContainerAnnotationParser.getAnnotationMirrorValue(nodeContainerMirror, "value" /* todo runtime check */);
+            final List<AnnotationMirror> nodeMirrors = NodeContainerAnnotationParser.getAnnotationMirrorValue(nodeContainerMirror, Constants.NodeContainer_value);
 
             for (int i = 0; i < nodeContainer.value().length; i++) {
                 SubNode node = nodeContainer.value()[i];

@@ -61,12 +61,12 @@ abstract class AnnotationNodeWrapper
     /**
      * @see SubNode#subNodes()
      */
-    final List<AnnotationMirror> subNodeMirrors() { return NodeContainerAnnotationParser.getAnnotationMirrorValue(sourceMirror(), "subNodes"/* todo runtime check */); }
+    final List<AnnotationMirror> subNodeMirrors() { return NodeContainerAnnotationParser.getAnnotationMirrorValue(sourceMirror(), Constants.SubNode_subNodes); }
     /**
      * @see SubNode#subNodeContainerRef()
      */
     final TypeElement subRef() {
-        DeclaredType subRefType = NodeContainerAnnotationParser.getAnnotationMirrorValue(sourceMirror(), "subNodeContainerRef" /* todo runtime check */);
+        DeclaredType subRefType = NodeContainerAnnotationParser.getAnnotationMirrorValue(sourceMirror(), Constants.SubNode_subNodeContainerRef);
         return subRefType != null
                 ? (TypeElement) subRefType.asElement()
                 : null;
