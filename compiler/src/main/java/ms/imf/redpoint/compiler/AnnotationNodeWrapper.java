@@ -16,6 +16,7 @@ import ms.imf.redpoint.annotation.SubNode5;
 import ms.imf.redpoint.annotation.SubNode6;
 import ms.imf.redpoint.annotation.SubNode7;
 import ms.imf.redpoint.annotation.SubNode8;
+import ms.imf.redpoint.annotation.SubNode9;
 
 /**
  * 由于注解类型不支持嵌套，所以通过创建独立注解类型层层上下级引用的方式进行规避。
@@ -126,8 +127,15 @@ abstract class AnnotationNodeWrapper
         @Override protected SubNode8[] subNodes() { return source().subNodes(); }
         @Override protected AnnotationNodeWrapper<SubNode8, ?> subNodeWrapper(SubNode8 source, AnnotationMirror sourceMirror) { return new SubNode8Parser(source, sourceMirror); }
     }
-    private static class SubNode8Parser extends AnnotationNodeWrapper<SubNode8, Annotation> {
+    private static class SubNode8Parser extends AnnotationNodeWrapper<SubNode8, SubNode9> {
         private SubNode8Parser(SubNode8 source, AnnotationMirror sourceMirror) { super(source, sourceMirror); }
+        @Override protected String name() { return source().value(); }
+        @Override protected Arg[] args() { return source().args(); }
+        @Override protected SubNode9[] subNodes() { return source().subNodes(); }
+        @Override protected AnnotationNodeWrapper<SubNode9, ?> subNodeWrapper(SubNode9 source, AnnotationMirror sourceMirror) { return new SubNode9Parser(source, sourceMirror); }
+    }
+    private static class SubNode9Parser extends AnnotationNodeWrapper<SubNode9, Annotation> {
+        private SubNode9Parser(SubNode9 source, AnnotationMirror sourceMirror) { super(source, sourceMirror); }
         @Override protected String name() { return source().value(); }
         @Override protected Arg[] args() { return source().args(); }
         @Override protected Annotation[] subNodes() { return null; }

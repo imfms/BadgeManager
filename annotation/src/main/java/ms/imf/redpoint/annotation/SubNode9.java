@@ -10,7 +10,7 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.SOURCE)
 @Target(ElementType.ANNOTATION_TYPE)
-public @interface SubNode8 {
+public @interface SubNode9 {
     /**
      * @see SubNode#value()
      */
@@ -20,11 +20,6 @@ public @interface SubNode8 {
      * @see SubNode#args()
      */
     Arg[] args() default {};
-
-    /**
-     * @see SubNode#subNodes()
-     */
-    SubNode9[] subNodes() default {};
 
     /**
      * @see SubNode#subNodeContainerRef()
