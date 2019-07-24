@@ -29,7 +29,7 @@ import ms.imf.redpoint.compiler.plugin.nodetree.export.json.NodeTreeExportJsonCo
 )
 @NodeParserGlobalConfig(
         eachAptRoundNodeTreeParsedPlugins = @Plugin(NodeContainerHelperCodeGeneratorCompilePlugin.class),
-        lastAptRoundNodeTreeParsedPlugins = @Plugin(value = NodeTreeExportJsonCompilerPlugin.class, args = "a.b.c/hi.json")
+        lastAptRoundNodeTreeParsedPlugins = @Plugin(value = NodeTreeExportJsonCompilerPlugin.class, args = "javaResource://a.b.c/hi.json")
 )
 public class TestPath {
     public static void main(String[] args) {

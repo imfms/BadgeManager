@@ -7,6 +7,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
     implementation project(':compiler-plugin')
     implementation 'com.google.code.gson:gson:2.8.5'
+    api project(':util')
 }
 
 sourceCompatibility = "7"
