@@ -1,33 +1,26 @@
 package ms.imf.redpoint.compiler.plugin.filemover;
 
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.Arrays;
 
 import javax.annotation.processing.ProcessingEnvironment;
-import javax.tools.StandardLocation;
 
 import ms.imf.redpoint.compiler.plugin.AptProcessException;
 import ms.imf.redpoint.compiler.plugin.NodeTreeHandlePlugin;
+import ms.imf.redpoint.util.IOUtil;
+import ms.imf.redpoint.util.ResourceHandler;
 
 /**
  * 文件移动器，支持复制指定资源到指定位置。
  * <p>
  * 主要用于编译期将外部资源移入到java-resource，例如编译期将外部nodeConverterMappingFile复制到java-resource
  * <p>
- * <pre>
+ * <p>
  * 所需参数：
- * 参数1: 源文件位置
- * 参数2: 文件移动后目标位置
- *
- * 文件位置支持以下类型, 方括号[]包裹的内容为可选项:
- * file://filePath: 常规文件系统绝对、相对位置
- *   例如: file:///home/user/resource.txt, file://resource.txt
- * javaResource://[packageName/]resourceName: java-style资源位置
- *   例如: javaResource://com.foo/resource.txt, javaResource://resource.txt
+ * <pre>
+ * 参数1: 源资源类型及位置，支持类型参见 {@link ResourceHandler}
+ * 参数2: 文件移动后目标位置，支持类型参见 {@link ResourceHandler}
  * </pre>
  *
  * @author f_ms
@@ -37,32 +30,19 @@ public class FileMoverCompilerPlugin implements NodeTreeHandlePlugin {
 
     public static final int ARG_INDEX_SOURCE_LOCATION = 0;
     public static final int ARG_INDEX_TARGET_LOCATION = 1;
-    public static final String RESOURCE_TYPE_SCHEMA_SYMBOL = "://";
-
-    private static final int COPY_BUFFER_SIZE = 4096;
-
-    private static final String RESOURCE_TYPE_NAME_FILE = "file";
-    private static final String RESOURCE_TYPE_NAME_JAVA_RESOURCE = "javaResource";
-
-    public static final String RESOURCE_TYPE_FILE = RESOURCE_TYPE_NAME_FILE + RESOURCE_TYPE_SCHEMA_SYMBOL;
-    public static final String RESOURCE_TYPE_JAVA_RESOURCE = RESOURCE_TYPE_NAME_JAVA_RESOURCE + RESOURCE_TYPE_SCHEMA_SYMBOL;
 
     @Override
     public void onNodeTreeParsed(NodeTreeHandlePlugin.PluginContext context) throws AptProcessException {
 
-        InputStream sourceLocation = getInputStreamArg(
+        InputStream sourceInputStream = getInputStreamArg(
                 context.processingEnvironment(), context.args(), ARG_INDEX_SOURCE_LOCATION, "source resource location"
         );
-        OutputStream targetLocation = getOutputStreamArg(
+        OutputStream targetOutputStream = getOutputStreamArg(
                 context.processingEnvironment(), context.args(), ARG_INDEX_TARGET_LOCATION, "target resource location"
         );
 
         try {
-            byte[] buffer = new byte[COPY_BUFFER_SIZE];
-            int readSize;
-            while ((readSize = sourceLocation.read(buffer)) != -1) {
-                targetLocation.write(buffer, 0, readSize);
-            }
+            IOUtil.copy(sourceInputStream, targetOutputStream);
         } catch (IOException e) {
             throw new AptProcessException(
                     String.format(
@@ -73,111 +53,6 @@ public class FileMoverCompilerPlugin implements NodeTreeHandlePlugin {
                     ),
                     e
             );
-        }
-    }
-
-    private enum ResourceTypeHandler {
-        /**
-         * file
-         */
-        FILE(RESOURCE_TYPE_NAME_FILE) {
-            @Override
-            InputStream read(ProcessingEnvironment processingEnvironment, String type, String location) throws Exception {
-                return new FileInputStream(location);
-            }
-
-            @Override
-            OutputStream write(ProcessingEnvironment processingEnvironment, String type, String location) throws Exception {
-                return new FileOutputStream(location);
-            }
-        },
-        /**
-         * java-style-resource
-         */
-        JAVA_RESOURCE(RESOURCE_TYPE_NAME_JAVA_RESOURCE) {
-            @Override
-            InputStream read(ProcessingEnvironment processingEnvironment, String type, String location) throws Exception {
-
-                /*
-                javaStylePath    package  resourceName
-                -------------    -------  ------------
-                'a.b.c/d.txt' -> 'a.b.c', 'd.txt'
-                'd.txt'       -> ''     , 'd.txt'
-                 */
-
-                final String packageName;
-                final String resourceName;
-
-                int pathSymbolIndex = location.indexOf('/');
-                if (pathSymbolIndex < 0) {
-                    packageName = "";
-                    resourceName = location;
-                } else {
-                    packageName = location.substring(0, pathSymbolIndex);
-                    resourceName = location.substring(pathSymbolIndex + 1, location.length());
-                }
-
-                /*
-                 'd.txt' -> '/d.txt'
-                 'a.b.c/d.txt' -> '/a/b/c/d.txt'
-                  */
-                final String rawLocation;
-                if (packageName.isEmpty()) {
-                    rawLocation = "/" + resourceName;
-                } else {
-                    rawLocation = String.format(
-                            "/%s/%s",
-                            packageName.replace('.', '/'),
-                            resourceName
-                    );
-                }
-
-                return FileMoverCompilerPlugin.class.getClassLoader().getResourceAsStream(rawLocation);
-            }
-
-            @Override
-            OutputStream write(ProcessingEnvironment processingEnvironment, String type, String location) throws Exception {
-
-                final String resourcePackage;
-                final String resourceName;
-
-                int splitIndex = location.indexOf('/');
-                if (splitIndex < 0) {
-                    resourcePackage = "";
-                    resourceName = location;
-                } else {
-                    resourcePackage = location.substring(0, splitIndex);
-                    resourceName = location.substring(splitIndex + 1);
-                }
-
-                return processingEnvironment.getFiler()
-                        .createResource(StandardLocation.CLASS_OUTPUT, resourcePackage, resourceName)
-                        .openOutputStream();
-            }
-        };
-
-        private final String type;
-
-        ResourceTypeHandler(String type) {
-            this.type = type;
-        }
-
-        boolean accept(String type, String location) {
-            return this.type.equals(type);
-        }
-
-        abstract InputStream read(ProcessingEnvironment processingEnvironment, String type, String location) throws Exception;
-
-        abstract OutputStream write(ProcessingEnvironment processingEnvironment, String type, String location) throws Exception;
-
-        public static String[] acceptTypes() {
-            String[] types = new String[values().length];
-
-            for (int i = 0; i < types.length; i++) {
-                types[i] = values()[i].type;
-            }
-
-            return types;
         }
     }
 
@@ -195,23 +70,16 @@ public class FileMoverCompilerPlugin implements NodeTreeHandlePlugin {
     }
 
     private static InputStream getInputStreamArg(ProcessingEnvironment processingEnvironment, String[] args, int index, String argDesc) throws AptProcessException {
-        String[] locationArg = getLocationArg(args, index, argDesc);
 
-        String type = locationArg[0];
-        String location = locationArg[1];
+        String resourceStr = getArg(args, index, argDesc);
 
-        ResourceTypeHandler resourceTypeHandler = getResourceTypeHandler(type, location);
         try {
-            InputStream read = resourceTypeHandler.read(processingEnvironment, type, location);
-            if (read == null) {
-                throw new RuntimeException(String.format("can't find resource: %s://%s", type, location));
-            }
-            return read;
+            return ResourceHandler.read(processingEnvironment, resourceStr);
         } catch (Exception e) {
             throw new AptProcessException(
                     String.format(
-                            "found error on read resource %s://%s: %s",
-                            type, location, e.getMessage()
+                            "found error on read resource %s: %s",
+                            resourceStr, e.getMessage()
                     ),
                     e
             );
@@ -219,55 +87,19 @@ public class FileMoverCompilerPlugin implements NodeTreeHandlePlugin {
     }
 
     private static OutputStream getOutputStreamArg(ProcessingEnvironment processingEnvironment, String[] args, int index, String argDesc) throws AptProcessException {
-        String[] locationArg = getLocationArg(args, index, argDesc);
+        String resourceStr = getArg(args, index, argDesc);
 
-        String type = locationArg[0];
-        String location = locationArg[1];
-
-        ResourceTypeHandler resourceTypeHandler = getResourceTypeHandler(type, location);
         try {
-            return resourceTypeHandler.write(processingEnvironment, type, location);
+            return ResourceHandler.write(processingEnvironment, resourceStr);
         } catch (Exception e) {
             throw new AptProcessException(
                     String.format(
-                            "found error on write resource %s://%s: %s",
-                            type, location, e.getMessage()
+                            "found error on read resource %s: %s",
+                            resourceStr, e.getMessage()
                     ),
                     e
             );
         }
     }
 
-    private static String[] getLocationArg(String[] args, int index, String argDesc) throws AptProcessException {
-        String arg = getArg(args, index, argDesc);
-
-        int schemaSymbolIndex = arg.indexOf(RESOURCE_TYPE_SCHEMA_SYMBOL);
-        if (schemaSymbolIndex < 0) {
-            throw new AptProcessException(String.format(
-                    "can't find resource type schema symbol '%s' in arg[%d](%s)",
-                    RESOURCE_TYPE_SCHEMA_SYMBOL, index, argDesc
-            ));
-        }
-
-        String type = arg.substring(0, schemaSymbolIndex);
-        String location = arg.substring(schemaSymbolIndex + RESOURCE_TYPE_SCHEMA_SYMBOL.length(), arg.length());
-
-        return new String[]{
-                type, location
-        };
-    }
-
-    private static ResourceTypeHandler getResourceTypeHandler(String type, String location) throws AptProcessException {
-        for (ResourceTypeHandler resourceTypeHandler : ResourceTypeHandler.values()) {
-            if (resourceTypeHandler.accept(type, location)) {
-                return resourceTypeHandler;
-            }
-        }
-
-        throw new AptProcessException(String.format(
-                "unaccept resource type '%s', I only accept resourceType: %s",
-                type,
-                Arrays.toString(ResourceTypeHandler.acceptTypes())
-        ));
-    }
 }

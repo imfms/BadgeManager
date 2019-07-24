@@ -1,12 +1,7 @@
 apply plugin: 'java-library'
 
-apply plugin: 'maven'
-group='com.github.imfms'
-
 dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
-    implementation project(':compiler-plugin')
-    implementation project(':util')
 }
 
 sourceCompatibility = "7"
