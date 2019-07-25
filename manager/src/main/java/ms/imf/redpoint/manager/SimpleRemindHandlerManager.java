@@ -1,5 +1,7 @@
 package ms.imf.redpoint.manager;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -49,7 +51,7 @@ public class SimpleRemindHandlerManager<RemindType extends Remind> extends Remin
 
         List<NodePath> remindChangedPaths = new LinkedList<>();
         for (NodePath path : remindHandler.getPaths()) {
-            if (remindRepo().removeMatchReminds(NodePath.instance(path.nodes())) > 0) {
+            if (remindRepo().removeMatchReminds(Collections.singleton(NodePath.instance(path.nodes()))) > 0) {
                 remindChangedPaths.add(path);
             }
         }
@@ -63,7 +65,7 @@ public class SimpleRemindHandlerManager<RemindType extends Remind> extends Remin
             return;
         }
         for (NodePath path : remindHandler.getPaths()) {
-            remindRepo().removeMatchSubReminds(NodePath.instance(path.nodes()));
+            remindRepo().removeMatchSubReminds(Collections.singletonList(NodePath.instance(path.nodes())));
         }
         notifyRemindDataChanged();
     }
@@ -85,7 +87,10 @@ public class SimpleRemindHandlerManager<RemindType extends Remind> extends Remin
 
         List<RemindType> reminds = new LinkedList<>();
         for (NodePath path : remindHandler.getPaths()) {
-            reminds.addAll(remindRepo().getMatchSubReminds(NodePath.instance(path.nodes())));
+            for (Collection<? extends RemindType> matchReminds : remindRepo().getMatchSubReminds(
+                    Collections.singletonList(NodePath.instance(path.nodes()))).values()) {
+                reminds.addAll(matchReminds);
+            }
         }
 
         remindHandler.showReminds(reminds);

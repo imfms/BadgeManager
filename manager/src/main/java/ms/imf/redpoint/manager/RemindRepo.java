@@ -1,6 +1,7 @@
 package ms.imf.redpoint.manager;
 
 import java.util.Collection;
+import java.util.Map;
 
 import ms.imf.redpoint.entity.NodePath;
 
@@ -24,48 +25,41 @@ public interface RemindRepo<RemindType extends Remind> {
     /**
      * 获取完全匹配指定节点路径的提醒数据
      *
-     * @param nodePath 匹配的节点路径
-     * @return 匹配的提醒数据
+     * @param nodePaths 用于匹配的节点路径集
+     * @return 指定节点路径集合匹配到的提醒数据
      */
-    Collection<? extends RemindType> getMatchReminds(NodePath nodePath);
+    Map<NodePath, Collection<? extends RemindType>> getMatchReminds(Collection<NodePath> nodePaths);
 
     /**
      * 获取匹配指定节点路径及其子路径的提醒数据
      *
-     * @param nodePath 节点路径
-     * @return 匹配的提醒数据
+     * @param nodePaths 用于匹配的节点路径集
+     * @return 指定路径集合匹配到的提醒数据
      */
-    Collection<? extends RemindType> getMatchSubReminds(NodePath nodePath);
+    Map<NodePath, Collection<? extends RemindType>> getMatchSubReminds(Collection<NodePath> nodePaths);
 
     /**
-     * 移除指定提醒
+     * 移除指定提醒数据集
      *
-     * @param remind 要移除的提醒
-     */
-    void removeRemind(RemindType remind);
-
-    /**
-     * 移除指定提醒列表
-     *
-     * @param reminds 要移除的提醒列表
+     * @param reminds 要移除的提醒数据集
      */
     void removeReminds(Iterable<? extends RemindType> reminds);
 
     /**
-     * 移除完全匹配指定节点路径的提醒
+     * 移除完全匹配指定节点路径的提醒数据集
      *
-     * @param nodePath 节点路径
-     * @return 移除提醒的数量
+     * @param nodePaths 用于匹配节点路径集
+     * @return 被移除提醒的数量
      */
-    long removeMatchReminds(NodePath nodePath);
+    long removeMatchReminds(Collection<NodePath> nodePaths);
 
     /**
-     * 移除匹配指定节点路径及子路径的提醒
+     * 移除匹配指定节点路径及子路径的提醒数据集
      *
-     * @param nodePath 节点路径
-     * @return 移除提醒的数量
+     * @param nodePaths 用于匹配的节点路径集
+     * @return 被移除提醒的数量
      */
-    long removeMatchSubReminds(NodePath nodePath);
+    long removeMatchSubReminds(Collection<NodePath> nodePaths);
 
     /**
      * 移除所有提醒
@@ -75,7 +69,7 @@ public interface RemindRepo<RemindType extends Remind> {
     long removeAllReminds();
 
     /**
-     * 设置提醒数据改变改变监听器
+     * 设置提醒数据改变监听器
      *
      * @param listener 要设置的提醒数据改变监听器
      */

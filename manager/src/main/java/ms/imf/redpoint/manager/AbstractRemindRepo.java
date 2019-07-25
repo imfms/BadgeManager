@@ -1,8 +1,10 @@
 package ms.imf.redpoint.manager;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 
 import ms.imf.redpoint.entity.Node;
 import ms.imf.redpoint.entity.NodePath;
@@ -17,7 +19,17 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
     private RemindDataChangedListener mRemindDataChangedListener;
 
     @Override
-    public Collection<RemindType> getMatchReminds(NodePath nodePath) {
+    public Map<NodePath, Collection<? extends RemindType>> getMatchReminds(Collection<NodePath> nodePaths) {
+        HashMap<NodePath, Collection<? extends RemindType>> result = new HashMap<>(nodePaths.size());
+
+        for (NodePath nodePath : nodePaths) {
+            result.put(nodePath, getMatchRemind(nodePath));
+        }
+
+        return result;
+    }
+
+    private Collection<RemindType> getMatchRemind(NodePath nodePath) {
         List<RemindType> results = new LinkedList<>();
 
         for (RemindType remind : getAllReminds()) {
@@ -30,7 +42,17 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
     }
 
     @Override
-    public Collection<RemindType> getMatchSubReminds(NodePath nodePath) {
+    public Map<NodePath, Collection<? extends RemindType>> getMatchSubReminds(Collection<NodePath> nodePaths) {
+        HashMap<NodePath, Collection<? extends RemindType>> result = new HashMap<>(nodePaths.size());
+
+        for (NodePath nodePath : nodePaths) {
+            result.put(nodePath, getMatchSubReminds(nodePath));
+        }
+
+        return result;
+    }
+
+    private Collection<RemindType> getMatchSubReminds(NodePath nodePath) {
         List<RemindType> results = new LinkedList<>();
 
         for (RemindType remind : getAllReminds()) {
@@ -43,15 +65,15 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
     }
 
     @Override
-    public void removeReminds(Iterable<? extends RemindType> reminds) {
-        for (RemindType remind : reminds) {
-            removeRemind(remind);
+    public long removeMatchReminds(Collection<NodePath> nodePaths) {
+        long result = 0;
+        for (NodePath nodePath : nodePaths) {
+            result += removeMatchReminds(nodePath);
         }
+        return result;
     }
 
-    @Override
-    public long removeMatchReminds(NodePath nodePath) {
-
+    private long removeMatchReminds(NodePath nodePath) {
         List<RemindType> handledReminds = new LinkedList<>();
 
         for (RemindType remind : getAllReminds()) {
@@ -64,7 +86,15 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
     }
 
     @Override
-    public long removeMatchSubReminds(NodePath nodePath) {
+    public long removeMatchSubReminds(Collection<NodePath> nodePaths) {
+        long result = 0;
+        for (NodePath nodePath : nodePaths) {
+            result += removeMatchSubReminds(nodePath);
+        }
+        return result;
+    }
+
+    private long removeMatchSubReminds(NodePath nodePath) {
         return removeReminds(getMatchSubReminds(nodePath));
     }
 
