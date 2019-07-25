@@ -80,9 +80,4 @@ public interface RemindRepo<RemindType extends Remind> {
      * @param listener 要设置的提醒数据改变监听器
      */
     void setRemindDataChangedListener(RemindDataChangedListener<? super RemindType> listener);
-
-    /**
-     * 通知仓库提醒数据已改变
-     */
-    void notifyRepoRemindDataChanged();
 }

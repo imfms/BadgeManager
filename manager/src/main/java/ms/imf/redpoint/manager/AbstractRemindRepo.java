@@ -78,13 +78,6 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
         mRemindDataChangedListener = listener;
     }
 
-    @Override
-    public void notifyRepoRemindDataChanged() {
-        if (mRemindDataChangedListener != null) {
-            mRemindDataChangedListener.onRemindDataChanged();
-        }
-    }
-
     protected RemindDataChangedListener remindChangedListener() {
         return mRemindDataChangedListener;
     }
