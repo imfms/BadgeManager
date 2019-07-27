@@ -19,7 +19,7 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
     private RemindDataChangedListener mRemindDataChangedListener;
 
     @Override
-    public Map<NodePath, Collection<? extends RemindType>> getMatchReminds(Collection<NodePath> nodePaths) {
+    public Map<NodePath, ? extends Collection<? extends RemindType>> getMatchReminds(Collection<NodePath> nodePaths) {
         HashMap<NodePath, Collection<? extends RemindType>> result = new HashMap<>(nodePaths.size());
 
         for (NodePath nodePath : nodePaths) {
@@ -42,7 +42,7 @@ public abstract class AbstractRemindRepo<RemindType extends Remind> implements R
     }
 
     @Override
-    public Map<NodePath, Collection<? extends RemindType>> getMatchSubReminds(Collection<NodePath> nodePaths) {
+    public Map<NodePath, ? extends Collection<? extends RemindType>> getMatchSubReminds(Collection<NodePath> nodePaths) {
         HashMap<NodePath, Collection<? extends RemindType>> result = new HashMap<>(nodePaths.size());
 
         for (NodePath nodePath : nodePaths) {

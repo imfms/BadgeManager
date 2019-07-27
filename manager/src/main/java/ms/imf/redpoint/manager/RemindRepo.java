@@ -28,7 +28,7 @@ public interface RemindRepo<RemindType extends Remind> {
      * @param nodePaths 用于匹配的节点路径集
      * @return 指定节点路径集合匹配到的提醒数据
      */
-    Map<NodePath, Collection<? extends RemindType>> getMatchReminds(Collection<NodePath> nodePaths);
+    Map<NodePath, ? extends Collection<? extends RemindType>> getMatchReminds(Collection<NodePath> nodePaths);
 
     /**
      * 获取匹配指定节点路径及其子路径的提醒数据
@@ -36,7 +36,7 @@ public interface RemindRepo<RemindType extends Remind> {
      * @param nodePaths 用于匹配的节点路径集
      * @return 指定路径集合匹配到的提醒数据
      */
-    Map<NodePath, Collection<? extends RemindType>> getMatchSubReminds(Collection<NodePath> nodePaths);
+    Map<NodePath, ? extends Collection<? extends RemindType>> getMatchSubReminds(Collection<NodePath> nodePaths);
 
     /**
      * 移除指定提醒数据集
