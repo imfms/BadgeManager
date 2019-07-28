@@ -24,17 +24,23 @@ public interface RemindRepo<RemindType extends Remind> {
 
     /**
      * 获取完全匹配指定节点路径的提醒数据
+     * <p>
+     * 例如有消息 'a', 'a>b' 和 'a>b>c', 查询路径为 'a>b', 则只有消息 'a>b' 能够被匹配
      *
      * @param nodePaths 用于匹配的节点路径集
      * @return 指定节点路径集合匹配到的提醒数据
+     * @see #removeMatchReminds(Collection)
      */
     Map<NodePath, ? extends Collection<? extends RemindType>> getMatchReminds(Collection<NodePath> nodePaths);
 
     /**
      * 获取匹配指定节点路径及其子路径的提醒数据
+     * <p>
+     * 例如有消息 'a', 'a>b' 和 'a>b>c', 查询路径为 'a>b', 则消息 'a>b' 和 'a>b>c' 能够被匹配
      *
      * @param nodePaths 用于匹配的节点路径集
      * @return 指定路径集合匹配到的提醒数据
+     * @see #removeMatchSubReminds(Collection)
      */
     Map<NodePath, ? extends Collection<? extends RemindType>> getMatchSubReminds(Collection<NodePath> nodePaths);
 
@@ -50,6 +56,7 @@ public interface RemindRepo<RemindType extends Remind> {
      *
      * @param nodePaths 用于匹配节点路径集
      * @return 被移除提醒的数量
+     * @see #getMatchReminds(Collection)
      */
     long removeMatchReminds(Collection<NodePath> nodePaths);
 
@@ -58,6 +65,7 @@ public interface RemindRepo<RemindType extends Remind> {
      *
      * @param nodePaths 用于匹配的节点路径集
      * @return 被移除提醒的数量
+     * @see #getMatchSubReminds(Collection)
      */
     long removeMatchSubReminds(Collection<NodePath> nodePaths);
 
