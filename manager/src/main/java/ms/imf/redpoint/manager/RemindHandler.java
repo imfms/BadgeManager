@@ -1,6 +1,7 @@
 package ms.imf.redpoint.manager;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -161,7 +162,7 @@ public abstract class RemindHandler<RemindType extends Remind> {
      *
      * @param reminds 要展示的消息
      */
-    protected abstract void showReminds(List<? extends RemindType> reminds);
+    public abstract void showReminds(Collection<? extends RemindType> reminds);
 
     /**
      * 当消息处理器被触发，触发范围为支持的节点路径
