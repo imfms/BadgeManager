@@ -7,6 +7,7 @@ dependencies {
     implementation fileTree(dir: 'libs', include: ['*.jar'])
 
     api project(':entity')
+    testImplementation 'junit:junit:4.12'
 }
 
 sourceCompatibility = "7"
