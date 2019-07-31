@@ -4,6 +4,8 @@ package ms.imf.redpoint.manager;
  * RemindHandler管理器
  * <p>
  * 用于管理RemindHandler支持节点路径对应消息数据的获取/更新/触发
+ * <p>
+ * 推荐使用使用树型结构remindHandler管理器： {@link TreeModeRemindHandlerManager}
  *
  * @param <RemindType> 支持的消息类型
  * @author f_ms
