@@ -19,15 +19,13 @@ import ms.imf.redpoint.entity.NodePath;
  * 从而达到通过节点快速匹配到对应的RemindHandler的目的，并通过此思想的优势来提升RemindHandlerManager内各项匹配任务的效率
  * <p>
  *
- * TODO concurrent safe
- *
  * @author f_ms
  * @date 19-07-26
  */
 public class TreeModeRemindHandlerManager<RemindType extends Remind> extends RemindHandlerManager<RemindType> {
 
     private final Map<RemindHandler<RemindType>, Set<NodePath>> attachedRemindHandlers = new HashMap<>();
-    private final TreeStructure<Node, RemindHandler<RemindType>> remindHandlerTree = new TreeStructure<>();
+    private final TreeStructure<Node, RemindHandler<RemindType>> remindHandlerTree = new ConcurrentSafeTreeStructure<>();
 
     public TreeModeRemindHandlerManager(RemindRepo<RemindType> repo) {
         super(repo);

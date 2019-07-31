@@ -96,6 +96,13 @@ class TreeStructure<Node, Data> {
     }
 
     /**
+     * 清空所有数据
+     */
+    void clear() {
+        tree.clear();
+    }
+
+    /**
      * 获取完全匹配指定路径节点下的数据
      *
      * 例如有节点: 'a', 'a>b', 'a>b>c'

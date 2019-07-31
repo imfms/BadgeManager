@@ -3,6 +3,8 @@ package ms.imf.redpoint.manager;
 import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.junit.runners.Parameterized;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -17,13 +19,26 @@ import ms.imf.redpoint.entity.NodePath;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 
+@RunWith(Parameterized.class)
 public class TreeStructureTest {
+
+    @Parameterized.Parameters
+    public static TreeStructure[] data() {
+        return new TreeStructure[]{
+                new TreeStructure<Node, String>(),
+                new ConcurrentSafeTreeStructure<Node, String>()
+        };
+    }
 
     private TreeStructure<Node, String> tree;
 
+    public TreeStructureTest(TreeStructure<Node, String> tree) {
+        this.tree = tree;
+    }
+
     @Before
     public void setUp() throws Exception {
-        tree = new TreeStructure<>();
+        tree.clear();
     }
 
     @Test
@@ -92,6 +107,36 @@ public class TreeStructureTest {
             assertThat(
                     tree.getMatchPathData(path.nodes()),
                     CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(data3)))
+            );
+        }
+    }
+
+    @Test
+    public void clear() {
+        NodePath[] paths = {
+                NodePath.instance("a"),
+                NodePath.instance("a", "b"),
+                NodePath.instance("a", "b", "c"),
+                NodePath.instance("a", "b", "c", "d"),
+                NodePath.instance("a", "b", "e"),
+        };
+        for (NodePath path : paths) {
+            StringBuilder names = new StringBuilder();
+            for (Node node : path.nodes()) {
+                names.append(node.name);
+            }
+            tree.put(names.toString(), path.nodes());
+            assertThat(
+                    tree.getMatchPathData(path.nodes()),
+                    is(Collections.singleton(names.toString()))
+            );
+        }
+
+        tree.clear();
+        for (NodePath path : paths) {
+            assertThat(
+                    tree.getMatchPathData(path.nodes()),
+                    is(Collections.<String>emptySet())
             );
         }
     }
