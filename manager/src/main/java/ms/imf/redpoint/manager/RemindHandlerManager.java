@@ -54,6 +54,14 @@ public abstract class RemindHandlerManager<RemindType extends Remind> {
      */
     public abstract boolean remindHandlerAttached(RemindHandler<RemindType> remindHandler);
 
+
+    /**
+     * 当{@link RemindHandler}支持的nodePath发生变更
+     *
+     * @param remindHandler 发生变更的{@link RemindHandler}
+     */
+    public abstract void notifyRemindHandlerChanged(RemindHandler<RemindType> remindHandler);
+
     /**
      * {@link RemindHandler}被触发，触发范围为支持的节点路径
      * @param remindHandler 被触发的{@link RemindHandler}
@@ -66,13 +74,6 @@ public abstract class RemindHandlerManager<RemindType extends Remind> {
      * @param remindHandler 被触发的{@link RemindHandler}
      */
     public abstract void happenedRemindHandlerWithSubPathAll(RemindHandler<RemindType> remindHandler);
-
-    /**
-     * 当{@link RemindHandler}支持nodePath发成变更
-     *
-     * @param remindHandler 发生变更的{@link RemindHandler}
-     */
-    public abstract void notifyRemindHandlerChanged(RemindHandler<RemindType> remindHandler);
 
     /**
      * 当提醒数据发生变更

@@ -1,9 +1,11 @@
 package ms.imf.redpoint.manager;
 
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import ms.imf.redpoint.entity.NodePath;
 
@@ -16,14 +18,14 @@ import ms.imf.redpoint.entity.NodePath;
 public abstract class RemindHandler<RemindType extends Remind> {
 
     private final RemindHandlerManager<RemindType> remindHandleManager;
-    private final List<NodePath> paths = new LinkedList<>();
+    private final Set<NodePath> paths = new HashSet<>();
 
     /**
      * 由于RemindHandler在程序中为高频使用的类，所以本构造的{@link RemindHandlerManager}参数的指定会挺麻烦
      * <p>
      * 所以推荐开发者继承此类时重写构造方法并对该参数进行封装，直接指向一个可以获取到{@link RemindHandlerManager}的固定方式
      * <p>
-     * 本库之所以没有封装是为了不限制开发者的使用场景，有可能开发者的需求会需要两套不同消息机制同时存在
+     * 之所以没有对推荐进行封装是为了不限制开发者的使用场景，可能开发者会有两套不同消息机制同时存在的情况
      *
      * @param remindHandleManager 要依附的{@link RemindHandlerManager}
      */
@@ -151,7 +153,7 @@ public abstract class RemindHandler<RemindType extends Remind> {
      * 获取支持的节点路径
      * @return 支持的节点路径
      */
-    public List<NodePath> getPaths() {
+    public Set<NodePath> getPaths() {
         return paths;
     }
 
@@ -160,7 +162,7 @@ public abstract class RemindHandler<RemindType extends Remind> {
      *
      * @param reminds 要展示的消息
      */
-    protected abstract void showReminds(List<? extends RemindType> reminds);
+    public abstract void showReminds(Collection<? extends RemindType> reminds);
 
     /**
      * 当消息处理器被触发，触发范围为支持的节点路径
