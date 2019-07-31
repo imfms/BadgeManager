@@ -4,9 +4,11 @@ import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import ms.imf.redpoint.entity.Node;
@@ -17,7 +19,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 
 public class TreeStructureTest {
 
-    private TreeStructure<String> tree;
+    private TreeStructure<Node, String> tree;
 
     @Before
     public void setUp() throws Exception {
@@ -33,29 +35,29 @@ public class TreeStructureTest {
         NodePath path2 = NodePath.instance("a", "b", "d");
 
         assertThat(
-                tree.getMatchPathData(path1),
+                tree.getMatchPathData(path1.nodes()),
                 is(Collections.<String>emptySet())
         );
 
-        tree.put(data1, path1);
+        tree.put(data1, path1.nodes());
         assertThat(
-                tree.getMatchPathData(path1),
+                tree.getMatchPathData(path1.nodes()),
                 is(Collections.singleton(data1))
         );
 
-        tree.put(data2, path1);
+        tree.put(data2, path1.nodes());
         assertThat(
-                tree.getMatchPathData(path1),
+                tree.getMatchPathData(path1.nodes()),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(data1, data2)))
         );
 
-        tree.put(data3, new HashSet<>(Arrays.asList(path1, path2)));
+        tree.putMore(data3, Arrays.asList(path1.nodes(), path2.nodes()));
         assertThat(
-                tree.getMatchPathData(path1),
+                tree.getMatchPathData(path1.nodes()),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(data1, data2, data3)))
         );
         assertThat(
-                tree.getMatchPathData(path2),
+                tree.getMatchPathData(path2.nodes()),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Collections.singletonList(data3)))
         );
     }
@@ -72,22 +74,23 @@ public class TreeStructureTest {
 
         for (NodePath nodePath : paths) {
             for (String data : new String[]{data1, data2, data3}) {
-                tree.put(data, nodePath);
+                tree.put(data, nodePath.nodes());
             }
         }
 
         for (NodePath path : paths) {
-            tree.remove(data1, path);
+            tree.remove(data1, path.nodes());
             assertThat(
-                    tree.getMatchPathData(path),
+                    tree.getMatchPathData(path.nodes()),
                     CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(data2, data3)))
             );
         }
 
-        tree.remove(data2, new HashSet<>(Arrays.asList(paths)));
+
+        tree.removeMore(data2, pathsToNodes(Arrays.asList(paths)));
         for (NodePath path : paths) {
             assertThat(
-                    tree.getMatchPathData(path),
+                    tree.getMatchPathData(path.nodes()),
                     CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(data3)))
             );
         }
@@ -104,28 +107,28 @@ public class TreeStructureTest {
 
         for (NodePath path : paths) {
             assertThat(
-                    tree.getMatchPathData(path),
+                    tree.getMatchPathData(path.nodes()),
                     is(Collections.<String>emptySet())
             );
 
-            tree.put(data1, path);
+            tree.put(data1, path.nodes());
             assertThat(
-                    tree.getMatchPathData(path),
+                    tree.getMatchPathData(path.nodes()),
                     is(Collections.singleton(data1))
             );
 
-            tree.put(data2, path);
+            tree.put(data2, path.nodes());
             assertThat(
-                    tree.getMatchPathData(path),
+                    tree.getMatchPathData(path.nodes()),
                     CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(data1, data2)))
             );
         }
 
-        tree.put(data3, new HashSet<>(Arrays.asList(paths)));
+        tree.putMore(data3, pathsToNodes(Arrays.asList(paths)));
 
         for (NodePath path : paths) {
             assertThat(
-                    tree.getMatchPathData(path),
+                    tree.getMatchPathData(path.nodes()),
                     CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(data1, data2, data3)))
             );
         }
@@ -135,7 +138,7 @@ public class TreeStructureTest {
                 NodePath.instance("a", "b")
         }) {
             assertThat(
-                    tree.getMatchPathData(path),
+                    tree.getMatchPathData(path.nodes()),
                     is(Collections.<String>emptySet())
             );
         }
@@ -155,31 +158,31 @@ public class TreeStructureTest {
             for (Node node : path.nodes()) {
                 names.append(node.name);
             }
-            tree.put(names.toString(), path);
+            tree.put(names.toString(), path.nodes());
         }
 
         // 应查询无果
         assertThat(
-                tree.getPathRangeAllData(NodePath.instance(Collections.<Node>emptyList())),
+                tree.getPathRangeAllData(Collections.<Node>emptyList()),
                 is(Collections.<String>emptySet())
         );
 
         // 非边界
         assertThat(
-                tree.getPathRangeAllData(NodePath.instance("a", "b", "c")),
+                tree.getPathRangeAllData(NodePath.instance("a", "b", "c").nodes()),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList("a", "ab", "abc")))
         );
         assertThat(
-                tree.getPathRangeAllData(new HashSet<>(Arrays.asList(
-                        NodePath.instance("a", "b", "c"),
-                        NodePath.instance("a", "b", "e")
-                ))),
+                tree.getPathsRangeAllData(Arrays.asList(
+                        NodePath.instance("a", "b", "c").nodes(),
+                        NodePath.instance("a", "b", "e").nodes()
+                )),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList("a", "ab", "abc", "abe")))
         );
 
         // 边界
         assertThat(
-                tree.getPathRangeAllData(NodePath.instance("a", "b", "e")),
+                tree.getPathRangeAllData(NodePath.instance("a", "b", "e").nodes()),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList("a", "ab", "abe")))
         );
     }
@@ -199,27 +202,27 @@ public class TreeStructureTest {
             for (Node node : path.nodes()) {
                 names.append(node.name);
             }
-            tree.put(names.toString(), path);
+            tree.put(names.toString(), path.nodes());
         }
 
         // 应查询无果
         assertThat(
-                tree.getMatchPathSubData(NodePath.instance(Collections.<Node>emptyList())),
+                tree.getMatchPathSubData(Collections.<Node>emptyList()),
                 is(Collections.<String>emptySet())
         );
 
         // 非边界
         assertThat(
-                tree.getMatchPathSubData(NodePath.instance("a", "b")),
+                tree.getMatchPathSubData(NodePath.instance("a", "b").nodes()),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(
                         "ab", "abc", "abd", "abde"
                 )))
         );
         assertThat(
-                tree.getMatchPathSubData(new HashSet<>(Arrays.asList(
-                        NodePath.instance("a", "b", "c"),
-                        NodePath.instance("a", "b", "d")
-                ))),
+                tree.getMatchPathsSubData(Arrays.asList(
+                        NodePath.instance("a", "b", "c").nodes(),
+                        NodePath.instance("a", "b", "d").nodes()
+                )),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(
                         "abc", "abd", "abde"
                 )))
@@ -227,7 +230,7 @@ public class TreeStructureTest {
 
         // 边界
         assertThat(
-                tree.getMatchPathSubData(NodePath.instance("a", "b", "c")),
+                tree.getMatchPathSubData(NodePath.instance("a", "b", "c").nodes()),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(
                         "abc"
                 )))
@@ -256,7 +259,7 @@ public class TreeStructureTest {
             for (Node node : path.nodes()) {
                 names.append(node.name);
             }
-            tree.put(names.toString(), path);
+            tree.put(names.toString(), path.nodes());
         }
         assertThat(
                 tree.getLongestPathData(),
@@ -266,7 +269,7 @@ public class TreeStructureTest {
                 )))
         );
 
-        tree.remove("abcdef", NodePath.instance("a", "b", "c", "d", "e", "f"));
+        tree.remove("abcdef", NodePath.instance("a", "b", "c", "d", "e", "f").nodes());
         assertThat(
                 tree.getLongestPathData(),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(
@@ -275,8 +278,8 @@ public class TreeStructureTest {
                 )))
         );
 
-        tree.remove("abcd", NodePath.instance("a", "b", "c", "d"));
-        tree.remove("abcde", NodePath.instance("a", "b", "c", "d", "e"));
+        tree.remove("abcd", NodePath.instance("a", "b", "c", "d").nodes());
+        tree.remove("abcde", NodePath.instance("a", "b", "c", "d", "e").nodes());
         assertThat(
                 tree.getLongestPathData(),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(
@@ -305,7 +308,7 @@ public class TreeStructureTest {
             for (Node node : path.nodes()) {
                 names.append(node.name);
             }
-            tree.put(names.toString(), path);
+            tree.put(names.toString(), path.nodes());
         }
         assertThat(
                 tree.getShortestPathData(),
@@ -314,12 +317,22 @@ public class TreeStructureTest {
                 )))
         );
         
-        tree.remove("ad", NodePath.instance("a", "d"));
+        tree.remove("ad", NodePath.instance("a", "d").nodes());
         assertThat(
                 tree.getShortestPathData(),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(
                         "ab", "ade"
                 )))
         );
+    }
+
+    private Iterable<? extends Iterable<Node>> pathsToNodes(Iterable<NodePath> paths) {
+        List<List<Node>> nodes = new ArrayList<>();
+
+        for (NodePath path : paths) {
+            nodes.add(path.nodes());
+        }
+
+        return nodes;
     }
 }

@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import ms.imf.redpoint.entity.Node;
 import ms.imf.redpoint.entity.NodePath;
 
 /**
@@ -26,7 +27,7 @@ import ms.imf.redpoint.entity.NodePath;
 public class TreeModeRemindHandlerManager<RemindType extends Remind> extends RemindHandlerManager<RemindType> {
 
     private final Map<RemindHandler<RemindType>, Set<NodePath>> attachedRemindHandlers = new HashMap<>();
-    private final TreeStructure<RemindHandler<RemindType>> remindHandlerTree = new TreeStructure<>();
+    private final TreeStructure<Node, RemindHandler<RemindType>> remindHandlerTree = new TreeStructure<>();
 
     public TreeModeRemindHandlerManager(RemindRepo<RemindType> repo) {
         super(repo);
@@ -93,7 +94,7 @@ public class TreeModeRemindHandlerManager<RemindType extends Remind> extends Rem
             return;
         }
 
-        Set<RemindHandler<RemindType>> needChangedHandlers = remindHandlerTree.getPathRangeAllData(paths);
+        Set<RemindHandler<RemindType>> needChangedHandlers = remindHandlerTree.getPathsRangeAllData(pathsToNodes(paths));
         notifyRemindHandlersDataChanged(needChangedHandlers);
     }
 
@@ -111,10 +112,10 @@ public class TreeModeRemindHandlerManager<RemindType extends Remind> extends Rem
         变更涉及handler支持路径节点范围内节点和路径根节点后整个树上的所有handler
          */
         Set<RemindHandler<RemindType>> needChangedHandlers = new HashSet<>(
-                remindHandlerTree.getPathRangeAllData(paths)
+                remindHandlerTree.getPathsRangeAllData(pathsToNodes(paths))
         );
         needChangedHandlers.addAll(
-                remindHandlerTree.getMatchPathSubData(paths)
+                remindHandlerTree.getMatchPathsSubData(pathsToNodes(paths))
         );
         notifyRemindHandlersDataChanged(needChangedHandlers);
     }
@@ -131,14 +132,14 @@ public class TreeModeRemindHandlerManager<RemindType extends Remind> extends Rem
         取所有变更消息支持路径中的最长路径，获取对应的handler刷新其数据
           */
 
-        TreeStructure<NodePath> remindTree = new TreeStructure<>();
+        TreeStructure<Node, NodePath> remindTree = new TreeStructure<>();
         for (RemindType remind : changedReminds) {
-            remindTree.put(remind.path(), remind.path());
+            remindTree.put(remind.path(), remind.path().nodes());
         }
         Set<NodePath> longestPaths = remindTree.getLongestPathData();
 
         notifyRemindHandlersDataChanged(
-                remindHandlerTree.getPathRangeAllData(longestPaths)
+                remindHandlerTree.getPathsRangeAllData(pathsToNodes(longestPaths))
         );
     }
 
@@ -170,10 +171,10 @@ public class TreeModeRemindHandlerManager<RemindType extends Remind> extends Rem
         Map<NodePath, ? extends Collection<? extends RemindType>> rootNodePathSubRemindsMap = remindRepo().getMatchSubReminds(shortestPaths);
 
         // 生成消息树
-        TreeStructure<RemindType> remindTree = new TreeStructure<>();
+        TreeStructure<Node, RemindType> remindTree = new TreeStructure<>();
         for (Collection<? extends RemindType> reminds : rootNodePathSubRemindsMap.values()) {
             for (RemindType remind : reminds) {
-                remindTree.put(remind, remind.path());
+                remindTree.put(remind, remind.path().nodes());
             }
         }
 
@@ -189,7 +190,7 @@ public class TreeModeRemindHandlerManager<RemindType extends Remind> extends Rem
 
             List<RemindType> handlerReminds = new LinkedList<>();
             for (NodePath path : paths) {
-                Collection<? extends RemindType> reminds = remindTree.getMatchPathSubData(path);
+                Collection<? extends RemindType> reminds = remindTree.getMatchPathSubData(path.nodes());
                 if (reminds != null) {
                     handlerReminds.addAll(reminds);
                 }
@@ -209,17 +210,17 @@ public class TreeModeRemindHandlerManager<RemindType extends Remind> extends Rem
         }
 
         if (!put.isEmpty()) {
-            remindHandlerTree.put(handler, put);
+            remindHandlerTree.putMore(handler, pathsToNodes(put));
             attachedNodePaths.addAll(put);
         }
 
         if (!remove.isEmpty()) {
-            remindHandlerTree.remove(handler, remove);
+            remindHandlerTree.removeMore(handler, pathsToNodes(remove));
             attachedNodePaths.removeAll(remove);
         }
     }
     private void removeRemindHandlerPath(RemindHandler<RemindType> handler, Set<NodePath> remove) {
-        remindHandlerTree.remove(handler, remove);
+        remindHandlerTree.removeMore(handler, pathsToNodes(remove));
         attachedRemindHandlers.remove(handler);
     }
     private Set<NodePath> getRemindHandlerPath(RemindHandler<RemindType> handler) {
@@ -228,9 +229,9 @@ public class TreeModeRemindHandlerManager<RemindType extends Remind> extends Rem
 
     private Set<NodePath> getShortestPaths(Set<NodePath> paths) {
 
-        TreeStructure<NodePath> pathTree = new TreeStructure<>();
+        TreeStructure<Node, NodePath> pathTree = new TreeStructure<>();
         for (NodePath path : paths) {
-            pathTree.put(path, path);
+            pathTree.put(path, path.nodes());
         }
 
         return pathTree.getShortestPathData();
@@ -242,5 +243,15 @@ public class TreeModeRemindHandlerManager<RemindType extends Remind> extends Rem
             result.addAll(attachedRemindHandlers.get(remindHandler));
         }
         return result;
+    }
+
+    private Iterable<? extends Iterable<Node>> pathsToNodes(Iterable<NodePath> paths) {
+        List<List<Node>> nodes = new LinkedList<>();
+
+        for (NodePath path : paths) {
+            nodes.add(path.nodes());
+        }
+
+        return nodes;
     }
 }

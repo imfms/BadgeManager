@@ -8,9 +8,6 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
-import ms.imf.redpoint.entity.Node;
-import ms.imf.redpoint.entity.NodePath;
-
 /**
  * 树结构，每个树节点可携带数个数据
  * 提供树结构的构建和路径-数据的各项查询功能的封装
@@ -18,7 +15,7 @@ import ms.imf.redpoint.entity.NodePath;
  * @author f_ms
  * @date 19-7-28
  */
-class TreeStructure<Data> {
+class TreeStructure<Node, Data> {
 
     private class DataNode {
         final Set<Data> dataSet = new HashSet<>();
@@ -30,19 +27,19 @@ class TreeStructure<Data> {
     /**
      * 插入数据到指定路径下
      */
-    void put(Data data, NodePath path) {
-        put(data, Collections.singleton(path));
+    void put(Data data, Iterable<Node> path) {
+        putMore(data, Collections.singleton(path));
     }
 
     /**
-     * @see #put(Data, NodePath)
+     * @see #put(Data, Iterable)
      */
-    void put(Data data, Set<NodePath> paths) {
-        for (NodePath path : paths) {
+    void putMore(Data data, Iterable<? extends Iterable<Node>> paths) {
+        for (Iterable<Node> path : paths) {
 
             Map<Node, DataNode> currentNode = tree;
 
-            Iterator<Node> iterator = path.nodes().iterator();
+            Iterator<Node> iterator = path.iterator();
             while (iterator.hasNext()) {
                 Node node = iterator.next();
 
@@ -65,19 +62,19 @@ class TreeStructure<Data> {
     /**
      * 从指定路径移除数据
      */
-    void remove(Data data, NodePath path) {
-       remove(data, Collections.singleton(path));
+    void remove(Data data, Iterable<Node> path) {
+       removeMore(data, Collections.singleton(path));
     }
 
     /**
-     * @see #remove(Data, NodePath)
+     * @see #remove(Data, Iterable)
      */
-    void remove(Data data, Set<NodePath> paths) {
-        for (NodePath path : paths) {
+    void removeMore(Data data, Iterable<? extends Iterable<Node>> paths) {
+        for (Iterable<Node> path : paths) {
 
             Map<Node, DataNode> currentNode = tree;
 
-            Iterator<Node> iterator = path.nodes().iterator();
+            Iterator<Node> iterator = path.iterator();
             while (iterator.hasNext()) {
                 Node node = iterator.next();
                 DataNode dataNode = currentNode.get(node);
@@ -104,7 +101,7 @@ class TreeStructure<Data> {
      * 例如有节点: 'a', 'a>b', 'a>b>c'
      * 指定路径为 'a>b>c' 的情况下只会返回节点 'a>b>c' 下的数据
      */
-    Set<Data> getMatchPathData(NodePath path) {
+    Set<Data> getMatchPathData(Iterable<Node> path) {
         DataNode dataNode = getPathLastDataNode(path);
         if (dataNode == null) {
             return Collections.emptySet();
@@ -121,21 +118,21 @@ class TreeStructure<Data> {
      * 例如有节点: 'a','a>b','a>b>c','a>b>c>d'
      * 则通过路径 'a>b>c'可查询到这些节点下的数据: 'a','a>b','a>b>c'
      */
-    Set<Data> getPathRangeAllData(NodePath path) {
-        return getPathRangeAllData(Collections.singleton(path));
+    Set<Data> getPathRangeAllData(Iterable<Node> path) {
+        return getPathsRangeAllData(Collections.singleton(path));
     }
 
     /**
-     * @see #getPathRangeAllData(NodePath)
+     * @see #getPathRangeAllData(Iterable)
      */
-    Set<Data> getPathRangeAllData(Set<NodePath> paths) {
+    Set<Data> getPathsRangeAllData(Iterable<? extends Iterable<Node>> paths) {
         final Set<Data> result = new HashSet<>();
 
-        for (NodePath path : paths) {
+        for (Iterable<Node> path : paths) {
 
             Map<Node, DataNode> currentDataNode = tree;
 
-            for (Node node : path.nodes()) {
+            for (Node node : path) {
                 DataNode dataNode = currentDataNode.get(node);
                 if (dataNode == null) {
                     break;
@@ -157,17 +154,17 @@ class TreeStructure<Data> {
      * 例如有节点: 'a','a>b','a>b>c','a>b>c>d'
      * 则通过路径 'a>b>c' 可查询到这些节点下的数据: 'a>b>c', 'a>b>c>d'
      */
-    Set<Data> getMatchPathSubData(NodePath path) {
-        return getMatchPathSubData(Collections.singleton(path));
+    Set<Data> getMatchPathSubData(Iterable<Node> path) {
+        return getMatchPathsSubData(Collections.singleton(path));
     }
 
     /**
-     * @see #getMatchPathSubData(NodePath)
+     * @see #getMatchPathSubData(Iterable)
      */
-    Set<Data> getMatchPathSubData(Set<NodePath> paths) {
+    Set<Data> getMatchPathsSubData(Iterable<? extends Iterable<Node>> paths) {
         Set<Data> result = new HashSet<>();
 
-        for (NodePath path : paths) {
+        for (Iterable<Node> path : paths) {
 
             DataNode matchDataNode = getPathLastDataNode(path);
             if (matchDataNode == null) {
@@ -206,11 +203,11 @@ class TreeStructure<Data> {
         return result;
     }
 
-    private DataNode getPathLastDataNode(NodePath path) {
+    private DataNode getPathLastDataNode(Iterable<Node> path) {
         DataNode matchDataNode = null;
         Map<Node, DataNode> currentNode = tree;
 
-        Iterator<Node> nodeIterator = path.nodes().iterator();
+        Iterator<Node> nodeIterator = path.iterator();
         while (nodeIterator.hasNext()) {
             Node node = nodeIterator.next();
 
@@ -254,10 +251,10 @@ class TreeStructure<Data> {
             addShortestPathDataToContainer(entry.getValue(), resultContainer);
         }
     }
-    private void removeInvalidNode(NodePath path) {
+    private void removeInvalidNode(Iterable<Node> path) {
         Map<Node, DataNode> currentNode = tree;
 
-        for (Node node : path.nodes()) {
+        for (Node node : path) {
             DataNode dataNode = currentNode.get(node);
             if (dataNode == null) {
                 break;
