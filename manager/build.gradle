@@ -8,6 +8,7 @@ dependencies {
 
     api project(':entity')
     testImplementation 'junit:junit:4.12'
+    testImplementation 'org.mockito:mockito-core:2.28.2'
 }
 
 sourceCompatibility = "7"
