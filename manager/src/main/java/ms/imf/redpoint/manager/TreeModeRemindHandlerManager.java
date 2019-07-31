@@ -88,7 +88,7 @@ public class TreeModeRemindHandlerManager<RemindType extends Remind> extends Rem
 
         Set<NodePath> paths = getRemindHandlerPath(remindHandler);
 
-        if (remindRepo().removeMatchReminds(paths) <= 0) {
+        if (remindRepo().removeMatchPathReminds(paths) <= 0) {
             return;
         }
 
@@ -97,12 +97,12 @@ public class TreeModeRemindHandlerManager<RemindType extends Remind> extends Rem
     }
 
     @Override
-    public void happenedRemindHandlerWithSubPathAll(RemindHandler<RemindType> remindHandler) {
+    public void happenedRemindHandlerWithSubPath(RemindHandler<RemindType> remindHandler) {
         if (!remindHandlerAttached(remindHandler)) { return; }
 
         Set<NodePath> paths = getRemindHandlerPath(remindHandler);
 
-        if (remindRepo().removeMatchSubReminds(paths) <= 0) {
+        if (remindRepo().removeMatchPathSubReminds(paths) <= 0) {
             return;
         }
 
@@ -166,7 +166,7 @@ public class TreeModeRemindHandlerManager<RemindType extends Remind> extends Rem
         Set<NodePath> shortestPaths = getShortestPaths(allPaths);
 
         // 查询消息
-        Map<NodePath, ? extends Collection<? extends RemindType>> rootNodePathSubRemindsMap = remindRepo().getMatchSubReminds(shortestPaths);
+        Map<NodePath, ? extends Collection<? extends RemindType>> rootNodePathSubRemindsMap = remindRepo().getMatchPathSubReminds(shortestPaths);
 
         // 生成消息树
         TreeStructure<Node, RemindType> remindTree = new TreeStructure<>();

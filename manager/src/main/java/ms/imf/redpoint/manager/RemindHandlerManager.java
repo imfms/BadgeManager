@@ -73,7 +73,7 @@ public abstract class RemindHandlerManager<RemindType extends Remind> {
      *
      * @param remindHandler 被触发的{@link RemindHandler}
      */
-    public abstract void happenedRemindHandlerWithSubPathAll(RemindHandler<RemindType> remindHandler);
+    public abstract void happenedRemindHandlerWithSubPath(RemindHandler<RemindType> remindHandler);
 
     /**
      * 当提醒数据发生变更

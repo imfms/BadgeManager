@@ -177,7 +177,7 @@ public abstract class RemindHandler<RemindType extends Remind> {
      * 一般用于消息被用户直接移除的情况，例如用户以拖拽的方式消除红点，此时子路径的消息也应该被清空
      */
     public void onHappednWithSubPath() {
-        remindHandleManager.happenedRemindHandlerWithSubPathAll(this);
+        remindHandleManager.happenedRemindHandlerWithSubPath(this);
     }
 
     @Override
