@@ -104,74 +104,74 @@ public class TreeModeRemindHandlerManagerTest {
 
     @Test
     public void notifyRemindHandlerChanged() {
-        NodePath path1 = NodePath.instance("a", "b");
-        NodePath path2 = NodePath.instance("a", "b", "c");
-        NodePath path3 = NodePath.instance("a", "b", "c", "d");
-        NodePath path4 = NodePath.instance("a", "e");
+        NodePath pathAb = NodePath.instance("a", "b");
+        NodePath pathAbc = NodePath.instance("a", "b", "c");
+        NodePath pathAbcd = NodePath.instance("a", "b", "c", "d");
+        NodePath pathAe = NodePath.instance("a", "e");
 
         handler.attachToManager();
 
         // handler setPath后manager应有查询path对应消息及调用handler展示行为
         reset(repo, handler);
-        handler.setPath(path1);
-        verify(repo).getMatchSubReminds(Collections.singleton(path1));
+        handler.setPath(pathAb);
+        verify(repo).getMatchSubReminds(Collections.singleton(pathAb));
         verify(handler).showReminds(Collections.<Remind>emptyList());
 
         // handler set多个path后应查找重合path中最短的path查询消息及调用handler展示行为
         reset(repo, handler);
         when(repo.getMatchSubReminds(any(Collection.class)))
-                .then(new Returns(Collections.singletonMap(path1, Arrays.asList(
-                        new Remind(path1),
-                        new Remind(path2),
-                        new Remind(path3)
+                .then(new Returns(Collections.singletonMap(pathAb, Arrays.asList(
+                        new Remind(pathAb),
+                        new Remind(pathAbc),
+                        new Remind(pathAbcd)
                 ))));
 
         handler.setPath(Arrays.asList(
-                path1, path2, path4
+                pathAb, pathAbc, pathAe
         ));
-        verify(repo).getMatchSubReminds(new HashSet<>(Arrays.asList(path1, path4)));
+        verify(repo).getMatchSubReminds(new HashSet<>(Arrays.asList(pathAb, pathAe)));
         verify(handler).showReminds(Arrays.asList(
-                new Remind(path1),
-                new Remind(path2),
-                new Remind(path3)
+                new Remind(pathAb),
+                new Remind(pathAbc),
+                new Remind(pathAbcd)
         ));
 
         // manager调用handler.showReminds应提供给其支持的remind
         reset(repo, handler);
         when(repo.getMatchSubReminds(ArgumentMatchers.<NodePath>anyCollection()))
-                .then(new Returns(Collections.singletonMap(path2, Arrays.asList(
-                        new Remind(path1),
-                        new Remind(path2),
-                        new Remind(path3)
+                .then(new Returns(Collections.singletonMap(pathAbc, Arrays.asList(
+                        new Remind(pathAb),
+                        new Remind(pathAbc),
+                        new Remind(pathAbcd)
                 ))));
-        handler.setPath(path2);
-        verify(repo).getMatchSubReminds(Collections.singleton(path2));
+        handler.setPath(pathAbc);
+        verify(repo).getMatchSubReminds(Collections.singleton(pathAbc));
         verify(handler).showReminds(Arrays.asList(
-                new Remind(path2),
-                new Remind(path3)
+                new Remind(pathAbc),
+                new Remind(pathAbcd)
         ));
     }
 
     @Test
     public void happenedRemindHandler() {
-        NodePath path1 = NodePath.instance("a", "b");
-        NodePath path2 = NodePath.instance("a", "b", "c");
-        NodePath path3 = NodePath.instance("a", "b", "c", "d");
+        NodePath pathAb = NodePath.instance("a", "b");
+        NodePath pathAbc = NodePath.instance("a", "b", "c");
+        NodePath pathAbcd = NodePath.instance("a", "b", "c", "d");
 
         RemindHandler handlerAb = spy(new RemindHandler(manager));
-        handlerAb.setPath(path1);
+        handlerAb.setPath(pathAb);
         handlerAb.attachToManager();
 
         RemindHandler handlerAbc = spy(new RemindHandler(manager));
-        handlerAbc.setPath(path2);
+        handlerAbc.setPath(pathAbc);
         handlerAbc.attachToManager();
 
         // handler happened后manager应从repo移除其path对应的消息
         reset(repo);
         when(repo.getMatchSubReminds(handlerAb.getPaths()))
-                .then(new Returns(Collections.singletonMap(path1, Arrays.asList(
-                        new Remind(path1),
-                        new Remind(path3)
+                .then(new Returns(Collections.singletonMap(pathAb, Arrays.asList(
+                        new Remind(pathAb),
+                        new Remind(pathAbcd)
                 ))));
         when(repo.removeMatchReminds(handlerAbc.getPaths())).thenReturn(1L);
 
@@ -180,30 +180,30 @@ public class TreeModeRemindHandlerManagerTest {
         // 消息被移除后将刷新路径上被影响的handler
         verify(repo).removeMatchReminds(handlerAbc.getPaths());
         verify(handlerAb).showReminds(Arrays.asList(
-                new Remind(path1),
-                new Remind(path3)
+                new Remind(pathAb),
+                new Remind(pathAbcd)
         ));
     }
 
     @Test
     public void happenedRemindHandlerWithSubPathAll() {
-        NodePath path1 = NodePath.instance("a", "b");
-        NodePath path2 = NodePath.instance("a", "b", "c");
-        NodePath path3 = NodePath.instance("a", "b", "c", "d");
+        NodePath pathAb = NodePath.instance("a", "b");
+        NodePath pathAbc = NodePath.instance("a", "b", "c");
+        NodePath pathAbcd = NodePath.instance("a", "b", "c", "d");
 
         RemindHandler handlerAb = spy(new RemindHandler(manager));
-        handlerAb.setPath(path1);
+        handlerAb.setPath(pathAb);
         handlerAb.attachToManager();
 
         RemindHandler handlerAbc = spy(new RemindHandler(manager));
-        handlerAbc.setPath(path2);
+        handlerAbc.setPath(pathAbc);
         handlerAbc.attachToManager();
 
         // handler happened后manager应从repo移除其path对应的消息
         reset(repo);
         when(repo.getMatchSubReminds(handlerAb.getPaths()))
-                .then(new Returns(Collections.singletonMap(path1, Arrays.asList(
-                        new Remind(path1)
+                .then(new Returns(Collections.singletonMap(pathAb, Arrays.asList(
+                        new Remind(pathAb)
                 ))));
         when(repo.removeMatchSubReminds(handlerAbc.getPaths())).thenReturn(1L);
 
@@ -212,7 +212,7 @@ public class TreeModeRemindHandlerManagerTest {
         // 消息被移除后将刷新路径上被影响的handler
         verify(repo).removeMatchSubReminds(handlerAbc.getPaths());
         verify(handlerAb).showReminds(Arrays.asList(
-                new Remind(path1)
+                new Remind(pathAb)
         ));
     }
 

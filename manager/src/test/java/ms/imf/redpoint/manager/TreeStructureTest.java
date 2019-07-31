@@ -31,33 +31,33 @@ public class TreeStructureTest {
         String data1 = "1";
         String data2 = "2";
         String data3 = "3";
-        NodePath path1 = NodePath.instance("a", "b", "c");
-        NodePath path2 = NodePath.instance("a", "b", "d");
+        NodePath pathAbc = NodePath.instance("a", "b", "c");
+        NodePath pathAbd = NodePath.instance("a", "b", "d");
 
         assertThat(
-                tree.getMatchPathData(path1.nodes()),
+                tree.getMatchPathData(pathAbc.nodes()),
                 is(Collections.<String>emptySet())
         );
 
-        tree.put(data1, path1.nodes());
+        tree.put(data1, pathAbc.nodes());
         assertThat(
-                tree.getMatchPathData(path1.nodes()),
+                tree.getMatchPathData(pathAbc.nodes()),
                 is(Collections.singleton(data1))
         );
 
-        tree.put(data2, path1.nodes());
+        tree.put(data2, pathAbc.nodes());
         assertThat(
-                tree.getMatchPathData(path1.nodes()),
+                tree.getMatchPathData(pathAbc.nodes()),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(data1, data2)))
         );
 
-        tree.putMore(data3, Arrays.asList(path1.nodes(), path2.nodes()));
+        tree.putMore(data3, Arrays.asList(pathAbc.nodes(), pathAbd.nodes()));
         assertThat(
-                tree.getMatchPathData(path1.nodes()),
+                tree.getMatchPathData(pathAbc.nodes()),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Arrays.asList(data1, data2, data3)))
         );
         assertThat(
-                tree.getMatchPathData(path2.nodes()),
+                tree.getMatchPathData(pathAbd.nodes()),
                 CoreMatchers.<Set<String>>is(new HashSet<>(Collections.singletonList(data3)))
         );
     }
@@ -68,9 +68,9 @@ public class TreeStructureTest {
         String data2 = "2";
         String data3 = "3";
 
-        NodePath path1 = NodePath.instance("a", "b");
-        NodePath path2 = NodePath.instance("a", "b", "c");
-        NodePath[] paths = {path1, path2};
+        NodePath pathAb = NodePath.instance("a", "b");
+        NodePath pathAbc = NodePath.instance("a", "b", "c");
+        NodePath[] paths = {pathAb, pathAbc};
 
         for (NodePath nodePath : paths) {
             for (String data : new String[]{data1, data2, data3}) {
@@ -101,9 +101,9 @@ public class TreeStructureTest {
         String data1 = "1";
         String data2 = "2";
         String data3 = "3";
-        NodePath path1 = NodePath.instance("a", "b", "c");
-        NodePath path2 = NodePath.instance("a", "b", "d");
-        NodePath[] paths = {path1, path2};
+        NodePath pathAbc = NodePath.instance("a", "b", "c");
+        NodePath pathAbd = NodePath.instance("a", "b", "d");
+        NodePath[] paths = {pathAbc, pathAbd};
 
         for (NodePath path : paths) {
             assertThat(
