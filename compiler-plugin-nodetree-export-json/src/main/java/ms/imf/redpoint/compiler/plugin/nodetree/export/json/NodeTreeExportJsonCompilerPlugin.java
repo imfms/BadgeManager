@@ -49,7 +49,7 @@ public class NodeTreeExportJsonCompilerPlugin implements NodeTreeHandlePlugin {
                 || context.args().length <= 0
                 || context.args()[0] == null
                 || context.args()[0].isEmpty()) {
-            throw new IllegalArgumentException("args can't be empty, I resource type and location, please add it into args[0]");
+            throw new IllegalArgumentException("args can't be empty, I need resource type and location, please add it into args[0]");
         }
 
         final String resourceStr = context.args()[0];
