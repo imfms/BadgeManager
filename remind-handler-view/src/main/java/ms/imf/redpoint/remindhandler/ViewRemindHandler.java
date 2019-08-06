@@ -23,6 +23,8 @@ public abstract class ViewRemindHandler<RemindType extends Remind, BadgeView ext
 
     private static final String TAG = ViewRemindHandler.class.getSimpleName();
 
+    private final BadgeView badgeView;
+
     /**
      * @param remindHandleManager see {@link RemindHandler}
      * @param badgeView           badgeView
@@ -34,6 +36,8 @@ public abstract class ViewRemindHandler<RemindType extends Remind, BadgeView ext
         if (badgeView == null) {
             throw new IllegalArgumentException("badgeView can't be null");
         }
+
+        this.badgeView = badgeView;
 
         if (isAttachedToWindow(badgeView)) {
             ViewRemindHandler.super.attachToManager();
@@ -50,6 +54,10 @@ public abstract class ViewRemindHandler<RemindType extends Remind, BadgeView ext
                 ViewRemindHandler.super.detachFromManager();
             }
         });
+    }
+
+    public BadgeView badgeView() {
+        return badgeView;
     }
 
     @Override
