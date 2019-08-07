@@ -11,7 +11,7 @@ import ms.imf.redpoint.manager.RemindHandlerManager;
 /**
  * 一个通过{@link View#addOnAttachStateChangeListener(View.OnAttachStateChangeListener)}管理自己attach/detach生命周期的RemindHandler
  * <p>
- * 使用此RemindHandler你无需再调用{@link RemindHandler#attachToManager()}和{@link RemindHandler#detachFromManager()}方法
+ * 使用此RemindHandler你无需再手动调用{@link RemindHandler#attachToManager()}和{@link RemindHandler#detachFromManager()}方法
  *
  * @see View#isAttachedToWindow()
  * @see View#addOnAttachStateChangeListener(View.OnAttachStateChangeListener)
