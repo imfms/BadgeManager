@@ -1,9 +1,9 @@
 package ms.imf.redpoint.manager;
 
 /**
- * 消息获取守护着
+ * 提醒数据获取守护者
  * <p>
- * 对消息守护者常用方法的基本定义，消息守护者用于在后端持续性的获取消息的变更并同步到消息仓库
+ * 对提醒数据守护者常用方法的基本定义，用于在后端持续性的获取消息的变更并同步到消息仓库
  *
  * @author f_ms
  * @date 2019/5/29
@@ -43,7 +43,7 @@ public interface RemindDaemon {
     boolean resumed();
 
     /**
-     * 刷新数据、同步消息
+     * 刷新、同步提醒数据
      */
     void refresh();
 

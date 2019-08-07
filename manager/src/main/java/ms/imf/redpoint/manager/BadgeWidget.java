@@ -10,26 +10,26 @@ import java.util.Set;
 import ms.imf.redpoint.entity.NodePath;
 
 /**
- * 提醒消息处理器，用于管理指定节点路径消息的展示、触发
+ * 提醒消息处理器，用于管理指定节点路径消息的展示、消费
  *
  * @param <RemindType> 支持的消息数据类型
  * @author f_ms
  */
-public abstract class RemindHandler<RemindType extends Remind> {
+public abstract class BadgeWidget<RemindType extends Remind> {
 
-    private final RemindHandlerManager<RemindType> remindHandleManager;
+    private final BadgeManager<RemindType> remindHandleManager;
     private final Set<NodePath> paths = new HashSet<>();
 
     /**
-     * 由于RemindHandler在程序中为高频使用的类，所以本构造的{@link RemindHandlerManager}参数的指定会挺麻烦
+     * 由于{@link BadgeWidget}在程序中为高频使用的类，所以本构造的{@link BadgeManager}参数的指定会挺麻烦
      * <p>
-     * 所以推荐开发者继承此类时重写构造方法并对该参数进行封装，直接指向一个可以获取到{@link RemindHandlerManager}的固定方式
+     * 所以推荐开发者继承此类时重写构造方法并对该参数进行封装，直接指向一个可以获取到{@link BadgeManager}的固定方式
      * <p>
      * 之所以没有对推荐进行封装是为了不限制开发者的使用场景，可能开发者会有两套不同消息机制同时存在的情况
      *
-     * @param remindHandleManager 要依附的{@link RemindHandlerManager}
+     * @param remindHandleManager 要依附的{@link BadgeManager}
      */
-    protected RemindHandler(RemindHandlerManager<RemindType> remindHandleManager) {
+    protected BadgeWidget(BadgeManager<RemindType> remindHandleManager) {
         if (remindHandleManager == null) {
             throw new IllegalArgumentException("remindHandleManager can't be null");
         }
@@ -37,26 +37,26 @@ public abstract class RemindHandler<RemindType extends Remind> {
     }
 
     /**
-     * 依附到RemindHandlerManager
+     * 依附到{@link BadgeManager}
      */
     public void attachToManager() {
-        remindHandleManager.attachRemindHandler(this);
+        remindHandleManager.attachWidget(this);
     }
 
     /**
-     * 从RemindHandlerManager解除依附关系
+     * 从{@link BadgeManager}解除依附关系
      */
     public void detachFromManager() {
-        remindHandleManager.detachRemindHandler(this);
+        remindHandleManager.detachWidget(this);
     }
 
     /**
-     * 已经附加到RemindHandlerManager吗？
+     * 已经附加到{@link BadgeManager}了吗？
      *
      * @return true == 是的, false == 不，还没
      */
     public boolean isAttachedManager() {
-        return remindHandleManager.remindHandlerAttached(this);
+        return remindHandleManager.widgetAttached(this);
     }
 
     /**
@@ -126,7 +126,7 @@ public abstract class RemindHandler<RemindType extends Remind> {
         this.paths.addAll(paths);
 
         if (isAttachedManager()) {
-            remindHandleManager.notifyRemindHandlerChanged(this);
+            remindHandleManager.notifyWidgetChanged(this);
         }
     }
 
@@ -145,7 +145,7 @@ public abstract class RemindHandler<RemindType extends Remind> {
     public void clearPath() {
         this.paths.clear();
         if (isAttachedManager()) {
-            remindHandleManager.notifyRemindHandlerChanged(this);
+            remindHandleManager.notifyWidgetChanged(this);
         }
     }
 
@@ -165,19 +165,19 @@ public abstract class RemindHandler<RemindType extends Remind> {
     public abstract void showReminds(Collection<? extends RemindType> reminds);
 
     /**
-     * 当消息处理器被触发，触发范围为支持的节点路径
+     * 当消息处理器被消费，消费范围为支持的节点路径
      */
     public void onHappend() {
-        remindHandleManager.happenedRemindHandler(this);
+        remindHandleManager.happenedWidget(this);
     }
 
     /**
-     * 当消息处理器被触发，触发范围为支持的节点路径及其的子路径
+     * 当消息处理器被消费，消费范围为支持的节点路径及其的子路径
      * <p>
      * 一般用于消息被用户直接移除的情况，例如用户以拖拽的方式消除红点，此时子路径的消息也应该被清空
      */
     public void onHappednWithSubPath() {
-        remindHandleManager.happenedRemindHandlerWithSubPath(this);
+        remindHandleManager.happenedWidgetWithSubPath(this);
     }
 
     @Override
@@ -192,7 +192,7 @@ public abstract class RemindHandler<RemindType extends Remind> {
 
     @Override
     public String toString() {
-        return "RemindHandler{" +
+        return "BadgeWidget{" +
                 "paths=" + paths +
                 '}';
     }

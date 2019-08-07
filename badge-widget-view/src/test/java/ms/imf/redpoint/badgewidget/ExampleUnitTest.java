@@ -1,4 +1,4 @@
-package ms.imf.redpoint.remindhandler;
+package ms.imf.redpoint.badgewidget;
 
 import org.junit.Test;
 

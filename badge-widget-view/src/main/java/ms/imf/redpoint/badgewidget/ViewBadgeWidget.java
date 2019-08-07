@@ -1,17 +1,17 @@
-package ms.imf.redpoint.remindhandler;
+package ms.imf.redpoint.badgewidget;
 
 import android.os.Build;
 import android.util.Log;
 import android.view.View;
 
 import ms.imf.redpoint.manager.Remind;
-import ms.imf.redpoint.manager.RemindHandler;
-import ms.imf.redpoint.manager.RemindHandlerManager;
+import ms.imf.redpoint.manager.BadgeWidget;
+import ms.imf.redpoint.manager.BadgeManager;
 
 /**
- * 一个通过{@link View#addOnAttachStateChangeListener(View.OnAttachStateChangeListener)}管理自己attach/detach生命周期的RemindHandler
+ * 一个通过{@link View#addOnAttachStateChangeListener(View.OnAttachStateChangeListener)}管理自己attach/detach生命周期的{@link BadgeWidget}
  * <p>
- * 使用此RemindHandler你无需再调用{@link RemindHandler#attachToManager()}和{@link RemindHandler#detachFromManager()}方法
+ * 开发者无需再手动调用{@link BadgeWidget#attachToManager()}和{@link BadgeWidget#detachFromManager()}方法
  *
  * @see View#isAttachedToWindow()
  * @see View#addOnAttachStateChangeListener(View.OnAttachStateChangeListener)
@@ -19,18 +19,18 @@ import ms.imf.redpoint.manager.RemindHandlerManager;
  * @author f_ms
  * @date 2019/07/25
  */
-public abstract class ViewRemindHandler<RemindType extends Remind, BadgeView extends View> extends RemindHandler<RemindType> {
+public abstract class ViewBadgeWidget<RemindType extends Remind, BadgeView extends View> extends BadgeWidget<RemindType> {
 
-    private static final String TAG = ViewRemindHandler.class.getSimpleName();
+    private static final String TAG = ViewBadgeWidget.class.getSimpleName();
 
     private final BadgeView badgeView;
 
     /**
-     * @param remindHandleManager see {@link RemindHandler}
+     * @param remindHandleManager see {@link BadgeWidget}
      * @param badgeView           badgeView
-     * @see RemindHandler
+     * @see BadgeWidget
      */
-    protected ViewRemindHandler(RemindHandlerManager<RemindType> remindHandleManager, BadgeView badgeView) {
+    protected ViewBadgeWidget(BadgeManager<RemindType> remindHandleManager, BadgeView badgeView) {
         super(remindHandleManager);
 
         if (badgeView == null) {
@@ -40,18 +40,18 @@ public abstract class ViewRemindHandler<RemindType extends Remind, BadgeView ext
         this.badgeView = badgeView;
 
         if (isAttachedToWindow(badgeView)) {
-            ViewRemindHandler.super.attachToManager();
+            ViewBadgeWidget.super.attachToManager();
         }
 
         badgeView.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
             @Override
             public void onViewAttachedToWindow(View v) {
-                ViewRemindHandler.super.attachToManager();
+                ViewBadgeWidget.super.attachToManager();
             }
 
             @Override
             public void onViewDetachedFromWindow(View v) {
-                ViewRemindHandler.super.detachFromManager();
+                ViewBadgeWidget.super.detachFromManager();
             }
         });
     }
