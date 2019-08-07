@@ -8,5 +8,17 @@ dependencies {
     api project(':compiler-plugin')
 }
 
+task generateJavaDoc(type: Javadoc) {
+    source = sourceSets.main.allJava
+    failOnError false
+}
+task javadocJar(type: Jar, dependsOn: generateJavaDoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+artifacts {
+    archives javadocJar
+}
+
 sourceCompatibility = "7"
 targetCompatibility = "7"

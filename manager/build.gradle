@@ -10,6 +10,17 @@ dependencies {
     testImplementation 'junit:junit:4.12'
     testImplementation 'org.mockito:mockito-core:2.28.2'
 }
-
+task generateJavaDoc(type: Javadoc) {
+    options.encoding = 'UTF-8'
+    source = sourceSets.main.allJava
+    failOnError false
+}
+task javadocJar(type: Jar, dependsOn: generateJavaDoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+artifacts {
+    archives javadocJar
+}
 sourceCompatibility = "7"
 targetCompatibility = "7"

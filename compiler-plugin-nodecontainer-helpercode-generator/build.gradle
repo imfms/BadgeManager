@@ -9,6 +9,17 @@ dependencies {
     implementation project(path: ':compiler-plugin')
     implementation 'com.squareup:javapoet:1.11.1'
 }
-
+task generateJavaDoc(type: Javadoc) {
+    options.encoding = 'UTF-8'
+    source = sourceSets.main.allJava
+    failOnError false
+}
+task javadocJar(type: Jar, dependsOn: generateJavaDoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+artifacts {
+    archives javadocJar
+}
 sourceCompatibility = "7"
 targetCompatibility = "7"

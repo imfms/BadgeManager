@@ -10,6 +10,17 @@ dependencies {
 
     implementation project(':entity')
 }
-
+task generateJavaDoc(type: Javadoc) {
+    options.encoding = 'UTF-8'
+    source = sourceSets.main.allJava
+    failOnError false
+}
+task javadocJar(type: Jar, dependsOn: generateJavaDoc) {
+    classifier = 'javadoc'
+    from javadoc.destinationDir
+}
+artifacts {
+    archives javadocJar
+}
 sourceCompatibility = "7"
 targetCompatibility = "7"
