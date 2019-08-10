@@ -11,7 +11,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author f_ms
  * @date 19-7-31
  */
-public class ConcurrentSafeTreeStructure<Node, Data> extends TreeStructure<Node, Data> {
+class ConcurrentSafeTreeStructure<Node, Data> extends TreeStructure<Node, Data> {
 
     private final ReadWriteLock locker = new ReentrantReadWriteLock();
 
