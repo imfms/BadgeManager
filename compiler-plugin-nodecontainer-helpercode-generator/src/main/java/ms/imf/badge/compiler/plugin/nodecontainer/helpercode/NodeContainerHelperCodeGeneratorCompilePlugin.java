@@ -10,16 +10,16 @@ import ms.imf.badge.compiler.plugin.NodeTreeHandlePlugin;
  * <pre>
  * package ${CLASS_PACKAGE_NAME}
  *
- * interface ${CLASS}_Path {
+ * interface ${CLASS}_Node {
  *
- *   interface ${subNodeType} {
+ *   interface ${nodeName} {
  *
  *     String name$;
  *     String arg${arg...};
  *     String arg${arg...}${argValueLimit...};
  *     ...
  *
- *     interface ${subNodeType} {
+ *     interface ${subNodeName} {
  *       ...
  *     }
  *

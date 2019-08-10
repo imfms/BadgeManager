@@ -10,9 +10,11 @@ import java.util.Set;
 import ms.imf.badge.entity.NodePath;
 
 /**
- * 提醒消息处理器，用于管理指定节点路径消息的展示、消费
+ * 徽标控件，用于根据徽标提醒数据展示徽标，控制徽标的外观展示。
+ * <p>
+ * 依附于徽标管理器{@link BadgeManager}并受其管理
  *
- * @param <RemindType> 支持的消息数据类型
+ * @param <RemindType> 支持的徽标提醒数据类型
  * @author f_ms
  */
 public abstract class BadgeWidget<RemindType extends Remind> {

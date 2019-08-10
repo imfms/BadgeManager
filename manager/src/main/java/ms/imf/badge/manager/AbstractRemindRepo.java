@@ -10,7 +10,7 @@ import ms.imf.badge.entity.Node;
 import ms.imf.badge.entity.NodePath;
 
 /**
- * 消息数据仓库方法的简单封装
+ * 徽标提醒数据仓库{@link RemindRepo}的简单封装
  *
  * @param <RemindType> {@link RemindRepo}
  */

@@ -21,6 +21,8 @@ public @interface NodeParserGlobalConfig {
      *
      * <p>
      * when {@link RoundEnvironment#processingOver()} == false
+     * <p>
+     * 在此类型下被调用的插件有可能拿不到整颗节点树，因为可能会有新一轮的节点解析，具体详情参见API: <a href='https://docs.oracle.com/javase/8/docs/api/javax/annotation/processing/Processor.html'>Processor</a>
      */
     Plugin[] eachAptRoundNodeTreeParsedPlugins() default {};
 
@@ -29,6 +31,9 @@ public @interface NodeParserGlobalConfig {
      *
      * <p>
      * when {@link RoundEnvironment#processingOver()} == true
+     *
+     * <p>
+     * <a href='https://docs.oracle.com/javase/8/docs/api/javax/annotation/processing/Processor.html'>查看注解处理器相关详情</a>
      */
     Plugin[] lastAptRoundNodeTreeParsedPlugins() default {};
 }
